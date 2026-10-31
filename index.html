@@ -542,7 +542,7 @@
     <script>
         // *** ตั้งค่า URL ของ Google Apps Script และ LIFF ID ที่นี่ ***
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
-        const LIFF_ID = 'YOUR_LIFF_ID';
+        const LIFF_ID = '2012225566-hFrR9T1Q';
 
         // ข้อมูลจำลองเริ่มต้น (ทำงานได้ทันทีแม้ยังไม่ได้เชื่อม GAS และอัปเดตทับเมื่อดึงข้อมูลจริงสำเร็จ)
         let appState = {
@@ -577,7 +577,7 @@
         // 1. เริ่มต้นระบบ LIFF
         async function initializeLiff() {
             renderCouponsAndCatalog();
-            if (!LIFF_ID || LIFF_ID === '2012225566-hFrR9T1Q') {
+            if (!LIFF_ID || LIFF_ID === 'YOUR_LIFF_ID') {
                 console.log('Running in preview mode (LIFF_ID not configured yet).');
                 return;
             }
