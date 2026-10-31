@@ -120,12 +120,12 @@
         <div class="flex items-center gap-3.5 min-w-0">
             <div class="relative shrink-0" onclick="switchTab('profile')">
                 <img id="profileImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" referrerpolicy="no-referrer" alt="Profile" class="w-16 h-16 rounded-full border-[3px] border-red-600 shadow-md object-cover bg-white cursor-pointer">
-                <span id="liffStatusDot" class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+                <span id="StatusDot" class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
             <div class="min-w-0">
                 <div class="flex items-center gap-1.5">
                     <span class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider uppercase shadow-sm">PBD Smart</span>
-                    <button onclick="configureLiffIdPrompt()" id="liffConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
+                    <button onclick="configureIdPrompt()" id="ConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
                         ตั้งค่า LIFF ID
                     </button>
                 </div>
@@ -712,7 +712,7 @@
     <!-- JavaScript Application Logic -->
     <!-- ========================================================================= -->
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycby-ilOWGoru2tNQGaL8N6-oxFX_F9COs5txeFHmgSOpm8IQsLvjRh5EuYYfXyyXtVyWUA/exec';
         const DEFAULT_LIFF_ID = '2012225566-hFrR9T1Q';
 
         let html5QrScanner = null;
