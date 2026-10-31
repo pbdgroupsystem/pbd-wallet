@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PBD Employee Dashboard</title>
+    <title>PBD Smart</title>
     <!-- Google Fonts: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- LINE LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <!-- HTML5-QRCode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Font Awesome 6 -->
@@ -39,23 +41,23 @@
 
         /* Top Geometric Accents */
         .top-accent-red {
-            position: fixed;
-            top: -30px;
-            right: -40px;
-            width: 180px;
-            height: 90px;
+            position: absolute;
+            top: -35px;
+            right: -45px;
+            width: 170px;
+            height: 85px;
             background: linear-gradient(90deg, #ef4444, #991b1b);
             transform: rotate(-25deg);
             z-index: 0;
             pointer-events: none;
-            box-shadow: 0 4px 15px rgba(185, 28, 28, 0.3);
+            box-shadow: 0 4px 15px rgba(185, 28, 28, 0.25);
         }
         .top-accent-dark {
-            position: fixed;
-            top: 15px;
-            right: -50px;
-            width: 160px;
-            height: 45px;
+            position: absolute;
+            top: 10px;
+            right: -55px;
+            width: 150px;
+            height: 40px;
             background: #111827;
             transform: rotate(-25deg);
             z-index: 0;
@@ -87,9 +89,27 @@
             background: #cbd5e1;
             border-radius: 4px;
         }
+
+        /* Scanner Laser Animation */
+        @keyframes scanLaser {
+            0% { top: 10%; opacity: 0.9; }
+            50% { top: 88%; opacity: 1; }
+            100% { top: 10%; opacity: 0.9; }
+        }
+        .scanner-laser {
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            height: 2px;
+            background: #ef4444;
+            box-shadow: 0 0 10px 2px #ef4444;
+            animation: scanLaser 2.2s infinite ease-in-out;
+            pointer-events: none;
+            z-index: 20;
+        }
     </style>
 </head>
-<body class="pb-28 text-gray-800 relative min-h-screen max-w-md mx-auto shadow-2xl bg-gray-100">
+<body class="pb-28 text-gray-800 relative min-h-screen max-w-md mx-auto shadow-2xl bg-gray-100 overflow-x-hidden">
 
     <!-- Decorative Corner Ribbons -->
     <div class="top-accent-red"></div>
@@ -97,311 +117,482 @@
 
     <!-- 1. Top Profile & Notification Bar -->
     <header class="relative z-10 flex justify-between items-center px-5 pt-5 pb-3">
-        <div class="flex items-center gap-3.5">
-            <div class="relative">
-                <img id="profileImage" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Nattawat&backgroundColor=ffdfbf" alt="Profile" class="w-16 h-16 rounded-full border-[3px] border-red-600 shadow-md object-cover bg-white">
-                <span class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+        <div class="flex items-center gap-3.5 min-w-0">
+            <div class="relative shrink-0" onclick="switchTab('profile')">
+                <img id="profileImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" referrerpolicy="no-referrer" alt="Profile" class="w-16 h-16 rounded-full border-[3px] border-red-600 shadow-md object-cover bg-white cursor-pointer">
+                <span id="liffStatusDot" class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
-            <div>
-                <h1 class="text-lg font-bold text-gray-900 leading-tight">
+            <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                    <span class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider uppercase shadow-sm">PBD Smart</span>
+                    <button onclick="configureLiffIdPrompt()" id="liffConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
+                        ตั้งค่า LIFF ID
+                    </button>
+                </div>
+                <h1 class="text-lg font-bold text-gray-900 leading-tight truncate mt-0.5">
                     สวัสดี, <span id="userName">คุณณัฐวรรธน์</span>
                 </h1>
-                <p class="text-sm font-medium text-gray-500">(<span id="userRole">Sales</span>)</p>
+                <p class="text-xs font-medium text-gray-500 flex items-center gap-1">
+                    <span id="userRole">Sales</span> • <span id="userBranchHeader">สาขาสุราษฎร์ธานี</span>
+                </p>
             </div>
         </div>
-        <button onclick="showNotifications()" class="relative p-2 text-gray-800 hover:scale-105 transition">
-            <i class="fa-solid fa-bell text-3xl"></i>
-            <span id="notifBadge" class="absolute top-0.5 right-0.5 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow">2</span>
+        <button onclick="showNotifications()" class="relative p-2.5 bg-white/90 backdrop-blur rounded-full shadow-md text-gray-800 hover:scale-105 active:scale-95 transition shrink-0">
+            <i class="fa-solid fa-bell text-2xl text-gray-800"></i>
+            <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow">2</span>
         </button>
     </header>
 
-    <!-- 2. Wallet Header Card -->
-    <section class="relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
-        <!-- Glossy Overlay & Watermark -->
-        <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: หน้าหลัก (HOME VIEW) -->
+    <!-- ========================================================================= -->
+    <main id="view-home" class="space-y-4">
+        <!-- Wallet Header Card -->
+        <section class="relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
 
-        <div class="flex justify-between items-center relative z-10">
-            <!-- Left: Net Balance -->
-            <div class="pr-2">
-                <p class="text-xs sm:text-sm font-medium text-gray-200">ยอดเงินสุทธิที่รับได้ <span class="text-xs opacity-80">(Net Balance)</span></p>
-                <div class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-0.5 drop-shadow">
-                    ฿ <span id="netBalance">15,450.00</span>
+            <div class="flex justify-between items-center relative z-10">
+                <div class="pr-2">
+                    <p class="text-xs sm:text-sm font-medium text-gray-200">ยอดเงินสุทธิที่รับได้ <span class="text-xs opacity-80">(Net Balance)</span></p>
+                    <div class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-0.5 drop-shadow">
+                        ฿ <span id="netBalance">15,450.00</span>
+                    </div>
+                </div>
+
+                <div class="h-14 w-[1px] bg-white/25 mx-1"></div>
+
+                <div onclick="openSection('rewardsModal')" class="flex items-center gap-2.5 pl-2 cursor-pointer active:scale-95 transition">
+                    <div class="coin-stack relative w-11 h-11 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 flex items-center justify-center shadow-inner">
+                            <span class="text-amber-900 font-black text-lg">$</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="pbdCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">1,250</div>
+                        <div class="text-xs font-medium text-yellow-200 mt-0.5">PBD Coin</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Divider -->
-            <div class="h-14 w-[1px] bg-white/25 mx-1"></div>
+            <div onclick="switchTab('wallet', 'deduct')" class="mt-4 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer hover:brightness-110 active:scale-95 transition">
+                <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </span>
+                <span>มีรายการรอหัก (Pending): <strong class="font-bold text-yellow-200">฿ <span id="pendingDeduct">300</span></strong></span>
+                <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
+            </div>
+        </section>
 
-            <!-- Right: PBD Coin -->
-            <div onclick="openSection('rewardsModal')" class="flex items-center gap-2.5 pl-2 cursor-pointer active:scale-95 transition">
-                <div class="coin-stack relative w-11 h-11 flex items-center justify-center">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 flex items-center justify-center shadow-inner">
-                        <span class="text-amber-900 font-black text-lg">$</span>
-                    </div>
-                </div>
-                <div>
-                    <div id="pbdCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">1,250</div>
-                    <div class="text-xs font-medium text-yellow-200 mt-0.5">PBD Coin</div>
+        <!-- Quick Access Grid Menu (เพิ่ม Sales Dashboard) -->
+        <section class="relative z-10 mx-4">
+            <div class="ribbon-tab w-48 py-1.5 px-4 text-white font-bold text-sm flex items-center gap-2 rounded-tl-xl shadow">
+                <i class="fa-solid fa-border-all text-base"></i>
+                <span>เมนูใช้งานด่วน</span>
+            </div>
+
+            <div class="bg-white rounded-b-2xl rounded-tr-2xl shadow-md border border-gray-200/80 overflow-hidden">
+                <div class="grid grid-cols-3 divide-x divide-y divide-gray-200/80 text-center">
+                    <!-- Item 1: Sales Dashboard (ใหม่) -->
+                    <button onclick="openSection('salesDashboardModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center text-2xl shadow-sm relative">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span class="absolute -top-1 -right-1 bg-amber-400 text-black text-[8px] font-extrabold px-1.5 rounded-full shadow">NEW</span>
+                        </div>
+                        <span class="text-xs font-bold text-red-700">Sales Dashboard</span>
+                    </button>
+
+                    <!-- Item 2: ประวัติย้อนหลัง -->
+                    <button onclick="openSection('historyModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-800">ประวัติย้อนหลัง</span>
+                    </button>
+
+                    <!-- Item 3: ขอตรวจสอบยอด -->
+                    <button onclick="requestVerify()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
+                            <i class="fa-solid fa-magnifying-glass-dollar"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-800">ขอตรวจสอบยอด</span>
+                    </button>
+
+                    <!-- Item 4: แนะนำเพื่อนทำงาน (ลิงก์ไปหน้าโปรไฟล์พร้อม QR) -->
+                    <button onclick="switchTab('profile')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-800">แนะนำเพื่อนทำงาน</span>
+                    </button>
+
+                    <!-- Item 5: แลกสิทธิประโยชน์ -->
+                    <button onclick="openSection('rewardsModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm relative">
+                            <i class="fa-solid fa-gift"></i>
+                            <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 rounded-full">HOT</span>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-800">แลกสิทธิประโยชน์</span>
+                    </button>
+
+                    <!-- Item 6: ส่วนขยายอื่นๆ (รวมใบแจ้งยอดหัวหน้า, คูปอง, แอดมิน) -->
+                    <button onclick="openMoreExtensions()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center text-2xl shadow-sm">
+                            <i class="fa-solid fa-grip"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-800">เมนูส่วนขยาย</span>
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Pending Deduction Pill -->
-        <div onclick="showPendingList()" class="mt-4 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer hover:brightness-110 active:scale-95 transition">
-            <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </span>
-            <span>มีรายการรอหัก (Pending): <strong class="font-bold text-yellow-200">฿ <span id="pendingDeduct">300</span></strong></span>
-            <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
-        </div>
-    </section>
+        <!-- Monthly Sales Goal Card (นับยอดขายเป็นตัว) -->
+        <section class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 overflow-hidden">
+            <div class="absolute right-3 bottom-3 opacity-90 pointer-events-none flex items-end gap-1.5">
+                <div class="w-2.5 h-6 bg-red-200 rounded-t"></div>
+                <div class="w-2.5 h-9 bg-red-300 rounded-t"></div>
+                <div class="w-2.5 h-12 bg-red-500 rounded-t"></div>
+                <div class="w-2.5 h-16 bg-gradient-to-t from-red-700 to-red-500 rounded-t relative">
+                    <i class="fa-solid fa-arrow-trend-up text-red-600 text-2xl absolute -top-6 -left-6"></i>
+                </div>
+            </div>
 
-    <!-- 3. Quick Access Grid Menu (เมนูใช้งานด่วน) -->
-    <section class="relative z-10 mx-4 mt-4">
-        <!-- Ribbon Title -->
-        <div class="ribbon-tab w-48 py-1.5 px-4 text-white font-bold text-sm flex items-center gap-2 rounded-tl-xl shadow">
-            <i class="fa-solid fa-border-all text-base"></i>
-            <span>เมนูใช้งานด่วน</span>
-        </div>
+            <div class="flex items-start gap-3 relative z-10">
+                <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-bullseye"></i>
+                </div>
+                <div class="flex-1 pr-14">
+                    <h2 class="text-base font-bold text-gray-900">เป้าหมายยอดขายเดือนนี้</h2>
+                    <p class="text-xs sm:text-sm text-gray-700 font-medium mt-0.5">
+                        ขายได้แล้ว: <strong class="font-extrabold text-gray-900 text-base"><span id="currentSalesUnits">35</span> / <span id="targetSalesUnits">50</span></strong> ตัว
+                    </p>
 
-        <!-- Grid Container -->
-        <div class="bg-white rounded-b-2xl rounded-tr-2xl shadow-md border border-gray-200/80 overflow-hidden">
-            <div class="grid grid-cols-3 divide-x divide-y divide-gray-200/80 text-center">
-                <!-- Item 1: ประวัติย้อนหลัง -->
-                <button onclick="openSection('historyModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    <div class="mt-2.5 flex items-center gap-2">
+                        <div class="w-full h-3.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                            <div id="salesProgressBar" class="h-full bg-gradient-to-r from-red-800 via-red-600 to-red-500 rounded-full transition-all duration-500" style="width: 70%;"></div>
+                        </div>
+                        <span id="salesPercent" class="text-base font-extrabold text-red-600">70%</span>
                     </div>
-                    <span class="text-xs font-semibold text-gray-800">ประวัติย้อนหลัง</span>
+
+                    <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-700">
+                        <div class="flex items-center gap-1">
+                            <i class="fa-regular fa-clock text-gray-600"></i>
+                            <span>เหลือเวลา: <strong class="text-red-600 font-bold"><span id="daysLeft">10</span> วัน</strong></span>
+                        </div>
+                        <span class="text-gray-300">|</span>
+                        <div class="flex items-center gap-1">
+                            <i class="fa-solid fa-rocket text-red-600"></i>
+                            <span>ต้องขายอีก: <strong class="text-gray-900 font-bold"><span id="neededUnits">15</span> ตัว (เฉลี่ย <span id="neededPerDay">1.5</span> ตัว/วัน)</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Commission Status Card -->
+        <section class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-b from-red-500 to-red-700 text-white flex items-center justify-center text-lg shadow">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h2 class="text-base font-bold text-gray-900">สถานะคอมมิชชั่น</h2>
+                </div>
+                <button onclick="switchTab('list')" class="text-xs font-semibold text-red-600 hover:underline flex items-center gap-1">
+                    ดูรายการเคลื่อนไหว <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </button>
-
-                <!-- Item 2: ขอตรวจสอบยอด -->
-                <button onclick="requestVerify()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                        <i class="fa-solid fa-file-magnifying-glass"></i>
-                    </div>
-                    <span class="text-xs font-semibold text-gray-800">ขอตรวจสอบยอด</span>
-                </button>
-
-                <!-- Item 3: แนะนำเพื่อนทำงาน -->
-                <button onclick="referFriend()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </div>
-                    <span class="text-xs font-semibold text-gray-800">แนะนำเพื่อนทำงาน</span>
-                </button>
-
-                <!-- Item 4: แลกสิทธิประโยชน์ -->
-                <button onclick="openSection('rewardsModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm relative">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 rounded-full">HOT</span>
-                    </div>
-                    <span class="text-xs font-semibold text-gray-800">แลกสิทธิประโยชน์</span>
-                </button>
-
-                <!-- Item 5: ใบแจ้งยอด(หัวหน้า) / คูปองของฉัน -->
-                <button id="leaderMenuBtn" onclick="openLeaderReport()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                        <i class="fa-solid fa-file-lines"></i>
-                    </div>
-                    <span class="text-xs font-semibold text-gray-800">ใบแจ้งยอด(หัวหน้า)</span>
-                </button>
-
-                <!-- Item 6: ส่วนขยายอื่นๆ (คูปองของฉัน & แอดมินตรวจคูปอง) -->
-                <button onclick="openMoreExtensions()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                    <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center text-2xl shadow-sm">
-                        <i class="fa-solid fa-grip"></i>
-                    </div>
-                    <span class="text-xs font-semibold text-gray-800">ส่วนขยายอื่นๆ</span>
-                </button>
             </div>
-        </div>
-    </section>
 
-    <!-- 4. Monthly Sales Goal Card (เป้าหมายยอดขายเดือนนี้) -->
-    <section class="relative z-10 mx-4 mt-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 overflow-hidden">
-        <!-- Background Bar Chart Graphic -->
-        <div class="absolute right-3 bottom-3 opacity-90 pointer-events-none flex items-end gap-1.5">
-            <div class="w-2.5 h-6 bg-red-200 rounded-t"></div>
-            <div class="w-2.5 h-9 bg-red-300 rounded-t"></div>
-            <div class="w-2.5 h-12 bg-red-500 rounded-t"></div>
-            <div class="w-2.5 h-16 bg-gradient-to-t from-red-700 to-red-500 rounded-t relative">
-                <i class="fa-solid fa-arrow-trend-up text-red-600 text-2xl absolute -top-6 -left-6"></i>
-            </div>
-        </div>
-
-        <div class="flex items-start gap-3 relative z-10">
-            <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-3xl shrink-0 shadow-inner">
-                <i class="fa-solid fa-bullseye"></i>
-            </div>
-            <div class="flex-1 pr-14">
-                <h2 class="text-base font-bold text-gray-900">เป้าหมายยอดขายเดือนนี้</h2>
-                <p class="text-xs sm:text-sm text-gray-700 font-medium mt-0.5">
-                    ยอดปัจจุบัน: <strong class="font-extrabold text-gray-900"><span id="currentSales">35,000</span> / <span id="targetSales">50,000</span></strong> บาท
-                </p>
-
-                <!-- Progress Bar -->
-                <div class="mt-2.5 flex items-center gap-2">
-                    <div class="w-full h-3.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                        <div id="salesProgressBar" class="h-full bg-gradient-to-r from-red-800 via-red-600 to-red-500 rounded-full transition-all duration-500" style="width: 70%;"></div>
+            <div class="grid grid-cols-3 divide-x divide-gray-200 items-center text-left">
+                <div class="flex items-center gap-2 pr-2">
+                    <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-star"></i>
                     </div>
-                    <span id="salesPercent" class="text-base font-extrabold text-red-600">70%</span>
+                    <div>
+                        <p class="text-[11px] text-gray-500 leading-tight">พ้อยต์สะสม:</p>
+                        <p class="text-sm font-extrabold text-gray-900"><span id="accPoints">120</span> <span class="text-xs font-medium">Points</span></p>
+                    </div>
                 </div>
 
-                <!-- Footer Stats -->
-                <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-700">
-                    <div class="flex items-center gap-1">
-                        <i class="fa-regular fa-clock text-gray-600"></i>
-                        <span>เหลือเวลา: <strong class="text-red-600 font-bold"><span id="daysLeft">10</span> วัน</strong></span>
+                <div class="flex items-center gap-2 px-2.5">
+                    <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg font-black shrink-0">
+                        %
                     </div>
-                    <span class="text-gray-300">|</span>
-                    <div class="flex items-center gap-1">
-                        <i class="fa-solid fa-rocket text-red-600"></i>
-                        <span>ต้องขายอีก: <strong class="text-gray-900 font-bold"><span id="neededPerDay">1,500</span> บาท/วัน</strong></span>
+                    <div>
+                        <p class="text-[11px] text-gray-500 leading-tight">เรทค่าคอมปัจจุบัน:</p>
+                        <p id="currentCommRate" class="text-base font-extrabold text-gray-900">5%</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pl-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-base shrink-0">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600 font-bold"><span id="pointsNeeded">30</span> Points</strong></p>
+                        <p class="text-[10px] text-gray-500 leading-tight">เพื่อปรับเรทค่าคอมขึ้นเป็น <strong class="text-red-600"><span id="nextCommRate">7%</span></strong></p>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- 5. Commission Status Card (สถานะคอมมิชชั่น) -->
-    <section class="relative z-10 mx-4 mt-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
-        <div class="flex items-center gap-2.5 mb-3">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-b from-red-500 to-red-700 text-white flex items-center justify-center text-lg shadow">
-                <i class="fa-solid fa-trophy"></i>
-            </div>
-            <h2 class="text-base font-bold text-gray-900">สถานะคอมมิชชั่น</h2>
-        </div>
-
-        <div class="grid grid-cols-3 divide-x divide-gray-200 items-center text-left">
-            <!-- Col 1: Points -->
-            <div class="flex items-center gap-2 pr-2">
-                <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-lg shrink-0">
-                    <i class="fa-solid fa-star"></i>
-                </div>
-                <div>
-                    <p class="text-[11px] text-gray-500 leading-tight">พ้อยต์สะสม:</p>
-                    <p class="text-sm font-extrabold text-gray-900"><span id="accPoints">120</span> <span class="text-xs font-medium">Points</span></p>
-                </div>
-            </div>
-
-            <!-- Col 2: Current Rate -->
-            <div class="flex items-center gap-2 px-2.5">
-                <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg font-black shrink-0">
-                    %
-                </div>
-                <div>
-                    <p class="text-[11px] text-gray-500 leading-tight">เรทค่าคอมปัจจุบัน:</p>
-                    <p id="currentCommRate" class="text-base font-extrabold text-gray-900">5%</p>
-                </div>
-            </div>
-
-            <!-- Col 3: Next Tier -->
-            <div class="flex items-center gap-2 pl-2.5">
-                <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-base shrink-0">
-                    <i class="fa-solid fa-chart-line"></i>
-                </div>
-                <div>
-                    <p class="text-[11px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600 font-bold"><span id="pointsNeeded">30</span> Points</strong></p>
-                    <p class="text-[10px] text-gray-500 leading-tight">เพื่อปรับเรทค่าคอมขึ้นเป็น <strong class="text-red-600"><span id="nextCommRate">7%</span></strong></p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 6. Recent Activity List (รายการเคลื่อนไหวล่าสุด) -->
-    <section class="relative z-10 mx-4 mt-4 bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
-        <!-- Header -->
-        <div class="flex justify-between items-center px-4 pt-3.5 pb-2 border-b border-gray-100">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow">
-                    <i class="fa-solid fa-file-invoice"></i>
-                </div>
-                <h2 class="text-base font-bold text-gray-900">รายการเคลื่อนไหวล่าสุด</h2>
-            </div>
-            <button onclick="switchTab('list')" class="text-xs font-semibold text-gray-600 hover:text-red-600 flex items-center gap-1">
-                ดูทั้งหมด <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-        </div>
-
-        <!-- Activity Rows -->
-        <div id="activityList" class="divide-y divide-gray-100 text-xs sm:text-sm px-4">
-            <!-- Row 1 -->
-            <div class="py-2.5 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-7 h-7 rounded-full bg-amber-400 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
-                        <i class="fa-solid fa-shirt"></i>
-                    </div>
-                    <span class="font-medium text-gray-800 truncate">สแกนเบิกเสื้อ (แอดมินสาขา)</span>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-bold text-red-600">- ฿300</span>
-                    <span class="bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">รอหัก</span>
-                    <span class="text-[11px] text-gray-400 hidden sm:inline">15 ต.ค. 2568 10:24</span>
-                </div>
-            </div>
-
-            <!-- Row 2 -->
-            <div class="py-2.5 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
-                        <i class="fa-regular fa-clock"></i>
-                    </div>
-                    <span class="font-medium text-gray-800 truncate">หักมาสาย (สแกนหน้า 15 ต.ค.)</span>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-bold text-red-600">- ฿50</span>
-                    <span class="bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">หักแล้ว</span>
-                    <span class="text-[11px] text-gray-400 hidden sm:inline">15 ต.ค. 2568 08:32</span>
-                </div>
-            </div>
-
-            <!-- Row 3 -->
-            <div class="py-2.5 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
-                        <i class="fa-solid fa-camera"></i>
-                    </div>
-                    <span class="font-medium text-gray-800 truncate">กล้องวงจรปิด เลเซอร์ x2</span>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-bold text-green-600">+ 10 Points</span>
-                    <span class="text-[11px] text-gray-400">15 ต.ค. 2568 08:15</span>
-                </div>
-            </div>
-
-            <!-- Row 4 -->
-            <div class="py-2.5 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
-                        <i class="fa-solid fa-money-bill-wave"></i>
-                    </div>
-                    <span class="font-medium text-gray-800 truncate">ได้โบนัสเงินสด ค่าคอมพิเศษ</span>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-bold text-green-600">+ ฿150</span>
-                    <span class="text-[11px] text-gray-400">14 ต.ค. 2568 16:43</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Expand More Button -->
-        <button onclick="switchTab('list')" class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-xs font-semibold text-gray-600 flex items-center justify-center gap-1.5 border-t border-gray-100 transition">
-            <i class="fa-solid fa-chevron-down text-[10px]"></i>
-            <span>เลื่อนดูรายการเพิ่มเติม</span>
-        </button>
-    </section>
+        </section>
+    </main>
 
     <!-- ========================================================================= -->
-    <!-- MODALS: แลกสิทธิประโยชน์ / คูปองของฉัน & แอดมินตรวจสอบคูปอง -->
+    <!-- VIEW 2: หน้ารายการ (LIST VIEW - ย้ายรายการเคลื่อนไหวล่าสุดมาไว้หน้านี้) -->
     <!-- ========================================================================= -->
+    <main id="view-list" class="hidden relative z-10 mx-4 mt-2 space-y-4">
+        <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
+            <!-- Header -->
+            <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold leading-none">รายการเคลื่อนไหวล่าสุด</h2>
+                        <p class="text-[11px] text-gray-200 mt-1">ประวัติการได้พ้อยต์ โบนัส และรายการหักทั้งหมด</p>
+                    </div>
+                </div>
+                <span id="activityTotalBadge" class="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">4 รายการ</span>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex gap-2 overflow-x-auto text-xs font-bold">
+                <button onclick="filterActivities('all')" id="actFilter-all" class="px-3 py-1 rounded-full bg-red-600 text-white shadow-sm">ทั้งหมด</button>
+                <button onclick="filterActivities('earn')" id="actFilter-earn" class="px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-200">ได้พ้อยต์/โบนัส</button>
+                <button onclick="filterActivities('deduct')" id="actFilter-deduct" class="px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-200">รายการหัก</button>
+            </div>
+
+            <!-- Activity List Container -->
+            <div id="activityList" class="divide-y divide-gray-100 text-xs sm:text-sm px-4 py-1">
+                <!-- Rendered via JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: หน้าบัญชี (ACCOUNT / WALLET VIEW - รายการหัก, สินค้าที่ขาย, คูปองของฉัน) -->
+    <!-- ========================================================================= -->
+    <main id="view-wallet" class="hidden relative z-10 mx-4 mt-2 space-y-4">
+        <!-- Mini Summary Banner -->
+        <div class="bg-gradient-to-r from-gray-900 via-red-900 to-red-700 rounded-2xl p-4 text-white shadow-md flex justify-between items-center">
+            <div>
+                <p class="text-xs text-gray-200">สรุปบัญชีของฉัน (PBD Smart Account)</p>
+                <p class="text-xl font-extrabold mt-0.5">สุทธิ: ฿ <span id="walletViewNet">15,450.00</span></p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs bg-amber-400 text-black font-bold px-2.5 py-1 rounded-full">รอหัก ฿<span id="walletViewPending">300</span></span>
+            </div>
+        </div>
+
+        <!-- 3 Sub-Tabs: รายการหัก | สินค้าที่ขาย | คูปองของฉัน -->
+        <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
+            <div class="grid grid-cols-3 border-b border-gray-200 bg-gray-50 text-xs font-bold text-center">
+                <button id="walletSubBtn-deduct" onclick="switchWalletSubTab('deduct')" class="py-3 text-red-600 border-b-2 border-red-600 bg-white">
+                    ⚠️ รายการหัก
+                </button>
+                <button id="walletSubBtn-sold" onclick="switchWalletSubTab('sold')" class="py-3 text-gray-500 hover:text-gray-800">
+                    📦 สินค้าที่ขาย
+                </button>
+                <button id="walletSubBtn-coupons" onclick="switchWalletSubTab('coupons')" class="py-3 text-gray-500 hover:text-gray-800">
+                    🎟️ คูปองของฉัน
+                </button>
+            </div>
+
+            <!-- Sub-Tab 1: รายการหัก (Deductions) -->
+            <div id="walletSubContent-deduct" class="p-4 space-y-2.5">
+                <div id="accountDeductionList" class="space-y-2.5"></div>
+            </div>
+
+            <!-- Sub-Tab 2: สินค้าที่ขาย (Sold Products) -->
+            <div id="walletSubContent-sold" class="hidden p-4 space-y-2.5">
+                <div class="flex justify-between items-center bg-red-50 px-3 py-2 rounded-xl border border-red-100 text-xs">
+                    <span class="font-semibold text-gray-700">รวมจำนวนที่ขายได้เดือนนี้:</span>
+                    <strong class="text-red-600 text-sm"><span id="accountTotalSoldUnits">35</span> ตัว</strong>
+                </div>
+                <div id="accountSoldProductsList" class="space-y-2.5"></div>
+            </div>
+
+            <!-- Sub-Tab 3: คูปองของฉัน (My Coupons) -->
+            <div id="walletSubContent-coupons" class="hidden p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-700">คูปองพร้อมใช้งาน</span>
+                    <button onclick="openSection('rewardsModal'); switchRewardTab('catalog');" class="text-xs font-bold text-red-600 hover:underline">
+                        + แลกคูปองเพิ่ม
+                    </button>
+                </div>
+                <div id="accountCouponsList" class="space-y-2.5"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: หน้าโปรไฟล์ (PROFILE VIEW - ข้อมูลพนักงาน + QR แนะนำเพื่อนทำงาน) -->
+    <!-- ========================================================================= -->
+    <main id="view-profile" class="hidden relative z-10 mx-4 mt-2 space-y-4">
+        <!-- Employee ID Card -->
+        <div class="bg-white rounded-3xl shadow-md border border-gray-200/80 overflow-hidden">
+            <div class="h-20 bg-gradient-to-r from-gray-900 via-red-800 to-red-600 relative">
+                <span class="absolute right-4 top-3 text-white/20 font-black italic text-3xl">PBD SMART</span>
+            </div>
+            <div class="px-5 pb-5 relative">
+                <div class="flex justify-between items-end -mt-10 mb-3">
+                    <img id="profileCardImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" referrerpolicy="no-referrer" alt="Profile" class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg object-cover bg-white">
+                    <button onclick="configureLiffIdPrompt()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-xl border border-gray-300 flex items-center gap-1.5">
+                        <i class="fa-brands fa-line text-green-600"></i> ตั้งค่า LIFF ID
+                    </button>
+                </div>
+
+                <h2 id="profileCardName" class="text-xl font-extrabold text-gray-900">คุณณัฐวรรธน์</h2>
+                <p class="text-xs text-gray-500 mb-4">พนักงานองค์กร PBD Group</p>
+
+                <div class="grid grid-cols-3 gap-2 bg-gray-50 p-3 rounded-2xl border border-gray-200/80 text-center">
+                    <div>
+                        <p class="text-[10px] text-gray-500">รหัสพนักงาน</p>
+                        <p id="profileCardEmpId" class="text-xs font-extrabold text-gray-900 mt-0.5">EMP-001</p>
+                    </div>
+                    <div class="border-x border-gray-200">
+                        <p class="text-[10px] text-gray-500">สาขา</p>
+                        <p id="profileCardBranch" class="text-xs font-extrabold text-red-600 mt-0.5">สุราษฎร์ธานี</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-500">ตำแหน่ง</p>
+                        <p id="profileCardRole" class="text-xs font-extrabold text-gray-900 mt-0.5">Sales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code แนะนำเพื่อนทำงาน -->
+        <div class="bg-white rounded-3xl shadow-md border border-gray-200/80 p-5 text-center">
+            <div class="inline-flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold mb-2">
+                <i class="fa-solid fa-user-plus"></i> QR Code แนะนำเพื่อนสมัครงาน
+            </div>
+            <h3 class="text-sm font-bold text-gray-900">สแกนเพื่อสมัครงานพร้อมรับโบนัสแนะนำเพื่อน</h3>
+            <p class="text-xs text-gray-500 mt-0.5">ผู้แนะนำ: <strong id="qrRefName" class="text-gray-800">คุณณัฐวรรธน์ (EMP-001)</strong></p>
+
+            <div class="my-4 inline-block p-3 bg-white border-2 border-red-100 rounded-2xl shadow-sm">
+                <img id="referralQrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://pbdgroupsystem.github.io/?ref=EMP-001" alt="Referral QR Code" class="w-44 h-44 mx-auto rounded-lg">
+            </div>
+
+            <div class="flex gap-2 justify-center">
+                <button onclick="copyReferralLink()" class="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5 active:scale-95 transition">
+                    <i class="fa-regular fa-copy"></i> คัดลอกลิงก์แนะนำเพื่อน
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- MODALS: Sales Dashboard, กล้องสแกน QR, แลกรางวัล/คูปอง & แอดมิน -->
+    <!-- ========================================================================= -->
+
+    <!-- Sales Dashboard Modal (ใหม่จาก Grid Menu) -->
+    <div id="salesDashboardModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-chart-pie text-xl text-yellow-300"></i>
+                    <div>
+                        <h3 class="font-bold text-base leading-none">Sales Dashboard</h3>
+                        <p class="text-[11px] text-gray-200 mt-0.5">สรุปผลงานการขายประจำเดือน (นับจำนวนเป็นตัว)</p>
+                    </div>
+                </div>
+                <button onclick="closeSection('salesDashboardModal')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-4 overflow-y-auto space-y-4 text-xs">
+                <div class="grid grid-cols-3 gap-2.5 text-center">
+                    <div class="p-3 rounded-2xl bg-red-50 border border-red-100">
+                        <p class="text-gray-500 text-[11px]">ขายได้รวม</p>
+                        <p class="text-xl font-extrabold text-red-600 mt-0.5">35 ตัว</p>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-amber-50 border border-amber-100">
+                        <p class="text-gray-500 text-[11px]">พ้อยต์ที่ได้</p>
+                        <p class="text-xl font-extrabold text-amber-600 mt-0.5">120 Pts</p>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-green-50 border border-green-100">
+                        <p class="text-gray-500 text-[11px]">โบนัสเงินสด</p>
+                        <p class="text-xl font-extrabold text-green-600 mt-0.5">฿1,450</p>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-2xl p-3.5">
+                    <h4 class="font-bold text-gray-800 mb-2.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-open text-red-600"></i> สัดส่วนสินค้าที่ขายได้ (แยกตามรุ่น)
+                    </h4>
+                    <div id="salesModalProductBreakdown" class="space-y-2.5"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- In-App QR Scanner Modal -->
+    <div id="qrScannerModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+            <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-xl text-yellow-300"></i>
+                    <div>
+                        <h3 class="font-bold text-base leading-none">สแกน QR เบิกของ / อุปกรณ์</h3>
+                        <p class="text-[11px] text-gray-200 mt-0.5">ส่องกล้องไปที่ QR Code หรือเลือกรายการด่วน</p>
+                    </div>
+                </div>
+                <button onclick="closeQrScannerModal()" class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white hover:bg-white/25">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="relative bg-black w-full min-h-[250px] flex items-center justify-center overflow-hidden">
+                <div id="qr-reader" class="w-full"></div>
+                <div id="scannerLaser" class="scanner-laser"></div>
+                <div id="cameraStatusMsg" class="absolute inset-0 flex flex-col items-center justify-center text-white text-xs p-4 text-center pointer-events-none">
+                    <i class="fa-solid fa-camera text-3xl mb-2 opacity-60"></i>
+                    <span>กำลังเปิดกล้องสแกน QR Code...</span>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-3 bg-gray-50">
+                <div class="flex gap-2">
+                    <label for="qrFileInput" class="flex-1 py-2 px-3 bg-white border border-gray-300 rounded-xl text-xs font-bold text-gray-700 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:bg-gray-100">
+                        <i class="fa-solid fa-image text-red-600"></i> เลือกรูป QR จากเครื่อง
+                    </label>
+                    <input id="qrFileInput" type="file" accept="image/*" class="hidden" onchange="scanQrFromFile(event)">
+                    
+                    <button onclick="tryLineNativeScan()" class="py-2 px-3 bg-green-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-green-700">
+                        <i class="fa-brands fa-line"></i> กล้อง LINE
+                    </button>
+                </div>
+
+                <div class="border-t border-gray-200 pt-2.5">
+                    <p class="text-[11px] font-bold text-gray-500 mb-2">⚡ หรือกดเลือกเบิกของด่วน (กรณีไม่มีแผ่น QR):</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="processScannedCode('ITEM-SHIRT|เบิกเสื้อฟอร์ม PBD|300')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between shadow-sm">
+                            <span>👕 เสื้อฟอร์ม</span>
+                            <strong class="text-red-600">฿300</strong>
+                        </button>
+                        <button onclick="processScannedCode('ITEM-CARD|เบิกสายคล้องบัตร|50')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between shadow-sm">
+                            <span>🪪 สายคล้องบัตร</span>
+                            <strong class="text-red-600">฿50</strong>
+                        </button>
+                        <button onclick="processScannedCode('ITEM-TOOL|เบิกชุดไขควงช่าง|450')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between shadow-sm">
+                            <span>🧰 ชุดเครื่องมือ</span>
+                            <strong class="text-red-600">฿450</strong>
+                        </button>
+                        <button onclick="promptManualCode()" class="p-2 bg-gray-800 text-white rounded-xl text-center font-bold hover:bg-gray-900 flex items-center justify-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-keyboard"></i> กรอกรหัสเอง
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Rewards & My Coupons Modal -->
     <div id="rewardsModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl animate-slide-up">
-            <!-- Modal Header -->
             <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
                 <div class="flex items-center gap-2.5">
                     <i class="fa-solid fa-gift text-xl text-yellow-300"></i>
@@ -415,7 +606,6 @@
                 </button>
             </div>
 
-            <!-- Sub-Tabs -->
             <div class="flex border-b border-gray-200 bg-gray-50 text-xs font-bold">
                 <button id="tabBtnCoupons" onclick="switchRewardTab('myCoupons')" class="flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white">
                     🎟️ คูปองพร้อมใช้ (<span id="availableCouponCount">2</span>)
@@ -428,30 +618,21 @@
                 </button>
             </div>
 
-            <!-- Tab Content 1: My Available Coupons -->
             <div id="tabContentMyCoupons" class="p-4 overflow-y-auto space-y-3 flex-1">
-                <div id="myCouponsContainer" class="space-y-3">
-                    <!-- Rendered via JS -->
-                </div>
+                <div id="myCouponsContainer" class="space-y-3"></div>
             </div>
 
-            <!-- Tab Content 2: Rewards Catalog -->
             <div id="tabContentCatalog" class="hidden p-4 overflow-y-auto space-y-3 flex-1">
-                <div id="catalogContainer" class="space-y-3">
-                    <!-- Rendered via JS -->
-                </div>
+                <div id="catalogContainer" class="space-y-3"></div>
             </div>
 
-            <!-- Tab Content 3: Used Coupons History -->
             <div id="tabContentUsed" class="hidden p-4 overflow-y-auto space-y-3 flex-1">
-                <div id="usedCouponsContainer" class="space-y-3">
-                    <!-- Rendered via JS -->
-                </div>
+                <div id="usedCouponsContainer" class="space-y-3"></div>
             </div>
         </div>
     </div>
 
-    <!-- Activity Admin Panel Modal (หน้าตรวจสอบคูปองสำหรับ Activity_Admin) -->
+    <!-- Activity Admin Panel Modal -->
     <div id="adminModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
             <div class="p-4 bg-gray-900 text-white flex justify-between items-center">
@@ -467,7 +648,6 @@
                 </button>
             </div>
 
-            <!-- Search Box -->
             <div class="p-3 bg-gray-100 border-b border-gray-200">
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
@@ -475,7 +655,6 @@
                 </div>
             </div>
 
-            <!-- Admin Sub-Tabs -->
             <div class="flex border-b border-gray-200 text-xs font-bold bg-gray-50">
                 <button id="adminTabUsage" onclick="switchAdminTab('usage')" class="flex-1 py-2.5 text-red-600 border-b-2 border-red-600 bg-white">
                     ✅ ประวัติการกดใช้สิทธิ์ (Usage Log)
@@ -485,10 +664,7 @@
                 </button>
             </div>
 
-            <!-- Admin Table List -->
-            <div id="adminLogContainer" class="p-4 overflow-y-auto flex-1 space-y-2.5 text-xs">
-                <!-- Rendered via JS -->
-            </div>
+            <div id="adminLogContainer" class="p-4 overflow-y-auto flex-1 space-y-2.5 text-xs"></div>
         </div>
     </div>
 
@@ -497,38 +673,34 @@
     <!-- ========================================================================= -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-3xl shadow-[0_-6px_25px_rgba(0,0,0,0.1)] border-t border-gray-100 px-3 pt-2 pb-3 z-40">
         <div class="grid grid-cols-5 items-center text-center">
-            <!-- Tab 1: หน้าหลัก -->
-            <button id="nav-home" onclick="switchTab('home')" class="nav-item flex flex-col items-center justify-center text-red-600 relative py-1 transition">
+            <button id="nav-home" type="button" onclick="switchTab('home')" class="nav-item flex flex-col items-center justify-center text-red-600 relative py-1 transition">
                 <i class="fa-solid fa-house text-xl mb-0.5"></i>
                 <span class="text-[11px] font-bold">หน้าหลัก</span>
                 <span id="ind-home" class="nav-indicator w-10 h-1 bg-red-600 rounded-full mt-1"></span>
             </button>
 
-            <!-- Tab 2: รายการ -->
-            <button id="nav-list" onclick="switchTab('list')" class="nav-item flex flex-col items-center justify-center text-gray-700 hover:text-red-600 relative py-1 transition">
+            <button id="nav-list" type="button" onclick="switchTab('list')" class="nav-item flex flex-col items-center justify-center text-gray-700 hover:text-red-600 relative py-1 transition">
                 <i class="fa-solid fa-file-lines text-xl mb-0.5"></i>
                 <span class="text-[11px] font-medium">รายการ</span>
                 <span id="ind-list" class="nav-indicator w-10 h-1 bg-transparent rounded-full mt-1"></span>
             </button>
 
-            <!-- Tab 3: Center Floating Scan Button -->
-            <div class="flex flex-col items-center justify-center relative">
-                <button onclick="openScanner()" class="-top-6 relative w-20 h-20 rounded-full bg-gradient-to-b from-red-500 via-red-600 to-red-800 text-white shadow-[0_6px_20px_rgba(220,38,38,0.55)] border-4 border-white flex flex-col items-center justify-center active:scale-95 transition">
-                    <i class="fa-solid fa-expand text-2xl mb-0.5"></i>
-                    <span class="text-[10px] font-bold leading-tight">สแกน QR</span>
-                    <span class="text-[9px] font-medium leading-tight opacity-90">เบิกของ</span>
+            <!-- Center Floating Scan Button -->
+            <div class="flex flex-col items-center justify-center relative z-50">
+                <button id="btnScanQR" type="button" onclick="openScanner()" class="-top-6 relative w-20 h-20 rounded-full bg-gradient-to-b from-red-500 via-red-600 to-red-800 text-white shadow-[0_6px_20px_rgba(220,38,38,0.55)] border-4 border-white flex flex-col items-center justify-center active:scale-95 transition cursor-pointer">
+                    <i class="fa-solid fa-expand text-2xl mb-0.5 pointer-events-none"></i>
+                    <span class="text-[10px] font-bold leading-tight pointer-events-none">สแกน QR</span>
+                    <span class="text-[9px] font-medium leading-tight opacity-90 pointer-events-none">เบิกของ</span>
                 </button>
             </div>
 
-            <!-- Tab 4: บัญชี -->
-            <button id="nav-wallet" onclick="switchTab('wallet')" class="nav-item flex flex-col items-center justify-center text-gray-700 hover:text-red-600 relative py-1 transition">
+            <button id="nav-wallet" type="button" onclick="switchTab('wallet')" class="nav-item flex flex-col items-center justify-center text-gray-700 hover:text-red-600 relative py-1 transition">
                 <i class="fa-solid fa-wallet text-xl mb-0.5"></i>
                 <span class="text-[11px] font-medium">บัญชี</span>
                 <span id="ind-wallet" class="nav-indicator w-10 h-1 bg-transparent rounded-full mt-1"></span>
             </button>
 
-            <!-- Tab 5: โปรไฟล์ -->
-            <button id="nav-profile" onclick="switchTab('profile')" class="nav-item flex flex-col items-center justify-center text-gray-700 hover:text-red-600 relative py-1 transition">
+            <button id="nav-profile" type="button" onclick="switchTab('profile')" class="nav-item flex flex-col items-center justify-center text-gray-700 hover:text-red-600 relative py-1 transition">
                 <i class="fa-regular fa-user text-xl mb-0.5"></i>
                 <span class="text-[11px] font-medium">โปรไฟล์</span>
                 <span id="ind-profile" class="nav-indicator w-10 h-1 bg-transparent rounded-full mt-1"></span>
@@ -540,22 +712,42 @@
     <!-- JavaScript Application Logic -->
     <!-- ========================================================================= -->
     <script>
-        // *** ตั้งค่า URL ของ Google Apps Script และ LIFF ID ที่นี่ ***
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
-        const LIFF_ID = '2012225566-hFrR9T1Q';
+        const DEFAULT_LIFF_ID = 'YOUR_LIFF_ID';
 
-        // ข้อมูลจำลองเริ่มต้น (ทำงานได้ทันทีแม้ยังไม่ได้เชื่อม GAS และอัปเดตทับเมื่อดึงข้อมูลจริงสำเร็จ)
+        let html5QrScanner = null;
+        let currentActivityFilter = 'all';
+
         let appState = {
+            lineUserId: '',
+            pictureUrl: '',
             empId: 'EMP-001',
             name: 'คุณณัฐวรรธน์',
+            branch: 'สาขาสุราษฎร์ธานี',
             role: 'Sales',
             netBalance: 15450.00,
             pendingDeduct: 300,
             pbdCoins: 1250,
+            salesGoalUnits: {
+                current: 35,
+                target: 50,
+                daysLeft: 10
+            },
+            soldProducts: [
+                { id: 'PRD-01', name: 'กล้องวงจรปิด โซล่าเซลล์ 4G', qty: 15, pointsPerUnit: 5, bonus: 750, date: 'ต.ค. 2569' },
+                { id: 'PRD-02', name: 'กล้องวงจรปิด เลเซอร์ x2', qty: 12, pointsPerUnit: 4, bonus: 480, date: 'ต.ค. 2569' },
+                { id: 'PRD-03', name: 'ไฟสปอตไลท์ โซล่าเซลล์ 500W', qty: 8, pointsPerUnit: 3, bonus: 220, date: 'ต.ค. 2569' }
+            ],
+            activities: [
+                { type: 'deduct', icon: 'fa-shirt', iconBg: 'bg-amber-400', title: 'สแกนเบิกเสื้อ (แอดมินสาขา)', amountText: '- ฿300', amountColor: 'text-red-600', badge: 'รอหัก', badgeStyle: 'bg-amber-100 text-amber-800', time: '15 ต.ค. 2569 10:24' },
+                { type: 'deduct', icon: 'fa-clock', iconBg: 'bg-red-600', title: 'หักมาสาย (สแกนหน้า 15 ต.ค.)', amountText: '- ฿50', amountColor: 'text-red-600', badge: 'หักแล้ว', badgeStyle: 'bg-green-100 text-green-800', time: '15 ต.ค. 2569 08:32' },
+                { type: 'earn', icon: 'fa-camera', iconBg: 'bg-green-600', title: 'ขายกล้องวงจรปิด เลเซอร์ x2 (2 ตัว)', amountText: '+ 10 Points', amountColor: 'text-green-600', badge: '', badgeStyle: '', time: '15 ต.ค. 2569 08:15' },
+                { type: 'earn', icon: 'fa-money-bill-wave', iconBg: 'bg-blue-600', title: 'ได้โบนัสเงินสด ค่าคอมพิเศษ', amountText: '+ ฿150', amountColor: 'text-green-600', badge: '', badgeStyle: '', time: '14 ต.ค. 2569 16:43' }
+            ],
             coupons: [
-                { couponId: 'CPN-001', rewardName: 'บัตรกำนัล Starbucks 200฿', dateRedeemed: '14 ต.ค. 2568', status: 'Available', usedDate: null },
-                { couponId: 'CPN-002', rewardName: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', dateRedeemed: '12 ต.ค. 2568', status: 'Available', usedDate: null },
-                { couponId: 'CPN-000', rewardName: 'ใช้วันหยุดพิเศษ 1 วัน', dateRedeemed: '01 ต.ค. 2568', status: 'Used', usedDate: '05 ต.ค. 2568 09:15' }
+                { couponId: 'CPN-001', rewardName: 'บัตรกำนัล Starbucks 200฿', dateRedeemed: '14 ต.ค. 2569', status: 'Available', usedDate: null },
+                { couponId: 'CPN-002', rewardName: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', dateRedeemed: '12 ต.ค. 2569', status: 'Available', usedDate: null },
+                { couponId: 'CPN-000', rewardName: 'ใช้วันหยุดพิเศษ 1 วัน', dateRedeemed: '01 ต.ค. 2569', status: 'Used', usedDate: '05 ต.ค. 2569 09:15' }
             ],
             catalog: [
                 { rewardId: 'RWD-01', name: 'บัตรกำนัล Starbucks 200฿', cost: 500, icon: 'fa-mug-hot' },
@@ -564,41 +756,404 @@
             ],
             adminLogs: {
                 usage: [
-                    { couponId: 'CPN-000', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'ใช้วันหยุดพิเศษ 1 วัน', usedDate: '05 ต.ค. 2568 09:15' }
+                    { couponId: 'CPN-000', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'ใช้วันหยุดพิเศษ 1 วัน', usedDate: '05 ต.ค. 2569 09:15' }
                 ],
                 redeem: [
-                    { txId: 'TX-102', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'บัตรกำนัล Starbucks 200฿', coinCost: 500, date: '14 ต.ค. 2568 14:20' },
-                    { txId: 'TX-101', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', coinCost: 300, date: '12 ต.ค. 2568 11:05' }
+                    { txId: 'TX-102', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'บัตรกำนัล Starbucks 200฿', coinCost: 500, date: '14 ต.ค. 2569 14:20' },
+                    { txId: 'TX-101', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', coinCost: 300, date: '12 ต.ค. 2569 11:05' }
                 ]
             },
             currentAdminTab: 'usage'
         };
 
-        // 1. เริ่มต้นระบบ LIFF
-        async function initializeLiff() {
-            renderCouponsAndCatalog();
-            if (!LIFF_ID || LIFF_ID === 'YOUR_LIFF_ID') {
-                console.log('Running in preview mode (LIFF_ID not configured yet).');
+        function resolveLiffId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramLiffId = urlParams.get('liffId') || urlParams.get('liff_id');
+            if (paramLiffId) {
+                localStorage.setItem('PBD_LIFF_ID', paramLiffId.trim());
+                return paramLiffId.trim();
+            }
+            if (DEFAULT_LIFF_ID && DEFAULT_LIFF_ID !== 'YOUR_LIFF_ID') {
+                return DEFAULT_LIFF_ID.trim();
+            }
+            return localStorage.getItem('PBD_LIFF_ID') || '';
+        }
+
+        // เรนเดอร์รายการเคลื่อนไหวในแท็บ "รายการ"
+        function renderActivityList() {
+            const container = document.getElementById('activityList');
+            const filtered = appState.activities.filter(act => {
+                if (currentActivityFilter === 'all') return true;
+                return act.type === currentActivityFilter;
+            });
+
+            document.getElementById('activityTotalBadge').innerText = `${filtered.length} รายการ`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="py-8 text-center text-gray-400 text-xs">ไม่พบรายการเคลื่อนไหว</div>`;
                 return;
             }
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (liff.isLoggedIn()) {
-                    const profile = await liff.getProfile();
-                    if (profile.pictureUrl) {
-                        document.getElementById('profileImage').src = profile.pictureUrl;
-                    }
-                    document.getElementById('userName').innerText = profile.displayName;
-                    fetchUserData(profile.userId);
+
+            container.innerHTML = filtered.map(act => `
+                <div class="py-3 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-full ${act.iconBg} text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
+                            <i class="fa-solid ${act.icon}"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-gray-800 truncate">${act.title}</p>
+                            <p class="text-[10px] text-gray-400">${act.time}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="font-bold ${act.amountColor}">${act.amountText}</span>
+                        ${act.badge ? `<span class="${act.badgeStyle} text-[10px] font-semibold px-2 py-0.5 rounded-full">${act.badge}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterActivities(filterType) {
+            currentActivityFilter = filterType;
+            ['all', 'earn', 'deduct'].forEach(t => {
+                const btn = document.getElementById('actFilter-' + t);
+                if (t === filterType) {
+                    btn.className = 'px-3 py-1 rounded-full bg-red-600 text-white shadow-sm';
                 } else {
-                    liff.login();
+                    btn.className = 'px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-200';
                 }
-            } catch (err) {
-                console.error("LIFF Init Error:", err);
+            });
+            renderActivityList();
+        }
+
+        // เรนเดอร์ข้อมูลหน้า "บัญชี" (รายการหัก, สินค้าที่ขาย, คูปองของฉัน)
+        function renderAccountView() {
+            document.getElementById('walletViewNet').innerText = appState.netBalance.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+            document.getElementById('walletViewPending').innerText = appState.pendingDeduct.toLocaleString('th-TH');
+
+            // 1. รายการหัก
+            const deductions = appState.activities.filter(a => a.type === 'deduct');
+            const deductContainer = document.getElementById('accountDeductionList');
+            deductContainer.innerHTML = deductions.map(d => `
+                <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full ${d.iconBg} text-white flex items-center justify-center text-xs">
+                            <i class="fa-solid ${d.icon}"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-900">${d.title}</p>
+                            <p class="text-[10px] text-gray-500">${d.time}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-extrabold text-red-600">${d.amountText}</p>
+                        <span class="${d.badgeStyle} text-[10px] font-semibold px-2 py-0.5 rounded-full">${d.badge}</span>
+                    </div>
+                </div>
+            `).join('') || `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีรายการหัก</div>`;
+
+            // 2. สินค้าที่ขาย
+            const totalUnits = appState.soldProducts.reduce((sum, p) => sum + p.qty, 0);
+            document.getElementById('accountTotalSoldUnits').innerText = totalUnits;
+            const soldHTML = appState.soldProducts.map(p => `
+                <div class="p-3 rounded-xl border border-gray-200 bg-white flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm font-bold">
+                            ${p.qty}x
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-900">${p.name}</p>
+                            <p class="text-[10px] text-gray-500">พ้อยต์: +${p.qty * p.pointsPerUnit} Pts | โบนัส: +฿${p.bonus}</p>
+                        </div>
+                    </div>
+                    <span class="bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded-lg">${p.qty} ตัว</span>
+                </div>
+            `).join('');
+            document.getElementById('accountSoldProductsList').innerHTML = soldHTML;
+            document.getElementById('salesModalProductBreakdown').innerHTML = soldHTML;
+
+            // 3. คูปองของฉันในหน้าบัญชี
+            const availCoupons = appState.coupons.filter(c => c.status === 'Available');
+            const accCouponsContainer = document.getElementById('accountCouponsList');
+            if (availCoupons.length === 0) {
+                accCouponsContainer.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีคูปองพร้อมใช้งาน</div>`;
+            } else {
+                accCouponsContainer.innerHTML = availCoupons.map(c => `
+                    <div class="border border-red-200 bg-red-50/40 rounded-2xl p-3 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-xs text-gray-900">${c.rewardName}</p>
+                            <p class="text-[10px] text-gray-500">รหัส: ${c.couponId} | แลกเมื่อ: ${c.dateRedeemed}</p>
+                        </div>
+                        <button onclick="useCoupon('${c.couponId}')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-red-700">
+                            ใช้สิทธิ์
+                        </button>
+                    </div>
+                `).join('');
             }
         }
 
-        // 2. ดึงข้อมูลพนักงานจาก GAS
+        function switchWalletSubTab(subTab) {
+            ['deduct', 'sold', 'coupons'].forEach(t => {
+                document.getElementById('walletSubContent-' + t).classList.add('hidden');
+                document.getElementById('walletSubBtn-' + t).className = 'py-3 text-gray-500 hover:text-gray-800';
+            });
+            document.getElementById('walletSubContent-' + subTab).classList.remove('hidden');
+            document.getElementById('walletSubBtn-' + subTab).className = 'py-3 text-red-600 border-b-2 border-red-600 bg-white';
+        }
+
+        // เรนเดอร์ข้อมูลหน้า "โปรไฟล์" และ QR แนะนำเพื่อนทำงาน
+        function updateProfileView() {
+            document.getElementById('profileCardImage').src = document.getElementById('profileImage').src;
+            document.getElementById('profileCardName').innerText = appState.name;
+            document.getElementById('profileCardEmpId').innerText = appState.empId;
+            document.getElementById('profileCardBranch').innerText = appState.branch.replace('สาขา', '');
+            document.getElementById('profileCardRole').innerText = appState.role;
+            document.getElementById('userBranchHeader').innerText = appState.branch;
+            document.getElementById('qrRefName').innerText = `${appState.name} (${appState.empId})`;
+
+            const refUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(appState.empId)}`;
+            document.getElementById('referralQrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(refUrl)}`;
+        }
+
+        function copyReferralLink() {
+            const refUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(appState.empId)}`;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(refUrl);
+            }
+            Swal.fire('คัดลอกลิงก์สำเร็จ!', `ส่งลิงก์หรือให้เพื่อนสแกน QR Code เพื่ออ้างอิงรหัส ${appState.empId} ได้เลยครับ`, 'success');
+        }
+
+        async function initializeLiff() {
+            updateDashboardUI();
+            renderActivityList();
+            renderCouponsAndCatalog();
+            renderAccountView();
+            updateProfileView();
+
+            const activeLiffId = resolveLiffId();
+            if (!activeLiffId) {
+                document.getElementById('liffConfigBtn').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                await liff.init({ liffId: activeLiffId });
+
+                if (!liff.isLoggedIn()) {
+                    liff.login({ redirectUri: window.location.href });
+                    return;
+                }
+
+                const profile = await liff.getProfile();
+                const idToken = liff.getDecodedIDToken ? liff.getDecodedIDToken() : null;
+
+                const linePicture = profile.pictureUrl || (idToken && idToken.picture) || '';
+                const lineName = profile.displayName || (idToken && idToken.name) || appState.name;
+                appState.lineUserId = profile.userId || '';
+
+                if (linePicture) {
+                    appState.pictureUrl = linePicture;
+                    document.getElementById('profileImage').src = linePicture;
+                    document.getElementById('profileCardImage').src = linePicture;
+                }
+
+                if (lineName) {
+                    appState.name = lineName;
+                    document.getElementById('userName').innerText = lineName;
+                }
+
+                document.getElementById('liffConfigBtn').classList.add('hidden');
+                updateProfileView();
+
+                if (appState.lineUserId) {
+                    fetchUserData(appState.lineUserId);
+                }
+            } catch (err) {
+                console.error("LIFF Init Error:", err);
+                document.getElementById('liffConfigBtn').classList.remove('hidden');
+            }
+        }
+
+        // ระบบสแกน QR Code
+        async function openScanner() {
+            document.getElementById('qrScannerModal').classList.remove('hidden');
+            const statusMsg = document.getElementById('cameraStatusMsg');
+            statusMsg.classList.remove('hidden');
+            statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><span>กำลังเปิดกล้องหลัง...</span>`;
+
+            try {
+                if (typeof Html5Qrcode === 'undefined') {
+                    throw new Error('Scanner library not loaded');
+                }
+                if (html5QrScanner) {
+                    try { await html5QrScanner.stop(); } catch (e) {}
+                }
+                html5QrScanner = new Html5Qrcode("qr-reader");
+                await html5QrScanner.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 210, height: 210 } },
+                    (decodedText) => {
+                        processScannedCode(decodedText);
+                    },
+                    () => {}
+                );
+                statusMsg.classList.add('hidden');
+            } catch (err) {
+                statusMsg.innerHTML = `
+                    <i class="fa-solid fa-camera-rotate text-2xl mb-1 text-amber-400"></i>
+                    <span class="font-bold">ไม่สามารถเปิดกล้องสดในหน้าต่างนี้ได้</span>
+                    <span class="text-[11px] text-gray-300 mt-1">กดปุ่ม <b>"กล้อง LINE"</b> หรือ <b>"เลือกรูป QR"</b> หรือกดปุ่มเบิกของด่วนด้านล่างได้เลยครับ</span>
+                `;
+            }
+        }
+
+        async function closeQrScannerModal() {
+            document.getElementById('qrScannerModal').classList.add('hidden');
+            if (html5QrScanner) {
+                try {
+                    await html5QrScanner.stop();
+                    html5QrScanner.clear();
+                } catch (e) {}
+                html5QrScanner = null;
+            }
+        }
+
+        function tryLineNativeScan() {
+            if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient() && liff.scanCodeV2) {
+                closeQrScannerModal();
+                liff.scanCodeV2().then(result => {
+                    if (result && result.value) {
+                        processScannedCode(result.value);
+                    }
+                }).catch(() => {
+                    Swal.fire('ไม่สามารถเปิดกล้อง LINE ได้', 'กรุณาใช้ปุ่มเลือกรูป QR หรือกดเลือกเบิกของด่วนแทนครับ', 'warning');
+                });
+            } else {
+                Swal.fire('แจ้งเตือน', 'ปุ่มกล้อง LINE ใช้ได้เมื่อเปิดผ่านลิงก์ liff.line.me ในแอป LINE เท่านั้น คุณสามารถใช้กล้องบนหน้าจอนี้ หรือกดเลือกรายการเบิกของด่วนได้เลยครับ', 'info');
+            }
+        }
+
+        async function scanQrFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                const fileScanner = new Html5Qrcode("qr-reader");
+                const decodedText = await fileScanner.scanFile(file, true);
+                processScannedCode(decodedText);
+            } catch (err) {
+                Swal.fire('ไม่พบ QR Code ในรูปภาพ', 'กรุณาเลือกรูปภาพที่มี QR Code ชัดเจน หรือกดปุ่มเลือกรายการด่วนด้านล่างครับ', 'error');
+            }
+            event.target.value = '';
+        }
+
+        function promptManualCode() {
+            closeQrScannerModal();
+            Swal.fire({
+                title: 'กรอกรหัสเบิกของ / จำนวนเงิน',
+                html: `
+                    <input id="manualItemName" class="swal2-input text-sm" placeholder="ชื่อรายการ เช่น เบิกเสื้อฟอร์ม">
+                    <input id="manualItemAmount" type="number" class="swal2-input text-sm" placeholder="จำนวนเงินรอหัก (บาท) เช่น 300">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'ยืนยันการเบิก',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#dc2626',
+                preConfirm: () => {
+                    const name = document.getElementById('manualItemName').value.trim() || 'สแกนเบิกอุปกรณ์';
+                    const amt = parseFloat(document.getElementById('manualItemAmount').value) || 300;
+                    return `MANUAL|${name}|${amt}`;
+                }
+            }).then(res => {
+                if (res.isConfirmed && res.value) {
+                    processScannedCode(res.value);
+                }
+            });
+        }
+
+        async function processScannedCode(rawCode) {
+            await closeQrScannerModal();
+
+            let itemCode = rawCode;
+            let itemName = `สแกน QR เบิกของ (${rawCode})`;
+            let deductAmount = 300;
+
+            if (rawCode.includes('|')) {
+                const parts = rawCode.split('|');
+                itemCode = parts[0];
+                itemName = parts[1] || itemName;
+                deductAmount = parseFloat(parts[2]) || 300;
+            }
+
+            Swal.fire({
+                title: 'ยืนยันการสแกนเบิกของ?',
+                html: `
+                    <div class="text-sm text-left bg-red-50 p-3 rounded-xl border border-red-200 space-y-1">
+                        <div><b>รายการ:</b> ${itemName}</div>
+                        <div><b>รหัสอ้างอิง:</b> ${itemCode}</div>
+                        <div><b>ยอดบันทึกเป็นรายการรอหัก:</b> <strong class="text-red-600">฿ ${deductAmount.toLocaleString()}</strong></div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ยืนยันเบิกของ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    const nowStr = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+
+                    appState.pendingDeduct += deductAmount;
+                    appState.activities.unshift({
+                        type: 'deduct',
+                        icon: 'fa-qrcode',
+                        iconBg: 'bg-amber-500',
+                        title: itemName,
+                        amountText: `- ฿${deductAmount.toLocaleString()}`,
+                        amountColor: 'text-red-600',
+                        badge: 'รอหัก',
+                        badgeStyle: 'bg-amber-100 text-amber-800',
+                        time: nowStr
+                    });
+
+                    updateDashboardUI();
+                    renderActivityList();
+                    renderAccountView();
+
+                    try {
+                        const formData = new URLSearchParams();
+                        formData.append('action', 'scan_deduct');
+                        formData.append('empId', appState.empId);
+                        formData.append('expenseType', itemName);
+                        formData.append('amount', deductAmount);
+                        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+                    } catch (e) {}
+
+                    Swal.fire('บันทึกสำเร็จ!', `เพิ่มรายการ "${itemName}" (รอหัก ฿${deductAmount.toLocaleString()}) เรียบร้อยแล้ว`, 'success');
+                }
+            });
+        }
+
+        function configureLiffIdPrompt() {
+            const currentId = resolveLiffId();
+            Swal.fire({
+                title: 'เชื่อมต่อ LINE LIFF',
+                html: `<p class="text-xs text-gray-600 mb-2">กรอก <b>LIFF ID</b> จากหน้า LINE Developers เพื่อดึงรูปโปรไฟล์และชื่อ LINE ของคุณโดยอัตโนมัติ</p>`,
+                input: 'text',
+                inputValue: currentId,
+                inputPlaceholder: 'xxxx-xxxxxxxx',
+                showCancelButton: true,
+                confirmButtonText: 'บันทึกและเชื่อมต่อ',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#dc2626'
+            }).then((res) => {
+                if (res.isConfirmed && res.value) {
+                    localStorage.setItem('PBD_LIFF_ID', res.value.trim());
+                    window.location.reload();
+                }
+            });
+        }
+
         async function fetchUserData(lineUserId) {
             try {
                 const response = await fetch(`${GAS_URL}?view=profile&lineUserId=${lineUserId}`);
@@ -607,13 +1162,16 @@
                     appState.empId = data.empId || appState.empId;
                     appState.name = data.name || appState.name;
                     appState.role = data.role || appState.role;
+                    appState.branch = data.branch || appState.branch;
                     appState.netBalance = data.netBalance ?? appState.netBalance;
                     appState.pendingDeduct = data.pendingDeduct ?? appState.pendingDeduct;
                     appState.pbdCoins = data.pbdCoins ?? appState.pbdCoins;
                     updateDashboardUI();
+                    updateProfileView();
+                    renderAccountView();
                 }
             } catch (error) {
-                console.warn('Using local state (GAS API unreachable or CORS):', error);
+                console.warn('Using local state:', error);
             }
         }
 
@@ -624,16 +1182,30 @@
             document.getElementById('pendingDeduct').innerText = appState.pendingDeduct.toLocaleString('th-TH');
             document.getElementById('pbdCoins').innerText = appState.pbdCoins.toLocaleString('th-TH');
             document.getElementById('modalCoinBalance').innerText = appState.pbdCoins.toLocaleString('th-TH');
+
+            // คำนวณเป้าหมายยอดขายเป็นตัว (Units)
+            const cur = appState.salesGoalUnits.current;
+            const target = appState.salesGoalUnits.target;
+            const days = appState.salesGoalUnits.daysLeft;
+            const pct = Math.min(100, Math.round((cur / target) * 100));
+            const remainUnits = Math.max(0, target - cur);
+            const perDay = days > 0 ? (remainUnits / days).toFixed(1).replace('.0', '') : remainUnits;
+
+            document.getElementById('currentSalesUnits').innerText = cur.toLocaleString('th-TH');
+            document.getElementById('targetSalesUnits').innerText = target.toLocaleString('th-TH');
+            document.getElementById('salesProgressBar').style.width = pct + '%';
+            document.getElementById('salesPercent').innerText = pct + '%';
+            document.getElementById('daysLeft').innerText = days;
+            document.getElementById('neededUnits').innerText = remainUnits;
+            document.getElementById('neededPerDay').innerText = perDay;
         }
 
-        // 3. การจัดการหน้าต่างคูปองของฉัน & แลกรางวัล
         function renderCouponsAndCatalog() {
             const availList = appState.coupons.filter(c => c.status === 'Available');
             const usedList = appState.coupons.filter(c => c.status === 'Used');
             document.getElementById('availableCouponCount').innerText = availList.length;
             document.getElementById('modalCoinBalance').innerText = appState.pbdCoins.toLocaleString('th-TH');
 
-            // Render Available Coupons
             const availContainer = document.getElementById('myCouponsContainer');
             if (availList.length === 0) {
                 availContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">ไม่มีคูปองที่พร้อมใช้งาน</div>`;
@@ -656,7 +1228,6 @@
                 `).join('');
             }
 
-            // Render Catalog
             const catalogContainer = document.getElementById('catalogContainer');
             catalogContainer.innerHTML = appState.catalog.map(item => `
                 <div class="border border-gray-200 rounded-2xl p-3.5 flex justify-between items-center shadow-sm">
@@ -675,7 +1246,6 @@
                 </div>
             `).join('');
 
-            // Render Used Coupons
             const usedContainer = document.getElementById('usedCouponsContainer');
             if (usedList.length === 0) {
                 usedContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีประวัติการใช้คูปอง</div>`;
@@ -692,7 +1262,6 @@
             }
         }
 
-        // 4. Workflow กดใช้คูปองด้วยตัวเอง (Self-Service Coupon Usage)
         function useCoupon(couponId) {
             const target = appState.coupons.find(c => c.couponId === couponId);
             if (!target) return;
@@ -716,11 +1285,8 @@
                         formData.append('action', 'use_coupon');
                         formData.append('couponId', couponId);
                         fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                    } catch (e) {
-                        console.warn(e);
-                    }
+                    } catch (e) {}
 
-                    // อัปเดตสถานะบนหน้าจอทันทีและย้ายไปแท็บประวัติ
                     target.status = 'Used';
                     target.usedDate = nowStr;
                     appState.adminLogs.usage.unshift({
@@ -731,13 +1297,13 @@
                     });
 
                     renderCouponsAndCatalog();
+                    renderAccountView();
                     switchRewardTab('usedCoupons');
                     Swal.fire('ใช้คูปองสำเร็จ!', 'ระบบได้บันทึกเวลาการใช้สิทธิ์และส่งข้อมูลไปยังแอดมินกิจกรรมเรียบร้อยแล้ว', 'success');
                 }
             });
         }
 
-        // 5. แลกของรางวัลด้วย PBD Coin
         function redeemReward(rewardId, name, cost) {
             if (appState.pbdCoins < cost) {
                 Swal.fire('เหรียญไม่เพียงพอ', `คุณต้องใช้ ${cost} PBD Coin ในการแลกรางวัลนี้`, 'error');
@@ -772,6 +1338,7 @@
                     });
                     updateDashboardUI();
                     renderCouponsAndCatalog();
+                    renderAccountView();
                     switchRewardTab('myCoupons');
                     Swal.fire('แลกสำเร็จ!', `คุณได้รับคูปอง ${name} เรียบร้อยแล้ว`, 'success');
                 }
@@ -800,7 +1367,6 @@
             }
         }
 
-        // 6. หน้าตรวจสอบสำหรับแอดมินกิจกรรม (Activity Admin Panel)
         function switchAdminTab(tab) {
             appState.currentAdminTab = tab;
             document.getElementById('adminTabUsage').className = tab === 'usage'
@@ -854,7 +1420,6 @@
             }
         }
 
-        // 7. ฟังก์ชันเสริมสำหรับปุ่มเมนูและ Bottom Navigation
         function openSection(id) {
             if (id === 'rewardsModal') {
                 renderCouponsAndCatalog();
@@ -862,13 +1427,16 @@
             } else if (id === 'adminModal') {
                 renderAdminLogs();
                 document.getElementById('adminModal').classList.remove('hidden');
+            } else if (id === 'salesDashboardModal') {
+                renderAccountView();
+                document.getElementById('salesDashboardModal').classList.remove('hidden');
             } else if (id === 'historyModal') {
                 Swal.fire({
-                    title: '📊 ประวัติรายได้ย้อนหลัง',
+                    title: '📊 ประวัติรายได้และยอดขายย้อนหลัง',
                     html: `<div class="text-left text-xs space-y-2">
-                        <div class="flex justify-between border-b pb-1"><span>กันยายน 2568:</span><strong class="text-green-600">฿ 18,200.00</strong></div>
-                        <div class="flex justify-between border-b pb-1"><span>สิงหาคม 2568:</span><strong class="text-green-600">฿ 16,900.00</strong></div>
-                        <div class="flex justify-between pb-1"><span>กรกฎาคม 2568:</span><strong class="text-green-600">฿ 15,100.00</strong></div>
+                        <div class="flex justify-between border-b pb-1"><span>กันยายน 2569 (ขาย 48 ตัว):</span><strong class="text-green-600">฿ 18,200.00</strong></div>
+                        <div class="flex justify-between border-b pb-1"><span>สิงหาคม 2569 (ขาย 42 ตัว):</span><strong class="text-green-600">฿ 16,900.00</strong></div>
+                        <div class="flex justify-between pb-1"><span>กรกฎาคม 2569 (ขาย 38 ตัว):</span><strong class="text-green-600">฿ 15,100.00</strong></div>
                     </div>`,
                     confirmButtonColor: '#dc2626'
                 });
@@ -884,11 +1452,11 @@
                 title: 'เมนูส่วนขยาย (Role-Based)',
                 html: `
                     <div class="grid grid-cols-1 gap-2.5 mt-2 text-left">
-                        <button onclick="Swal.close(); openSection('rewardsModal');" class="p-3 rounded-xl border border-red-200 bg-red-50 flex items-center gap-3">
-                            <i class="fa-solid fa-ticket text-red-600 text-xl"></i>
+                        <button onclick="Swal.close(); openLeaderReport();" class="p-3 rounded-xl border border-red-200 bg-red-50 flex items-center gap-3">
+                            <i class="fa-solid fa-file-lines text-red-600 text-xl"></i>
                             <div>
-                                <div class="font-bold text-sm text-gray-900">คูปองของฉัน (My Coupons)</div>
-                                <div class="text-[11px] text-gray-500">กดใช้สิทธิ์คูปองด้วยตัวเองทันที</div>
+                                <div class="font-bold text-sm text-gray-900">📋 ใบแจ้งยอด (สำหรับหัวหน้าทีม)</div>
+                                <div class="text-[11px] text-gray-500">สรุปยอดขายรายทีมและสถานะสแกนหน้านอกพื้นที่</div>
                             </div>
                         </button>
                         <button onclick="Swal.close(); openSection('adminModal');" class="p-3 rounded-xl border border-gray-300 bg-gray-100 flex items-center gap-3">
@@ -898,20 +1466,17 @@
                                 <div class="text-[11px] text-gray-500">ดูประวัติการแลกและกดใช้สิทธิ์แบบ Real-time</div>
                             </div>
                         </button>
+                        <button onclick="Swal.close(); configureLiffIdPrompt();" class="p-3 rounded-xl border border-amber-300 bg-amber-50 flex items-center gap-3">
+                            <i class="fa-brands fa-line text-green-600 text-xl"></i>
+                            <div>
+                                <div class="font-bold text-sm text-gray-900">ตั้งค่า LIFF ID (ดึงโปรไฟล์ LINE)</div>
+                                <div class="text-[11px] text-gray-500">ผูก LIFF ID เพื่อดึงรูปและชื่อจาก LINE</div>
+                            </div>
+                        </button>
                     </div>
                 `,
                 showConfirmButton: false,
                 showCloseButton: true
-            });
-        }
-
-        function showPendingList() {
-            Swal.fire({
-                title: '⚠️ รายการรอหัก (Pending)',
-                html: `<div class="text-xs text-left p-2 bg-amber-50 rounded-lg border border-amber-200">
-                    <b>15 ต.ค. 2568 10:24</b> - สแกนเบิกเสื้อ (แอดมินสาขา): <strong class="text-red-600">-฿300</strong>
-                </div>`,
-                confirmButtonColor: '#dc2626'
             });
         }
 
@@ -931,19 +1496,10 @@
             });
         }
 
-        function referFriend() {
-            Swal.fire({
-                title: '👥 แนะนำเพื่อนทำงาน',
-                text: 'รับโบนัสพิเศษและ PBD Coin เมื่อแนะนำเพื่อนมาร่วมงานกับ PBD Group!',
-                confirmButtonText: 'คัดลอกลิงก์แนะนำเพื่อน',
-                confirmButtonColor: '#dc2626'
-            });
-        }
-
         function openLeaderReport() {
             Swal.fire({
                 title: '📋 ใบแจ้งยอด (สำหรับหัวหน้าทีม)',
-                text: 'สรุปยอดขายรายทีมและสถานะการสแกนหน้านอกพื้นที่ของสมาชิกในทีม',
+                text: 'สรุปยอดขายรายทีม (นับเป็นตัว) และสถานะการสแกนหน้านอกพื้นที่ของสมาชิกในทีม',
                 icon: 'info',
                 confirmButtonColor: '#dc2626'
             });
@@ -960,8 +1516,13 @@
             });
         }
 
-        // Bottom Navigation Switcher
-        function switchTab(tabName) {
+        // สลับหน้าจอหลักทั้ง 4 แท็บ (หน้าหลัก, รายการ, บัญชี, โปรไฟล์)
+        function switchTab(tabName, subOption) {
+            ['home', 'list', 'wallet', 'profile'].forEach(view => {
+                const viewEl = document.getElementById('view-' + view);
+                if (viewEl) viewEl.classList.add('hidden');
+            });
+
             document.querySelectorAll('.nav-item').forEach(btn => {
                 btn.classList.remove('text-red-600');
                 btn.classList.add('text-gray-700');
@@ -970,6 +1531,9 @@
                 ind.classList.remove('bg-red-600');
                 ind.classList.add('bg-transparent');
             });
+
+            const targetView = document.getElementById('view-' + tabName);
+            if (targetView) targetView.classList.remove('hidden');
 
             const activeBtn = document.getElementById('nav-' + tabName);
             const activeInd = document.getElementById('ind-' + tabName);
@@ -983,39 +1547,15 @@
             }
 
             if (tabName === 'list') {
-                openSection('rewardsModal');
+                renderActivityList();
             } else if (tabName === 'wallet') {
-                showPendingList();
+                renderAccountView();
+                if (subOption) switchWalletSubTab(subOption);
             } else if (tabName === 'profile') {
-                openMoreExtensions();
+                updateProfileView();
             }
-        }
 
-        function openScanner() {
-            if (typeof liff !== 'undefined' && liff.isInClient() && liff.scanCodeV2) {
-                liff.scanCodeV2().then(result => {
-                    if (result.value) {
-                        Swal.fire('สแกน QR สำเร็จ', `รหัสรายการ: ${result.value}`, 'success');
-                    }
-                }).catch(err => {
-                    Swal.fire('ยกเลิกการสแกน', '', 'info');
-                });
-            } else {
-                Swal.fire({
-                    title: '📷 สแกน QR เบิกของ',
-                    text: 'กรุณาเปิดผ่านแอป LINE บนมือถือเพื่อใช้งานกล้องสแกน QR Code (หรือทดสอบจำลองการสแกนเบิกของ)',
-                    showCancelButton: true,
-                    confirmButtonText: 'จำลองสแกนเบิกของ (-฿300)',
-                    cancelButtonText: 'ปิด',
-                    confirmButtonColor: '#dc2626'
-                }).then(res => {
-                    if (res.isConfirmed) {
-                        appState.pendingDeduct += 300;
-                        updateDashboardUI();
-                        Swal.fire('บันทึกรายการรอหักสำเร็จ', 'เพิ่มรายการรอหัก +฿300 เรียบร้อยแล้ว', 'success');
-                    }
-                });
-            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         window.onload = () => {
