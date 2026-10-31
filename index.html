@@ -1,0 +1,30 @@
+<!-- โค้ด HTML และ UI คงเดิมทั้งหมด ... -->
+
+<script>
+    // 1. นำ Web App URL (GAS) จากขั้นตอนที่ 1 มาใส่ที่นี่ เพื่อดึงข้อมูล
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    
+    // 2. นำ LIFF ID จาก LINE มาใส่
+    const LIFF_ID = '2012225566-hFrR9T1Q'; 
+
+    async function initializeLiff() {
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if (liff.isLoggedIn()) {
+                const profile = await liff.getProfile();
+                document.getElementById('profileImage').src = profile.pictureUrl;
+                fetchUserData(profile.userId);
+            } else {
+                liff.login();
+            }
+        } catch (err) {
+            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ LINE LIFF ได้', 'error');
+        }
+    }
+
+    // โค้ด fetchUserData(), openCoupons(), useCoupon() คงเดิมตามที่เคยให้ไป
+
+    window.onload = () => {
+        initializeLiff(); 
+    };
+</script>
