@@ -147,8 +147,78 @@
     <!-- VIEW 1: หน้าหลัก (HOME VIEW) -->
     <!-- ========================================================================= -->
     <main id="view-home" class="space-y-4">
+        <!-- ===== หน้าแบบบริหาร (ผู้ดูแลระบบ / ผู้บริหาร / ตำแหน่งที่ไม่ใช่ฝ่ายขาย) ===== -->
+        <section data-mode="mgmt" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
+            <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
+            <div class="flex justify-between items-start relative z-10 gap-2">
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-200">ภาพรวมยอดขายทั้งบริษัท <span id="mgPeriod" class="opacity-80"></span></p>
+                    <div id="mgSalesBox">
+                        <div class="text-3xl font-extrabold tracking-tight mt-0.5 drop-shadow"><span id="mgSold">–</span><span class="text-lg font-semibold opacity-80"> / <span id="mgTarget">–</span> ตัว</span></div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <div class="w-40 h-2.5 bg-white/20 rounded-full overflow-hidden"><div id="mgBar" class="h-full bg-yellow-300 rounded-full transition-all duration-500" style="width:0%"></div></div>
+                            <span id="mgPct" class="text-sm font-extrabold text-yellow-200">–</span>
+                        </div>
+                        <p class="text-[11px] text-gray-200 mt-1">เหลือ <strong id="mgDays">–</strong> วัน · พนักงานขาย <strong id="mgPeople">–</strong> คน</p>
+                    </div>
+                    <p id="mgNoSales" class="hidden text-sm mt-1 text-gray-100">สวัสดีครับ ดูสิทธิประโยชน์และคูปองของคุณได้ด้านล่าง</p>
+                </div>
+                <div onclick="openSection('rewardsModal')" class="flex items-center gap-2 cursor-pointer active:scale-95 transition shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 flex items-center justify-center shadow-inner"><span class="text-amber-900 font-black text-lg">$</span></div>
+                    <div><div id="mgCoins" class="text-2xl font-extrabold leading-none">–</div><div class="text-[11px] text-yellow-200 mt-0.5">PBD Coin</div></div>
+                </div>
+            </div>
+        </section>
+
+        <section data-mode="mgmt" class="hidden relative z-10 mx-4">
+            <div class="ribbon-tab w-48 py-1.5 px-4 text-white font-bold text-sm flex items-center gap-2 rounded-tl-xl shadow">
+                <i class="fa-solid fa-briefcase text-base"></i><span>เมนูผู้บริหาร</span>
+            </div>
+            <div class="bg-white rounded-b-2xl rounded-tr-2xl shadow-md border border-gray-200/80 overflow-hidden">
+                <div class="grid grid-cols-3 divide-x divide-y divide-gray-200/80 text-center">
+                    <button onclick="openPersonalDashboard()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-chart-line"></i></div>
+                        <span class="text-xs font-bold text-red-700">PBD Dashboard</span></button>
+                    <button onclick="openLeaderReport()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-people-group"></i></div>
+                        <span class="text-xs font-semibold text-gray-800">ใบแจ้งยอดทีม</span></button>
+                    <button onclick="openRequests()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm relative"><i class="fa-solid fa-inbox"></i>
+                            <span id="mgReqBadge" class="hidden absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 rounded-full">0</span></div>
+                        <span class="text-xs font-semibold text-gray-800">คำขอรอดำเนินการ</span></button>
+                    <button onclick="openPendingAll()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <span class="text-xs font-semibold text-gray-800">รายการรอหักทั้งหมด</span></button>
+                    <button onclick="openSection('adminModal')" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-ticket"></i></div>
+                        <span class="text-xs font-semibold text-gray-800">ตรวจสอบคูปอง</span></button>
+                    <button onclick="openSection('rewardsModal')" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-gift"></i></div>
+                        <span class="text-xs font-semibold text-gray-800">แลกสิทธิประโยชน์</span></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="mgKpiBox" data-mode="mgmt" class="hidden relative z-10 mx-4 grid grid-cols-3 gap-2">
+            <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">รอหักทั้งระบบ</p><p class="text-base font-extrabold text-red-600">฿<span id="mgPendTotal">0</span></p><p class="text-[10px] text-gray-400"><span id="mgPendCount">0</span> รายการ</p></div>
+            <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">คำขอรอดำเนินการ</p><p id="mgReqCount" class="text-base font-extrabold text-gray-900">0</p><p class="text-[10px] text-gray-400">ลงทะเบียน/ตรวจยอด</p></div>
+            <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">คูปองรอใช้</p><p id="mgCoupons" class="text-base font-extrabold text-gray-900">0</p><p class="text-[10px] text-gray-400">เหรียญแจก <span id="mgCoinsEarned">0</span></p></div>
+        </section>
+
+        <section id="mgBranchBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-store"></i></div>
+                <h2 class="text-base font-bold text-gray-900">ยอดขายรายสาขา</h2>
+            </div>
+            <div id="mgBranches" class="space-y-2.5"></div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <div><p class="text-[11px] font-bold text-green-700 mb-1">ทีมนำ (% เป้า)</p><div id="mgTopTeams" class="space-y-1 text-[11px]"></div></div>
+                <div><p class="text-[11px] font-bold text-red-700 mb-1">ทีมที่ต้องเร่ง</p><div id="mgLowTeams" class="space-y-1 text-[11px]"></div></div>
+            </div>
+        </section>
+
         <!-- Wallet Header Card -->
-        <section class="relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
+        <section data-mode="sales" class="relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
             <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
             <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
 
@@ -185,7 +255,7 @@
         </section>
 
         <!-- Quick Access Grid Menu (เพิ่ม Sales Dashboard) -->
-        <section class="relative z-10 mx-4">
+        <section data-mode="sales" class="relative z-10 mx-4">
             <div class="ribbon-tab w-48 py-1.5 px-4 text-white font-bold text-sm flex items-center gap-2 rounded-tl-xl shadow">
                 <i class="fa-solid fa-border-all text-base"></i>
                 <span>เมนูใช้งานด่วน</span>
@@ -194,7 +264,7 @@
             <div class="bg-white rounded-b-2xl rounded-tr-2xl shadow-md border border-gray-200/80 overflow-hidden">
                 <div class="grid grid-cols-3 divide-x divide-y divide-gray-200/80 text-center">
                     <!-- Item 1: Sales Dashboard (ใหม่) -->
-                    <button onclick="openSection('salesDashboardModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                    <button onclick="openPersonalDashboard()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
                         <div class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center text-2xl shadow-sm relative">
                             <i class="fa-solid fa-chart-pie"></i>
                             <span class="absolute -top-1 -right-1 bg-amber-400 text-black text-[8px] font-extrabold px-1.5 rounded-full shadow">NEW</span>
@@ -247,7 +317,7 @@
         </section>
 
         <!-- Monthly Sales Goal Card (นับยอดขายเป็นตัว) -->
-        <section class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 overflow-hidden">
+        <section data-mode="sales" class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 overflow-hidden">
             <div class="absolute right-3 bottom-3 opacity-90 pointer-events-none flex items-end gap-1.5">
                 <div class="w-2.5 h-6 bg-red-200 rounded-t"></div>
                 <div class="w-2.5 h-9 bg-red-300 rounded-t"></div>
@@ -291,7 +361,7 @@
         </section>
 
         <!-- Commission Status Card -->
-        <section class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+        <section data-mode="sales" class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-full bg-gradient-to-b from-red-500 to-red-700 text-white flex items-center justify-center text-lg shadow">
@@ -704,13 +774,13 @@
 
         let html5QrScanner = null;
         let currentActivityFilter = 'all';
-        let idToken = '';
+        let idToken = '', accessToken = '';
         let lineDisplayName = '';
 
         let appState = {
             loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
             netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
-            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '',
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null,
             sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
             history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
@@ -721,9 +791,76 @@
         const num = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
 
         async function api(body) {
-            const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ idToken: idToken }, body)) });
+            const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ idToken: idToken, accessToken: accessToken }, body)) });
             const j = await r.json();
             return j;
+        }
+
+        // ---------- หน้าแบบบริหาร ----------
+        function renderMode() {
+            const mg = appState.mode === 'mgmt';
+            document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('hidden', el.getAttribute('data-mode') !== (mg ? 'mgmt' : 'sales')));
+            if (!mg) return;
+            const o = appState.overview || {};
+            $id('mgCoins').innerText = num(appState.pbdCoins);
+            $id('mgPeriod').innerText = appState.period ? '· ' + appState.period.label : '';
+            $id('mgSalesBox').classList.toggle('hidden', !o.canSales); $id('mgNoSales').classList.toggle('hidden', !!o.canSales);
+            $id('mgBranchBox').classList.toggle('hidden', !o.canSales || !(o.branches || []).length);
+            $id('mgKpiBox').classList.toggle('hidden', o.pendingCount === undefined);
+            if (o.canSales) {
+                $id('mgSold').innerText = num(o.sold); $id('mgTarget').innerText = num(o.target);
+                $id('mgPct').innerText = (o.pct || 0) + '%'; $id('mgBar').style.width = Math.min(100, o.pct || 0) + '%';
+                $id('mgDays').innerText = num(o.daysLeft); $id('mgPeople').innerText = num(o.people);
+                const col = p => p >= 100 ? 'bg-green-500' : p >= 80 ? 'bg-amber-400' : 'bg-red-500';
+                $id('mgBranches').innerHTML = (o.branches || []).map(b => `<div>
+                    <div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-800">${esc(b.branch)} <span class="font-normal text-gray-400">${num(b.teams)} ทีม${b.red ? ' · แดง ' + num(b.red) : ''}</span></span><span class="font-semibold text-gray-700">${num(b.sold)}/${num(b.target)} · <strong>${num(b.pct)}%</strong></span></div>
+                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full ${col(b.pct)} rounded-full" style="width:${Math.min(100, b.pct)}%"></div></div></div>`).join('');
+                const row = t => `<div class="flex justify-between gap-1"><span class="truncate">${esc(t.team)} <span class="text-gray-400">${esc(t.leader || '')}</span></span><strong>${num(t.pct)}%</strong></div>`;
+                $id('mgTopTeams').innerHTML = (o.topTeams || []).map(row).join('') || '<span class="text-gray-400">–</span>';
+                $id('mgLowTeams').innerHTML = (o.lowTeams || []).map(row).join('') || '<span class="text-gray-400">–</span>';
+            }
+            if (o.pendingCount !== undefined) {
+                $id('mgPendTotal').innerText = num(o.pendingTotal); $id('mgPendCount').innerText = num(o.pendingCount);
+                const nReq = (o.requests || []).length;
+                $id('mgReqCount').innerText = num(nReq); $id('mgReqBadge').innerText = nReq; $id('mgReqBadge').classList.toggle('hidden', !nReq);
+                $id('mgCoupons').innerText = num(o.couponsAvailable); $id('mgCoinsEarned').innerText = num(o.coinsEarned);
+            }
+        }
+        function adminOnly() { if ((appState.overview || {}).pendingCount === undefined) { Swal.fire('เฉพาะแอดมิน', 'เมนูนี้สำหรับผู้ดูแลระบบ/ผู้บริหาร', 'info'); return true; } return false; }
+        function openRequests() {
+            if (adminOnly()) return;
+            const rq = appState.overview.requests || [];
+            Swal.fire({ title: 'คำขอรอดำเนินการ', confirmButtonColor: '#dc2626', confirmButtonText: 'ปิด',
+                html: rq.length ? '<div class="text-left space-y-2 max-h-[60vh] overflow-y-auto">' + rq.map(r => `<div class="p-2.5 rounded-xl border border-gray-200 text-xs">
+                    <div class="flex justify-between"><strong>${esc(r.type)}</strong><span class="text-gray-400">${esc(r.date)}</span></div>
+                    <div class="text-gray-700">${esc(r.name)} (${esc(r.empId)})</div><div class="text-gray-500 mt-0.5 break-words">${esc(r.detail)}</div></div>`).join('') + '</div><p class="text-[10px] text-gray-400 mt-2">จัดการได้ที่ชีต Wallet แท็บ Requests</p>'
+                    : '<p class="text-sm text-gray-500">ไม่มีคำขอค้าง</p>' });
+        }
+        function openPendingAll() {
+            if (adminOnly()) return;
+            const o = appState.overview, ls = o.pendingList || [];
+            Swal.fire({ title: 'รายการรอหักทั้งหมด', confirmButtonColor: '#dc2626', confirmButtonText: 'ปิด',
+                html: `<p class="text-sm mb-2">รวม <strong class="text-red-600">฿${num(o.pendingTotal)}</strong> · ${num(o.pendingCount)} รายการ</p>` + (ls.length ? '<div class="text-left space-y-1.5 max-h-[55vh] overflow-y-auto">' + ls.map(r => `<div class="flex justify-between gap-2 p-2 rounded-lg bg-gray-50 text-xs">
+                    <span class="min-w-0"><strong>${esc(r.name || r.empId)}</strong> <span class="text-gray-500">${esc(r.item)}</span><br><span class="text-[10px] text-gray-400">${esc(r.date)}</span></span><strong class="text-red-600 shrink-0">฿${num(r.amount)}</strong></div>`).join('') + '</div><p class="text-[10px] text-gray-400 mt-2">แสดง 30 รายการล่าสุด · หักแล้วให้เปลี่ยนสถานะเป็น Deducted ในแท็บ Expenses</p>' : '<p class="text-sm text-gray-500">ไม่มีรายการรอหัก</p>') });
+        }
+        /** ปุ่ม Sales Dashboard → PBD Dashboard ส่วนตัว (ลิงก์ ?k= จากระบบ) · ไม่มีลิงก์ = แสดงสรุปยอดในแอปแทน */
+        function openPersonalDashboard() {
+            const url = appState.dashUrl;
+            if (!url) {
+                if (appState.loaded) Swal.fire({ icon: 'info', title: 'ยังไม่มี PBD Dashboard ส่วนตัว', html: '<p class="text-sm">บัญชี LINE นี้ยังไม่อยู่ในแท็บ Role ของระบบ — แสดงสรุปยอดในแอปแทน</p>', confirmButtonColor: '#dc2626' }).then(() => openSection('salesDashboardModal'));
+                else openSection('salesDashboardModal');
+                return;
+            }
+            try { if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) { liff.openWindow({ url: url, external: false }); return; } } catch (e) {}
+            window.open(url, '_blank');
+        }
+        /** token LINE หมดอายุ/ไม่ผ่าน → ล็อกอินใหม่อัตโนมัติ 1 ครั้ง (กันวนซ้ำ) */
+        function relogin() {
+            let n = 0; try { n = +sessionStorage.getItem('PBD_RELOGIN') || 0; sessionStorage.setItem('PBD_RELOGIN', n + 1); } catch (e) { n = 9; }
+            if (n >= 1 || typeof liff === 'undefined') return false;
+            if (liff.isInClient && liff.isInClient()) { window.location.reload(); return true; }
+            try { liff.logout(); } catch (e) {}
+            liff.login({ redirectUri: window.location.href }); return true;
         }
         function apiError(j, title) {
             Swal.fire(title || 'ทำรายการไม่สำเร็จ', esc(j && j.error || 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง'), 'error');
@@ -892,7 +1029,9 @@
             try {
                 const d = await api({ wl: 'me' });
                 if (d.notRegistered) { appState.loaded = true; showRegister(d.lineUserId); return; }
+                if (d.authFail && relogin()) return;
                 if (!d.ok) { appState.loaded = true; apiError(d, 'โหลดข้อมูลไม่สำเร็จ'); return; }
+                try { sessionStorage.removeItem('PBD_RELOGIN'); } catch (e) {}
                 Object.assign(appState, d, { loaded: true });
                 if (appState.history === undefined) appState.history = [];
                 renderAll();
@@ -902,7 +1041,7 @@
             }
         }
         function renderAll() {
-            updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems();
+            renderMode(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems();
         }
         function showRegister(lineUserId) {
             $id('userName').innerText = lineDisplayName || 'ยังไม่ได้ลงทะเบียน';
@@ -935,6 +1074,7 @@
                 if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
                 const profile = await liff.getProfile();
                 idToken = liff.getIDToken() || '';
+                try { accessToken = liff.getAccessToken() || ''; } catch (e) { accessToken = ''; }
                 appState.lineUserId = profile.userId || '';
                 lineDisplayName = profile.displayName || '';
                 if (profile.pictureUrl) { appState.pictureUrl = profile.pictureUrl; $id('profileImage').src = profile.pictureUrl; $id('profileCardImage').src = profile.pictureUrl; }
