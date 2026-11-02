@@ -1173,7 +1173,8 @@
             $id('commLines').classList.toggle('hidden', !cl.length);
             $id('commLines').innerHTML = cl.length ? '<p class="text-[11px] font-semibold text-gray-500">ค่าคอมพีเรียดนี้' + (appState.position ? ' · ตำแหน่ง ' + esc(appState.position) : '') + '</p>' + cl.map(l =>
                 '<div class="flex justify-between items-center text-xs"><span class="text-gray-700">' + esc(l.label) + ' <span class="text-gray-400">' + num(l.base) + ' ' + esc(l.unit) + ' × ' + num(l.rate) + ' บาท' + (l.tier && l.tier !== 'ต่อตัว' ? ' (ขั้น ' + esc(l.tier) + ')' : '') + '</span></span><span class="font-bold text-gray-900">฿' + num(l.amount) + '</span></div>').join('')
-                + '<div class="flex justify-between items-center text-xs pt-1 border-t border-dashed border-gray-200"><span class="font-semibold text-gray-700">รวมค่าคอม</span><span class="font-extrabold text-red-600">฿' + num(appState.commission) + '</span></div>' : '';
+                + '<div class="flex justify-between items-center text-xs pt-1 border-t border-dashed border-gray-200"><span class="font-semibold text-gray-700">รวมค่าคอม</span><span class="font-extrabold text-red-600">฿' + num(appState.commission) + '</span></div>'
+                + (appState.pointsSrc ? '<p class="text-[10px] text-gray-400">ที่มาพ้อย: ' + esc(appState.pointsSrc) + '</p>' : '') : '';
 
             const nPend = appState.activities.filter(a => a.kind === 'expense' && a.badge === 'รอหัก').length;
             const nCoupon = appState.coupons.filter(c => c.status === 'Available').length;
