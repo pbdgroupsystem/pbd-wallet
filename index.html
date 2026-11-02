@@ -398,7 +398,8 @@
                 </button>
             </div>
 
-            <div class="grid grid-cols-3 divide-x divide-gray-200 items-center text-left">
+            <div id="commTiers" class="hidden space-y-2.5"></div>
+            <div id="commGrid" class="grid grid-cols-3 divide-x divide-gray-200 items-center text-left">
                 <div class="flex items-center gap-2 pr-2">
                     <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-lg shrink-0">
                         <i class="fa-solid fa-star"></i>
@@ -1168,6 +1169,22 @@
                 ['currentSalesUnits', 'targetSalesUnits', 'daysLeft', 'neededUnits', 'neededPerDay'].forEach(i => $id(i).innerText = '–');
                 $id('salesProgressBar').style.width = '0%'; $id('salesPercent').innerText = '–';
                 $id('salesGoalNote').innerText = appState.loaded ? (appState.salesNote || 'ยังไม่มีข้อมูลยอดขาย') : 'กำลังโหลด…';
+            }
+            // หัวหน้าทีม/ผู้จัดการ: แสดงทีละประเภท (ยอดทีม/ยอดสาขา + ขายเอง) — พ้อย/ยอดสะสม · เรทปัจจุบัน · ทำอีกเท่าไรถึงเรทถัดไป
+            const tiers = (appState.commissionLines || []).filter(l => l.tier !== 'ต่อตัว'), multi = /หัวหน้าทีม|ผู้จัดการ/.test(appState.position || '') && tiers.length;
+            $id('commTiers').classList.toggle('hidden', !multi); $id('commGrid').classList.toggle('hidden', !!multi);
+            if (multi) {
+                const ord = l => /ขายเอง/.test(l.type) ? 1 : 0;
+                $id('commTiers').innerHTML = tiers.slice().sort((a, b) => ord(a) - ord(b)).map(l => {
+                    const own = /ขายเอง/.test(l.type), u = l.unit === 'Points' ? 'Points' : 'ตัว';
+                    return `<div class="rounded-xl border border-gray-200 p-3 ${own ? 'bg-amber-50/60' : 'bg-red-50/50'}">
+                        <p class="text-xs font-bold ${own ? 'text-amber-700' : 'text-red-700'} mb-2"><i class="fa-solid ${own ? 'fa-user' : 'fa-people-group'}"></i> ${esc(own ? 'ยอดขายเอง' : l.type)}</p>
+                        <div class="grid grid-cols-3 divide-x divide-gray-200 text-left">
+                            <div class="pr-2"><p class="text-[10px] text-gray-500 leading-tight">${own ? 'พ้อยต์สะสม' : 'ยอดสะสม'}</p><p class="text-sm font-extrabold text-gray-900">${num(l.base)} <span class="text-[10px] font-medium">${u}</span></p></div>
+                            <div class="px-2"><p class="text-[10px] text-gray-500 leading-tight">เรทค่าคอมปัจจุบัน</p><p class="text-sm font-extrabold text-gray-900">${l.rate ? num(l.rate) + ' บาท' : 'ยังไม่ถึงขั้นต่ำ'}</p></div>
+                            <div class="pl-2">${l.next ? `<p class="text-[10px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600">${num(l.next.need)} ${u}</strong></p><p class="text-[10px] text-gray-500 leading-tight">ปรับเป็น <strong class="text-red-600">${num(l.next.rate)} บาท</strong></p>` : '<p class="text-[10px] text-green-600 font-semibold leading-tight mt-1">เรทสูงสุดแล้ว</p>'}</div>
+                        </div></div>`;
+                }).join('');
             }
             const tg = appState.teamGoal;
             $id('teamGoalBox').classList.toggle('hidden', !tg);
