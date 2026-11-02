@@ -967,6 +967,7 @@
 
         // ---------- ค่าปรับ ขาด ลา สาย ----------
         function finesHTML(f) {
+            if (f && f.pending) return `<div class="p-3 rounded-xl bg-gray-50 text-xs text-gray-500 text-center"><i class="fa-solid fa-hourglass-half"></i> กำลังรวบรวมค่าปรับจาก Dashboard — ลองใหม่ในอีกสักครู่</div>`;
             if (!f) return `<div class="p-3 rounded-xl bg-gray-50 text-xs text-gray-500 text-center">${appState.loaded ? 'ยังไม่มีข้อมูลค่าปรับ (ไม่พบชื่อในใบแจ้งยอด)' : 'กำลังโหลด…'}</div>`;
             const it = f.items || [], lv = f.leave || [];
             return `<div class="rounded-xl border border-red-200 overflow-hidden">
@@ -1181,9 +1182,23 @@
         }
 
         // ---------- โหลดข้อมูล ----------
-        async function fetchUserData() {
+        // แคชข้อมูลล่าสุดในเครื่อง → เปิดหน้าแล้วเห็นข้อมูลทันที แล้วค่อยอัปเดตเบื้องหลัง
+        const ME_KEY = () => 'PBD_WALLET_ME:' + (appState.lineUserId || '');
+        function loadLocalMe() {
+            try { const j = JSON.parse(localStorage.getItem(ME_KEY()) || 'null'); if (j && j.ok) { Object.assign(appState, j, { loaded: true }); renderAll(); setSyncing(true); return true; } } catch (e) { }
+            return false;
+        }
+        function setSyncing(on) {
+            let el = $id('syncBadge');
+            if (!el) { el = document.createElement('div'); el.id = 'syncBadge'; el.className = 'fixed top-2 left-1/2 -translate-x-1/2 z-[60] bg-gray-900/80 text-white text-[11px] px-3 py-1 rounded-full shadow hidden'; el.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> กำลังอัปเดตข้อมูล…'; document.body.appendChild(el); }
+            el.classList.toggle('hidden', !on);
+        }
+        async function fetchUserData(fresh) {
+            if (fresh) setSyncing(true);
             try {
-                const d = await api({ wl: 'me' });
+                const d = await api(fresh ? { wl: 'me', fresh: 1 } : { wl: 'me' });
+                setSyncing(false);
+                if (d.ok) { try { localStorage.setItem(ME_KEY(), JSON.stringify(d)); } catch (e) { } }
                 if (d.notRegistered) { appState.loaded = true; showRegister(d.lineUserId); return; }
                 if (d.authFail && relogin()) return;
                 if (!d.ok) { appState.loaded = true; apiError(d, 'โหลดข้อมูลไม่สำเร็จ'); return; }
@@ -1192,6 +1207,8 @@
                 if (appState.history === undefined) appState.history = [];
                 renderAll();
             } catch (e) {
+                setSyncing(false);
+                if (appState.loaded) return;   // มีข้อมูลเดิมในเครื่องแสดงอยู่แล้ว
                 appState.loaded = true;
                 Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจสัญญาณอินเทอร์เน็ต แล้วปิด-เปิดหน้านี้ใหม่', 'error');
             }
@@ -1235,6 +1252,7 @@
                 lineDisplayName = profile.displayName || '';
                 if (profile.pictureUrl) { appState.pictureUrl = profile.pictureUrl; $id('profileImage').src = profile.pictureUrl; $id('profileCardImage').src = profile.pictureUrl; }
                 showConfigBtn(false);
+                loadLocalMe();
                 await fetchUserData();
             } catch (err) {
                 console.error('LIFF Init Error:', err);
