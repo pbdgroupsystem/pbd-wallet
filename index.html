@@ -371,6 +371,15 @@
                             <span>ต้องขายอีก: <strong class="text-gray-900 font-bold"><span id="neededUnits">–</span> ตัว (เฉลี่ย <span id="neededPerDay">–</span> ตัว/วัน)</strong></span>
                         </div>
                     </div>
+                    <div id="teamGoalBox" class="hidden mt-3 pt-3 border-t border-dashed border-gray-200">
+                        <p class="text-xs text-gray-700 font-medium"><i class="fa-solid fa-people-group text-red-600"></i> <span id="teamGoalLabel">ทีม</span>:
+                            <strong class="font-extrabold text-gray-900 text-base"><span id="teamGoalSold">–</span> / <span id="teamGoalTarget">–</span></strong> ตัว</p>
+                        <div class="mt-1.5 flex items-center gap-2">
+                            <div class="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden shadow-inner"><div id="teamGoalBar" class="h-full bg-gradient-to-r from-gray-800 to-gray-600 rounded-full transition-all duration-500" style="width:0%"></div></div>
+                            <span id="teamGoalPct" class="text-sm font-extrabold text-gray-800">–</span>
+                        </div>
+                        <p id="teamGoalNeed" class="text-[11px] text-gray-500 mt-1"></p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -820,7 +829,7 @@
         let appState = {
             loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
             netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
-            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100, fines: null, fineTotal: 0,
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100, fines: null, fineTotal: 0, teamGoal: null,
             sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
             history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
@@ -1159,6 +1168,14 @@
                 ['currentSalesUnits', 'targetSalesUnits', 'daysLeft', 'neededUnits', 'neededPerDay'].forEach(i => $id(i).innerText = '–');
                 $id('salesProgressBar').style.width = '0%'; $id('salesPercent').innerText = '–';
                 $id('salesGoalNote').innerText = appState.loaded ? (appState.salesNote || 'ยังไม่มีข้อมูลยอดขาย') : 'กำลังโหลด…';
+            }
+            const tg = appState.teamGoal;
+            $id('teamGoalBox').classList.toggle('hidden', !tg);
+            if (tg) {
+                $id('teamGoalLabel').innerText = tg.label; $id('teamGoalSold').innerText = num(tg.sold); $id('teamGoalTarget').innerText = num(tg.target);
+                $id('teamGoalPct').innerText = num(tg.pct) + '%'; $id('teamGoalBar').style.width = Math.min(100, tg.pct || 0) + '%';
+                const left = Math.max(0, (tg.target || 0) - (tg.sold || 0)), d = appState.sales ? appState.sales.daysLeft : null;
+                $id('teamGoalNeed').innerText = left ? 'ต้องขายอีก ' + num(left) + ' ตัว' + (d ? ' (เฉลี่ย ' + num(Math.ceil(left / Math.max(1, d))) + ' ตัว/วัน)' : '') : 'ถึงเป้าแล้ว 🎉';
             }
             $id('accPoints').innerText = num(appState.points);
             $id('currentCommRate').innerText = appState.rate ? num(appState.rate) + ' บาท' : 'ยังไม่ถึงขั้นต่ำ';
