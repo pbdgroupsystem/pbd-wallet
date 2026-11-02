@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex,nofollow">
+    <title>PBD สแกนคูปอง</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } } };</script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .hero { background: linear-gradient(135deg, #111827 0%, #7f1d1d 55%, #dc2626 100%); }
+        #reader video { border-radius: 1rem; object-fit: cover; }
+        #reader { border: none !important; }
+        #reader__dashboard_section_csr button, #reader button { font-family: 'Kanit', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen pb-10 text-gray-900">
+    <!-- หัวร้าน -->
+    <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
+        <div class="flex items-center justify-between max-w-md mx-auto">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-store"></i></div>
+                <div class="min-w-0">
+                    <p class="text-[11px] text-red-100">PBD Smart · หน้าสแกนคูปองร้านค้า</p>
+                    <h1 id="shopName" class="text-xl font-bold leading-tight truncate">กำลังโหลด…</h1>
+                </div>
+            </div>
+            <button onclick="loadInfo(true)" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="รีเฟรช"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 -mt-12 space-y-4">
+        <!-- สรุป -->
+        <section class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-2xl shadow-md p-4 text-center">
+                <p class="text-xs text-gray-500">ใช้สิทธิ์วันนี้</p>
+                <p id="todayCount" class="text-3xl font-extrabold text-red-600">–</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-md p-4 text-center">
+                <p class="text-xs text-gray-500">ทั้งหมด</p>
+                <p id="totalCount" class="text-3xl font-extrabold text-gray-900">–</p>
+            </div>
+        </section>
+
+        <!-- สแกน -->
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-bold text-base"><i class="fa-solid fa-qrcode text-red-600"></i> สแกน QR คูปองพนักงาน</h2>
+            </div>
+            <div id="readerWrap" class="hidden mb-3">
+                <div id="reader" class="w-full overflow-hidden rounded-2xl bg-black"></div>
+                <button onclick="stopScan()" class="mt-2 w-full py-2.5 rounded-xl bg-gray-200 font-semibold text-sm">ปิดกล้อง</button>
+            </div>
+            <button id="scanBtn" onclick="startScan()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-red-700 to-red-500 text-white font-bold text-lg shadow active:scale-[.98] transition">
+                <i class="fa-solid fa-camera"></i> เปิดกล้องสแกน
+            </button>
+            <details class="mt-3">
+                <summary class="text-xs text-gray-500 cursor-pointer">สแกนไม่ได้? กรอกรหัสจากใต้ QR / อัปโหลดรูป</summary>
+                <div class="mt-2 flex gap-2">
+                    <input id="manualCode" class="flex-1 min-w-0 border rounded-xl px-3 py-2 text-sm font-mono" placeholder="วางข้อความจาก QR (PBDC1.…)">
+                    <button onclick="checkCode(document.getElementById('manualCode').value)" class="px-4 rounded-xl bg-gray-900 text-white text-sm font-bold">ตรวจ</button>
+                </div>
+                <label class="mt-2 block text-center text-xs text-red-600 font-semibold cursor-pointer py-2 border border-dashed border-red-300 rounded-xl">
+                    <i class="fa-regular fa-image"></i> เลือกรูป QR จากเครื่อง
+                    <input id="qrFile" type="file" accept="image/*" class="hidden" onchange="scanFile(this)">
+                </label>
+                <div id="fileReader" class="hidden"></div>
+            </details>
+        </section>
+
+        <!-- ประวัติ -->
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <div class="flex items-center justify-between mb-3 gap-2">
+                <h2 class="font-bold text-base"><i class="fa-solid fa-clock-rotate-left text-red-600"></i> ประวัติการใช้สิทธิ์</h2>
+                <div class="flex gap-1 text-xs" id="filters">
+                    <button data-f="today" class="px-2.5 py-1 rounded-full bg-red-600 text-white font-semibold">วันนี้</button>
+                    <button data-f="7" class="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">7 วัน</button>
+                    <button data-f="all" class="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">ทั้งหมด</button>
+                </div>
+            </div>
+            <input id="search" oninput="renderHistory()" class="w-full border rounded-xl px-3 py-2 text-sm mb-3" placeholder="ค้นหา ชื่อ / รหัสพนักงาน / คูปอง">
+            <div id="history" class="space-y-2"></div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <h2 class="font-bold text-sm mb-2">สิทธิ์ที่ร้านนี้รับ</h2>
+            <div id="rewards" class="flex flex-wrap gap-1.5 text-xs"></div>
+        </section>
+        <p class="text-center text-[10px] text-gray-400">ลิงก์นี้เป็นของร้านคุณเท่านั้น — อย่าส่งต่อ</p>
+    </main>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    const MK = new URLSearchParams(location.search).get('m') || '';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let info = null, filter = 'today', scanner = null, busy = false;
+
+    async function api(body) {
+        const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ mk: MK }, body)) });
+        return r.json();
+    }
+    const today = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
+
+    async function loadInfo(spin) {
+        if (!MK) { $('shopName').innerText = 'ลิงก์ไม่ถูกต้อง'; Swal.fire('ลิงก์ไม่ถูกต้อง', 'กรุณาเปิดจากลิงก์ที่ได้รับจากผู้ดูแลระบบ', 'error'); return; }
+        try {
+            const j = await api({ wl: 'm_info' });
+            if (!j.ok) { $('shopName').innerText = 'ใช้งานไม่ได้'; Swal.fire('เปิดหน้าไม่ได้', esc(j.error), 'error'); return; }
+            info = j;
+            $('shopName').innerText = j.merchant.name;
+            document.title = 'สแกนคูปอง · ' + j.merchant.name;
+            $('todayCount').innerText = j.today; $('totalCount').innerText = j.total;
+            $('rewards').innerHTML = (j.rewards || []).map(r => `<span class="px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-100">${esc(r.name)}</span>`).join('') || '<span class="text-gray-400">–</span>';
+            renderHistory();
+        } catch (e) { Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจอินเทอร์เน็ต แล้วลองใหม่', 'error'); }
+    }
+
+    function renderHistory() {
+        if (!info) return;
+        const q = $('search').value.trim().toLowerCase(), t = today();
+        const since = filter === '7' ? new Date(Date.now() + 7 * 3600e3 - 6 * 864e5).toISOString().slice(0, 10) : null;
+        const rows = (info.history || []).filter(h => {
+            const d = String(h.usedDate).slice(0, 10);
+            if (filter === 'today' && d !== t) return false;
+            if (since && d < since) return false;
+            return !q || [h.empName, h.empId, h.couponId, h.rewardName, h.branch].join(' ').toLowerCase().indexOf(q) >= 0;
+        });
+        $('history').innerHTML = rows.length ? rows.map(h => `
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-check"></i></div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-bold truncate">${esc(h.rewardName)}</p>
+                    <p class="text-xs text-gray-600 truncate">${esc(h.empName || '-')} · รหัส ${esc(h.empId)}${h.branch ? ' · ' + esc(h.branch) : ''}</p>
+                    <p class="text-[10px] text-gray-400 font-mono truncate">${esc(h.couponId)}</p>
+                </div>
+                <div class="text-right text-[11px] text-gray-500 shrink-0">${esc(String(h.usedDate).slice(5, 10).split('-').reverse().join('/'))}<br><strong class="text-gray-800">${esc(String(h.usedDate).slice(11, 16))}</strong></div>
+            </div>`).join('') : '<p class="text-center text-sm text-gray-400 py-6">ไม่มีรายการ</p>';
+    }
+    document.querySelectorAll('#filters button').forEach(b => b.onclick = () => {
+        filter = b.dataset.f;
+        document.querySelectorAll('#filters button').forEach(x => x.className = 'px-2.5 py-1 rounded-full font-semibold ' + (x === b ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'));
+        renderHistory();
+    });
+
+    // ---------- สแกน ----------
+    async function startScan() {
+        if (typeof Html5Qrcode === 'undefined') { Swal.fire('โหลดตัวสแกนไม่สำเร็จ', 'ใช้ช่องกรอกรหัส / เลือกรูปแทน', 'warning'); return; }
+        $('readerWrap').classList.remove('hidden'); $('scanBtn').classList.add('hidden');
+        scanner = new Html5Qrcode('reader');
+        try {
+            await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, txt => { if (!busy) { stopScan(); checkCode(txt); } }, () => {});
+        } catch (e) {
+            stopScan();
+            Swal.fire('เปิดกล้องไม่ได้', 'อนุญาตการใช้กล้องให้เบราว์เซอร์ หรือใช้ปุ่ม "เลือกรูป QR จากเครื่อง"', 'warning');
+        }
+    }
+    async function stopScan() {
+        $('readerWrap').classList.add('hidden'); $('scanBtn').classList.remove('hidden');
+        if (scanner) { try { await scanner.stop(); scanner.clear(); } catch (e) {} scanner = null; }
+    }
+    async function scanFile(input) {
+        const f = input.files && input.files[0]; input.value = '';
+        if (!f || typeof Html5Qrcode === 'undefined') return;
+        try { const r = new Html5Qrcode('fileReader'); const txt = await r.scanFile(f, false); r.clear(); checkCode(txt); }
+        catch (e) { Swal.fire('อ่าน QR ในรูปไม่ได้', 'ลองถ่ายให้ชัดขึ้น', 'warning'); }
+    }
+
+    async function checkCode(code) {
+        code = String(code || '').trim();
+        if (!code) return;
+        busy = true;
+        Swal.fire({ title: 'กำลังตรวจคูปอง…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api({ wl: 'm_check', code: code });
+            if (!j.ok) { busy = false; return Swal.fire('ใช้คูปองนี้ไม่ได้', esc(j.error), 'error'); }
+            const c = j.coupon;
+            if (c.status === 'Used') { busy = false; return Swal.fire('คูปองนี้ใช้ไปแล้ว', `${esc(c.rewardName)}<br>เมื่อ ${esc(c.usedDate)}${c.usedAt ? ' ที่ ' + esc(c.usedAt) : ''}`, 'error'); }
+            const r = await Swal.fire({
+                title: 'ยืนยันให้สิทธิ์?',
+                html: `<div class="text-left text-sm space-y-1 bg-gray-50 rounded-xl p-3">
+                        <p class="text-lg font-bold text-red-600">${esc(c.rewardName)}</p>
+                        <p>พนักงาน: <strong>${esc(c.empName || '-')}</strong> (รหัส ${esc(c.empId)}${c.branch ? ' · ' + esc(c.branch) : ''})</p>
+                        <p class="text-xs text-gray-500">แลกเมื่อ ${esc(c.redeemed)} · <span class="font-mono">${esc(c.couponId)}</span></p></div>
+                       <p class="text-xs text-gray-500 mt-2">กดยืนยันเมื่อส่งมอบสินค้า/บริการแล้ว — ใช้ได้ครั้งเดียว</p>`,
+                icon: 'question', showCancelButton: true, confirmButtonText: 'ยืนยันใช้สิทธิ์', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#16a34a'
+            });
+            if (!r.isConfirmed) { busy = false; return; }
+            Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const u = await api({ wl: 'm_use', code: code });
+            busy = false;
+            if (!u.ok) return Swal.fire('บันทึกไม่สำเร็จ', esc(u.error), 'error');
+            $('manualCode').value = '';
+            await Swal.fire({ icon: 'success', title: 'ใช้สิทธิ์สำเร็จ', html: `${esc(u.coupon.rewardName)}<br>${esc(u.coupon.empName || u.coupon.empId)} · ${esc(u.coupon.usedDate)}`, timer: 4000, confirmButtonColor: '#16a34a' });
+            filter = 'today'; document.querySelector('#filters button[data-f="today"]').click();
+            loadInfo();
+        } catch (e) { busy = false; Swal.fire('เชื่อมต่อระบบไม่ได้', 'ลองใหม่อีกครั้ง', 'error'); }
+    }
+
+    loadInfo();
+</script>
+</body>
+</html>
