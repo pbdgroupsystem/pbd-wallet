@@ -12,6 +12,8 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <!-- HTML5-QRCode Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- QR Code generator (สร้าง QR คูปองในเครื่อง ไม่ส่งรหัสออกไปเว็บอื่น) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Font Awesome 6 -->
@@ -147,6 +149,9 @@
     <!-- VIEW 1: หน้าหลัก (HOME VIEW) -->
     <!-- ========================================================================= -->
     <main id="view-home" class="space-y-4">
+        <!-- ===== กิจกรรม / ประชุม (แบนเนอร์ + ตอบรับ) ===== -->
+        <section id="eventsBox" class="hidden relative z-10 mx-4 mt-1 space-y-3"></section>
+
         <!-- ===== หน้าแบบบริหาร (ผู้ดูแลระบบ / ผู้บริหาร / ตำแหน่งที่ไม่ใช่ฝ่ายขาย) ===== -->
         <section data-mode="mgmt" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
             <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
@@ -203,6 +208,22 @@
             <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">รอหักทั้งระบบ</p><p class="text-base font-extrabold text-red-600">฿<span id="mgPendTotal">0</span></p><p class="text-[10px] text-gray-400"><span id="mgPendCount">0</span> รายการ</p></div>
             <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">คำขอรอดำเนินการ</p><p id="mgReqCount" class="text-base font-extrabold text-gray-900">0</p><p class="text-[10px] text-gray-400">ลงทะเบียน/ตรวจยอด</p></div>
             <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">คูปองรอใช้</p><p id="mgCoupons" class="text-base font-extrabold text-gray-900">0</p><p class="text-[10px] text-gray-400">เหรียญแจก <span id="mgCoinsEarned">0</span></p></div>
+        </section>
+
+        <section id="mgMerchBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-mug-hot"></i></div>
+                <div><h2 class="text-base font-bold text-gray-900 leading-none">ร้านค้ารับคูปอง</h2><p class="text-[10px] text-gray-500 mt-1">ส่งลิงก์ให้พนักงานร้าน เปิดหน้าสแกน QR คูปอง + ดูประวัติ</p></div>
+            </div>
+            <div id="mgMerchants" class="space-y-1.5"></div>
+        </section>
+
+        <section id="mgEventsBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div>
+                <div><h2 class="text-base font-bold text-gray-900 leading-none">การตอบรับกิจกรรม</h2><p class="text-[10px] text-gray-500 mt-1">เพิ่ม/แก้กิจกรรมที่ชีต Wallet แท็บ Events · กดดูรายชื่อ</p></div>
+            </div>
+            <div id="mgEvents" class="space-y-1.5"></div>
         </section>
 
         <section id="mgBranchBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
@@ -358,6 +379,18 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- สินค้าที่ขาย + PBD Coin ที่ได้ -->
+        <section data-mode="sales" class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+                    <div><h2 class="text-base font-bold text-gray-900 leading-none">ขายอะไร ได้กี่ Coin</h2><p id="homeSoldNote" class="text-[10px] text-gray-500 mt-1">พีเรียดนี้ · 1 พ้อย = 100 PBD Coin</p></div>
+                </div>
+                <div class="text-right"><p class="text-[10px] text-gray-500">Coin จากยอดขาย</p><p class="text-base font-extrabold text-amber-600">+<span id="homeSoldCoins">0</span></p></div>
+            </div>
+            <div id="homeSoldList" class="space-y-2"></div>
         </section>
 
         <!-- Commission Status Card -->
@@ -780,7 +813,7 @@
         let appState = {
             loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
             netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
-            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null,
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100,
             sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
             history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
@@ -819,12 +852,24 @@
                 $id('mgTopTeams').innerHTML = (o.topTeams || []).map(row).join('') || '<span class="text-gray-400">–</span>';
                 $id('mgLowTeams').innerHTML = (o.lowTeams || []).map(row).join('') || '<span class="text-gray-400">–</span>';
             }
+            const ms = o.merchants || [];
+            $id('mgMerchBox').classList.toggle('hidden', !ms.length);
+            $id('mgMerchants').innerHTML = ms.map((m, i) => `<div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-gray-50 text-xs">
+                <span class="min-w-0"><strong>${esc(m.name)}</strong> <span class="text-gray-400">${esc(m.id)}${m.active ? '' : ' · ปิดอยู่'}</span></span>
+                <button onclick="copyMerchantLink(${i})" class="shrink-0 px-2.5 py-1 rounded-lg bg-red-600 text-white font-bold"><i class="fa-regular fa-copy"></i> ลิงก์</button></div>`).join('');
             if (o.pendingCount !== undefined) {
                 $id('mgPendTotal').innerText = num(o.pendingTotal); $id('mgPendCount').innerText = num(o.pendingCount);
                 const nReq = (o.requests || []).length;
                 $id('mgReqCount').innerText = num(nReq); $id('mgReqBadge').innerText = nReq; $id('mgReqBadge').classList.toggle('hidden', !nReq);
                 $id('mgCoupons').innerText = num(o.couponsAvailable); $id('mgCoinsEarned').innerText = num(o.coinsEarned);
             }
+        }
+        function merchantUrl(m) { return new URL('merchant.html?m=' + encodeURIComponent(m.key), window.location.href.split('#')[0]).href; }
+        function copyMerchantLink(i) {
+            const m = ((appState.overview || {}).merchants || [])[i]; if (!m) return;
+            const url = merchantUrl(m);
+            try { if (navigator.clipboard) navigator.clipboard.writeText(url); } catch (e) {}
+            Swal.fire({ title: esc(m.name), html: `<p class="text-xs text-gray-500 mb-2">คัดลอกลิงก์แล้ว — ส่งให้พนักงานร้าน (เก็บเป็นความลับ)</p><input class="swal2-input text-xs" readonly value="${esc(url)}" onclick="this.select()">`, confirmButtonColor: '#dc2626' });
         }
         function adminOnly() { if ((appState.overview || {}).pendingCount === undefined) { Swal.fire('เฉพาะแอดมิน', 'เมนูนี้สำหรับผู้ดูแลระบบ/ผู้บริหาร', 'info'); return true; } return false; }
         function openRequests() {
@@ -843,6 +888,69 @@
                 html: `<p class="text-sm mb-2">รวม <strong class="text-red-600">฿${num(o.pendingTotal)}</strong> · ${num(o.pendingCount)} รายการ</p>` + (ls.length ? '<div class="text-left space-y-1.5 max-h-[55vh] overflow-y-auto">' + ls.map(r => `<div class="flex justify-between gap-2 p-2 rounded-lg bg-gray-50 text-xs">
                     <span class="min-w-0"><strong>${esc(r.name || r.empId)}</strong> <span class="text-gray-500">${esc(r.item)}</span><br><span class="text-[10px] text-gray-400">${esc(r.date)}</span></span><strong class="text-red-600 shrink-0">฿${num(r.amount)}</strong></div>`).join('') + '</div><p class="text-[10px] text-gray-400 mt-2">แสดง 30 รายการล่าสุด · หักแล้วให้เปลี่ยนสถานะเป็น Deducted ในแท็บ Expenses</p>' : '<p class="text-sm text-gray-500">ไม่มีรายการรอหัก</p>') });
         }
+        // ---------- กิจกรรม ----------
+        const thDate = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return esc(d); const mo = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][+m[2] - 1]; return (+m[3]) + ' ' + mo + ' ' + (+m[1] + 543); };
+        function renderEvents() {
+            const ev = appState.events || [], box = $id('eventsBox');
+            box.classList.toggle('hidden', !ev.length);
+            box.innerHTML = ev.map(e => {
+                const my = e.my, join = my && my.answer === 'เข้าร่วม';
+                const img = /^https?:\/\//.test(e.banner || '') ? `<img src="${esc(e.banner)}" alt="" class="w-full h-32 object-cover" onerror="this.remove()">` : '';
+                return `<div class="rounded-2xl overflow-hidden shadow-md border border-amber-200 bg-white">
+                    ${img}
+                    <div class="p-4 bg-gradient-to-br from-amber-50 to-white">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 shrink-0 rounded-xl bg-red-600 text-white text-center py-1 leading-tight shadow"><div class="text-lg font-extrabold">${esc(String(e.date).slice(8, 10).replace(/^0/, ''))}</div><div class="text-[10px]">${thDate(e.date).split(' ')[1] || ''}</div></div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] font-bold text-red-600"><i class="fa-solid fa-bullhorn"></i> กิจกรรม${e.target ? ' · ' + esc(e.target) : ''}</p>
+                                <h3 class="text-base font-bold text-gray-900 leading-snug">${esc(e.title)}</h3>
+                                <p class="text-xs text-gray-600 mt-0.5"><i class="fa-regular fa-calendar"></i> ${thDate(e.date)}${e.time ? ' · <i class="fa-regular fa-clock"></i> ' + esc(e.time) : ''}${e.place ? ' · <i class="fa-solid fa-location-dot"></i> ' + esc(e.place) : ''}</p>
+                                ${e.detail ? `<p class="text-xs text-gray-500 mt-1 whitespace-pre-line">${esc(e.detail)}</p>` : ''}
+                            </div>
+                        </div>
+                        ${my ? `<div class="mt-3 flex items-center justify-between gap-2 text-xs p-2 rounded-xl ${join ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700 border border-gray-200'}">
+                                <span class="min-w-0"><i class="fa-solid ${join ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> คุณตอบ: <strong>${esc(my.answer)}</strong>${my.reason ? ' · ' + esc(my.reason) : ''}</span>
+                                <button onclick="answerEvent('${esc(e.id)}', '${join ? 'decline' : 'join'}')" class="shrink-0 underline font-semibold">เปลี่ยนเป็น${join ? 'ไม่เข้าร่วม' : 'เข้าร่วม'}</button></div>`
+                            : `<div class="mt-3 grid grid-cols-2 gap-2">
+                                <button onclick="answerEvent('${esc(e.id)}', 'join')" class="py-2.5 rounded-xl bg-green-600 text-white font-bold text-sm shadow active:scale-95 transition"><i class="fa-solid fa-check"></i> เข้าร่วม</button>
+                                <button onclick="answerEvent('${esc(e.id)}', 'decline')" class="py-2.5 rounded-xl bg-white border border-gray-300 text-gray-700 font-bold text-sm active:scale-95 transition"><i class="fa-solid fa-xmark"></i> ไม่เข้าร่วม</button></div>`}
+                    </div></div>`;
+            }).join('');
+            const ea = appState.eventsAdmin || [];
+            $id('mgEventsBox').classList.toggle('hidden', !ea.length);
+            $id('mgEvents').innerHTML = ea.map((e, i) => `<button onclick="showEventResponses(${i})" class="w-full text-left flex items-center justify-between gap-2 p-2.5 rounded-xl ${e.past ? 'bg-gray-50 opacity-70' : 'bg-amber-50'} text-xs">
+                <span class="min-w-0"><strong class="block truncate">${esc(e.title)}</strong><span class="text-gray-500">${thDate(e.date)}${e.time ? ' ' + esc(e.time) : ''}${e.closed ? ' · ปิด' : ''}</span></span>
+                <span class="shrink-0 font-bold"><span class="text-green-600">✓ ${num(e.join)}</span> · <span class="text-red-600">✗ ${num(e.decline)}</span></span></button>`).join('');
+        }
+        async function answerEvent(id, answer) {
+            const e = (appState.events || []).find(x => x.id === id); if (!e) return;
+            let reason = '';
+            if (answer === 'decline') {
+                const r = await Swal.fire({ title: 'ไม่เข้าร่วม', html: `<p class="text-sm text-gray-600">${esc(e.title)}</p>`, input: 'textarea', inputPlaceholder: 'เหตุผลที่ไม่เข้าร่วม (จำเป็น)',
+                    showCancelButton: true, confirmButtonText: 'ส่งคำตอบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626',
+                    inputValidator: v => !String(v || '').trim() ? 'กรุณาใส่เหตุผล' : undefined });
+                if (!r.isConfirmed) return; reason = String(r.value || '').trim();
+            } else {
+                const r = await Swal.fire({ title: 'ยืนยันเข้าร่วม?', html: `<p class="text-sm">${esc(e.title)}<br><span class="text-gray-500">${thDate(e.date)} ${esc(e.time || '')}</span></p>`, icon: 'question', showCancelButton: true, confirmButtonText: 'เข้าร่วม', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#16a34a' });
+                if (!r.isConfirmed) return;
+            }
+            Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                const j = await api({ wl: 'event', eventId: id, answer: answer, reason: reason });
+                if (!j.ok) return apiError(j);
+                e.my = { answer: j.answer, reason: j.reason }; renderEvents();
+                Swal.fire({ icon: 'success', title: 'บันทึกคำตอบแล้ว', text: j.answer, timer: 1800, showConfirmButton: false });
+            } catch (x) { apiError(null); }
+        }
+        function showEventResponses(i) {
+            const e = (appState.eventsAdmin || [])[i]; if (!e) return;
+            const row = r => `<div class="flex justify-between gap-2 p-2 rounded-lg ${r.answer === 'เข้าร่วม' ? 'bg-green-50' : 'bg-red-50'} text-xs"><span class="min-w-0"><strong>${esc(r.name)}</strong> <span class="text-gray-500">${esc(r.position)} ${esc(r.branch)}</span>${r.reason ? '<br><span class="text-gray-600">เหตุผล: ' + esc(r.reason) + '</span>' : ''}</span><span class="shrink-0 font-bold ${r.answer === 'เข้าร่วม' ? 'text-green-700' : 'text-red-700'}">${esc(r.answer)}</span></div>`;
+            Swal.fire({ title: esc(e.title), confirmButtonText: 'ปิด', confirmButtonColor: '#6b7280',
+                html: `<p class="text-xs text-gray-500 mb-2">${thDate(e.date)} ${esc(e.time || '')} · เป้าหมาย: ${esc(e.target || 'ทุกคน')}<br>เข้าร่วม ${num(e.join)} · ไม่เข้าร่วม ${num(e.decline)}</p>
+                       <div class="text-left space-y-1.5 max-h-[55vh] overflow-y-auto">${e.responses.map(row).join('') || '<p class="text-center text-gray-400 text-sm py-4">ยังไม่มีคนตอบ</p>'}</div>
+                       <p class="text-[10px] text-gray-400 mt-2">รายชื่อทั้งหมดอยู่ที่แท็บ Event_Responses</p>` });
+        }
+
         /** ปุ่ม Sales Dashboard → PBD Dashboard ส่วนตัว (ลิงก์ ?k= จากระบบ) · ไม่มีลิงก์ = แสดงสรุปยอดในแอปแทน */
         function openPersonalDashboard() {
             const url = appState.dashUrl;
@@ -913,15 +1021,15 @@
         function soldHTML() {
             if (!appState.soldProducts.length) return `<div class="text-center py-6 text-gray-400 text-xs">${appState.loaded ? 'ยังไม่มีรายการขายในระบบ Loyverse ของพีเรียดนี้' : 'กำลังโหลด…'}</div>`;
             return appState.soldProducts.map(p => `
-                <div class="p-3 rounded-xl border border-gray-200 bg-white flex justify-between items-center shadow-sm">
+                <div class="p-3 rounded-xl border border-gray-200 bg-white flex justify-between items-center gap-2 shadow-sm">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm font-bold shrink-0">${num(p.qty)}x</div>
+                        <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex flex-col items-center justify-center shrink-0 leading-none"><span class="text-sm font-extrabold">${num(p.qty)}</span><span class="text-[9px]">ตัว</span></div>
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-gray-900 truncate">${esc(p.name)}</p>
-                            <p class="text-[10px] text-gray-500">พ้อยต์: +${num(p.qty * p.pointsPerUnit)} Pts | โบนัส: ${p.matched ? '+฿' + num(p.bonus) : 'ไม่มีในรายการสินค้า'}</p>
+                            <p class="text-[10px] text-gray-500">${num(p.pointsPerUnit)} พ้อย/ตัว · รวม ${num(p.points != null ? p.points : p.qty * p.pointsPerUnit)} พ้อย · โบนัส ${p.matched ? '฿' + num(p.bonus) : '–'}</p>
                         </div>
                     </div>
-                    <span class="bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded-lg shrink-0">${num(p.qty)} ตัว</span>
+                    <span class="bg-amber-100 text-amber-700 text-xs font-extrabold px-2.5 py-1 rounded-lg shrink-0"><i class="fa-solid fa-coins"></i> +${num(p.coins || 0)}</span>
                 </div>`).join('');
         }
         function renderAccountView() {
@@ -941,6 +1049,9 @@
             const html = soldHTML();
             $id('accountSoldProductsList').innerHTML = html;
             $id('salesModalProductBreakdown').innerHTML = html;
+            $id('homeSoldList').innerHTML = html;
+            $id('homeSoldCoins').innerText = num(appState.soldProducts.reduce((a, p) => a + (p.coins || 0), 0));
+            $id('homeSoldNote').innerText = (appState.period ? 'พีเรียด ' + appState.period.label + ' · ' : '') + '1 พ้อย = ' + num(appState.coinPerPoint || 100) + ' PBD Coin';
             $id('smUnits').innerText = num(totalUnits) + ' ตัว';
             $id('smPoints').innerText = num(appState.points) + ' Pts';
             $id('smBonus').innerText = '฿' + num(appState.cashBonus);
@@ -950,7 +1061,7 @@
             $id('accountCouponsList').innerHTML = avail.length ? avail.map(c => `
                 <div class="border border-red-200 bg-red-50/40 rounded-2xl p-3 flex justify-between items-center gap-2">
                     <div class="min-w-0"><p class="font-bold text-xs text-gray-900">${esc(c.rewardName)}</p><p class="text-[10px] text-gray-500">รหัส: ${esc(c.couponId)} | แลกเมื่อ: ${esc(c.dateRedeemed)}</p></div>
-                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-red-700 shrink-0">ใช้สิทธิ์</button>
+                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-red-700 shrink-0"><i class="fa-solid fa-qrcode"></i> ใช้คูปอง</button>
                 </div>`).join('') : `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีคูปองพร้อมใช้งาน</div>`;
         }
         function switchWalletSubTab(subTab) {
@@ -1041,7 +1152,7 @@
             }
         }
         function renderAll() {
-            renderMode(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems();
+            renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems();
         }
         function showRegister(lineUserId) {
             $id('userName').innerText = lineDisplayName || 'ยังไม่ได้ลงทะเบียน';
@@ -1205,7 +1316,7 @@
                         <div class="w-11 h-11 bg-red-600 text-white rounded-xl flex items-center justify-center text-xl shadow shrink-0"><i class="fa-solid fa-ticket"></i></div>
                         <div class="min-w-0"><p class="font-bold text-sm text-gray-900">${esc(c.rewardName)}</p><p class="text-[11px] text-gray-500">รหัส: <strong>${esc(c.couponId)}</strong> | แลกเมื่อ: ${esc(c.dateRedeemed)}</p></div>
                     </div>
-                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:brightness-110 active:scale-95 transition shrink-0">ใช้สิทธิ์</button>
+                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:brightness-110 active:scale-95 transition shrink-0"><i class="fa-solid fa-qrcode"></i> ใช้คูปอง</button>
                 </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ไม่มีคูปองที่พร้อมใช้งาน</div>`;
             $id('catalogContainer').innerHTML = appState.catalog.length ? appState.catalog.map(item => `
                 <div class="border border-gray-200 rounded-2xl p-3.5 flex justify-between items-center gap-2 shadow-sm">
@@ -1221,22 +1332,40 @@
                     <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold shrink-0">ใช้แล้ว</span>
                 </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีประวัติการใช้คูปอง</div>`;
         }
+        /** ใช้คูปอง = แสดง QR ให้พนักงานร้านสแกน (ร้านกดยืนยันแล้วสถานะเปลี่ยนเป็นใช้แล้วเอง) */
+        let couponPoll = null;
+        function qrSvg(text) {
+            try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); }
+            catch (e) { return `<img alt="QR" class="w-full" src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(text)}">`; }
+        }
         function useCoupon(couponId) {
             const c = appState.coupons.find(x => x.couponId === couponId);
             if (!c) return;
+            if (!c.qr) { Swal.fire('คูปองนี้ใช้ไปแล้ว', c.usedDate ? 'เมื่อ ' + esc(c.usedDate) : '', 'info'); return; }
+            const stop = () => { if (couponPoll) { clearInterval(couponPoll); couponPoll = null; } };
             Swal.fire({
-                title: 'ใช้สิทธิ์คูปองนี้?',
-                html: `<div class="text-sm text-gray-600">คูปอง: <strong class="text-red-600">${esc(c.rewardName)}</strong> (${esc(couponId)})<br>กดยืนยันแล้วสถานะจะเป็น <b>"ใช้แล้ว"</b> ทันที — ให้กดต่อหน้าแอดมินกิจกรรม</div>`,
-                icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280', confirmButtonText: 'ยืนยันใช้สิทธิ์', cancelButtonText: 'ยกเลิก'
-            }).then(async r => {
-                if (!r.isConfirmed) return;
-                Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                try {
-                    const j = await api({ wl: 'use', couponId: couponId });
-                    if (!j.ok) return apiError(j);
-                    await fetchUserData(); switchRewardTab('usedCoupons');
-                    Swal.fire('ใช้คูปองแล้ว', `${esc(c.rewardName)} · ${esc(j.usedDate)}`, 'success');
-                } catch (e) { apiError(null); }
+                title: esc(c.rewardName),
+                html: `<p class="text-xs text-gray-500 mb-2">ให้พนักงานร้านสแกน QR นี้เพื่อรับสิทธิ์</p>
+                       <div class="mx-auto w-60 h-60 p-2 bg-white rounded-2xl border-2 border-red-100 shadow-inner [&_svg]:w-full [&_svg]:h-full">${qrSvg(c.qr)}</div>
+                       <p class="mt-2 font-mono text-[11px] text-gray-600 break-all">${esc(couponId)}</p>
+                       <p id="cpnStatus" class="mt-2 text-xs text-amber-600"><i class="fa-solid fa-spinner fa-spin"></i> รอร้านค้าสแกน…</p>
+                       <p class="text-[10px] text-gray-400 mt-1">อย่าส่งภาพ QR ให้คนอื่น — สแกนแล้วใช้ได้ครั้งเดียว</p>`,
+                showConfirmButton: true, confirmButtonText: 'ปิด', confirmButtonColor: '#6b7280', allowOutsideClick: false,
+                didOpen: () => {
+                    const t0 = Date.now();
+                    couponPoll = setInterval(async () => {
+                        if (Date.now() - t0 > 5 * 60e3) { stop(); const el = $id('cpnStatus'); if (el) el.innerHTML = 'หยุดรอแล้ว — ถ้าร้านสแกนแล้ว ปิดแล้วเปิดใหม่เพื่อดูสถานะ'; return; }
+                        try {
+                            const j = await api({ wl: 'cstat', couponId: couponId });
+                            if (j.ok && j.status === 'Used') {
+                                stop();
+                                await fetchUserData(); switchRewardTab('usedCoupons');
+                                Swal.fire('ใช้สิทธิ์สำเร็จ', `${esc(c.rewardName)} · ${esc(j.usedDate)}${j.usedAt ? ' · ' + esc(j.usedAt) : ''}`, 'success');
+                            }
+                        } catch (e) {}
+                    }, 3000);
+                },
+                willClose: stop
             });
         }
         function redeemReward(rewardId) {
