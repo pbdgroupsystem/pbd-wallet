@@ -330,11 +330,12 @@
                         <i class="fa-solid fa-chart-line"></i>
                     </div>
                     <div>
-                        <p class="text-[11px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600 font-bold"><span id="pointsNeeded">–</span> Points</strong></p>
+                        <p class="text-[11px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600 font-bold"><span id="pointsNeeded">–</span> <span id="needUnit">Points</span></strong></p>
                         <p class="text-[10px] text-gray-500 leading-tight">เพื่อปรับเรทค่าคอมขึ้นเป็น <strong class="text-red-600"><span id="nextCommRate">–</span></strong></p>
                     </div>
                 </div>
             </div>
+            <div id="commLines" class="mt-3 pt-3 border-t border-gray-100 space-y-1.5 hidden"></div>
         </section>
     </main>
 
@@ -709,7 +710,7 @@
         let appState = {
             loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
             netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
-            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null,
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '',
             sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
             history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
@@ -873,6 +874,12 @@
             $id('pointsNeeded').innerText = num(appState.pointsNeeded);
             $id('nextCommRate').innerText = appState.nextRate ? num(appState.nextRate) + ' บาท' : 'เรทสูงสุดแล้ว';
             $id('nextRateBox').classList.toggle('invisible', !appState.nextRate);
+            $id('needUnit').innerText = appState.needUnit === 'ตัว' ? 'ตัว' + (appState.needLabel ? ' (' + appState.needLabel + ')' : '') : 'Points';
+            const cl = appState.commissionLines || [];
+            $id('commLines').classList.toggle('hidden', !cl.length);
+            $id('commLines').innerHTML = cl.length ? '<p class="text-[11px] font-semibold text-gray-500">ค่าคอมพีเรียดนี้' + (appState.position ? ' · ตำแหน่ง ' + esc(appState.position) : '') + '</p>' + cl.map(l =>
+                '<div class="flex justify-between items-center text-xs"><span class="text-gray-700">' + esc(l.label) + ' <span class="text-gray-400">' + num(l.base) + ' ' + esc(l.unit) + ' × ' + num(l.rate) + ' บาท' + (l.tier && l.tier !== 'ต่อตัว' ? ' (ขั้น ' + esc(l.tier) + ')' : '') + '</span></span><span class="font-bold text-gray-900">฿' + num(l.amount) + '</span></div>').join('')
+                + '<div class="flex justify-between items-center text-xs pt-1 border-t border-dashed border-gray-200"><span class="font-semibold text-gray-700">รวมค่าคอม</span><span class="font-extrabold text-red-600">฿' + num(appState.commission) + '</span></div>' : '';
 
             const nPend = appState.activities.filter(a => a.kind === 'expense' && a.badge === 'รอหัก').length;
             const nCoupon = appState.coupons.filter(c => c.status === 'Available').length;
