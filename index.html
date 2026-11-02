@@ -125,21 +125,21 @@
             <div class="min-w-0">
                 <div class="flex items-center gap-1.5">
                     <span class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider uppercase shadow-sm">PBD Smart</span>
-                    <button onclick="configureIdPrompt()" id="ConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
+                    <button onclick="configureLiffIdPrompt()" id="ConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
                         ตั้งค่า LIFF ID
                     </button>
                 </div>
                 <h1 class="text-lg font-bold text-gray-900 leading-tight truncate mt-0.5">
-                    สวัสดี, <span id="userName">คุณณัฐวรรธน์</span>
+                    สวัสดี, <span id="userName">กำลังโหลด…</span>
                 </h1>
                 <p class="text-xs font-medium text-gray-500 flex items-center gap-1">
-                    <span id="userRole">Sales</span> • <span id="userBranchHeader">สาขาสุราษฎร์ธานี</span>
+                    <span id="userRole"></span> <span id="userBranchHeader"></span>
                 </p>
             </div>
         </div>
         <button onclick="showNotifications()" class="relative p-2.5 bg-white/90 backdrop-blur rounded-full shadow-md text-gray-800 hover:scale-105 active:scale-95 transition shrink-0">
             <i class="fa-solid fa-bell text-2xl text-gray-800"></i>
-            <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow">2</span>
+            <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow hidden">0</span>
         </button>
     </header>
 
@@ -154,9 +154,9 @@
 
             <div class="flex justify-between items-center relative z-10">
                 <div class="pr-2">
-                    <p class="text-xs sm:text-sm font-medium text-gray-200">ยอดเงินสุทธิที่รับได้ <span class="text-xs opacity-80">(Net Balance)</span></p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-200">ยอดเงินสุทธิที่รับได้ <span class="text-xs opacity-80">(ประมาณการ)</span></p>
                     <div class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-0.5 drop-shadow">
-                        ฿ <span id="netBalance">27,450.00</span>
+                        ฿ <span id="netBalance">–</span>
                     </div>
                 </div>
 
@@ -169,7 +169,7 @@
                         </div>
                     </div>
                     <div>
-                        <div id="pbdCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">2,270</div>
+                        <div id="pbdCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">–</div>
                         <div class="text-xs font-medium text-yellow-200 mt-0.5">PBD Coin</div>
                     </div>
                 </div>
@@ -179,7 +179,7 @@
                 <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </span>
-                <span>มีรายการรอหัก (Pending): <strong class="font-bold text-yellow-200">฿ <span id="pendingDeduct">300</span></strong></span>
+                <span>มีรายการรอหัก (Pending): <strong class="font-bold text-yellow-200">฿ <span id="pendingDeduct">0</span></strong></span>
                 <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
             </div>
         </section>
@@ -263,26 +263,27 @@
                 </div>
                 <div class="flex-1 pr-14">
                     <h2 class="text-base font-bold text-gray-900">เป้าหมายยอดขายพีเรียดนี้</h2>
+                    <p id="salesGoalNote" class="text-[11px] text-gray-500">กำลังโหลด…</p>
                     <p class="text-xs sm:text-sm text-gray-700 font-medium mt-0.5">
-                        ขายได้แล้ว: <strong class="font-extrabold text-gray-900 text-base"><span id="currentSalesUnits">23</span> / <span id="targetSalesUnits">50</span></strong> ตัว
+                        ขายได้แล้ว: <strong class="font-extrabold text-gray-900 text-base"><span id="currentSalesUnits">–</span> / <span id="targetSalesUnits">–</span></strong> ตัว
                     </p>
 
                     <div class="mt-2.5 flex items-center gap-2">
                         <div class="w-full h-3.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                            <div id="salesProgressBar" class="h-full bg-gradient-to-r from-red-800 via-red-600 to-red-500 rounded-full transition-all duration-500" style="width: 70%;"></div>
+                            <div id="salesProgressBar" class="h-full bg-gradient-to-r from-red-800 via-red-600 to-red-500 rounded-full transition-all duration-500" style="width: 0%;"></div>
                         </div>
-                        <span id="salesPercent" class="text-base font-extrabold text-red-600">46%</span>
+                        <span id="salesPercent" class="text-base font-extrabold text-red-600">–</span>
                     </div>
 
                     <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-700">
                         <div class="flex items-center gap-1">
                             <i class="fa-regular fa-clock text-gray-600"></i>
-                            <span>เหลือเวลา: <strong class="text-red-600 font-bold"><span id="daysLeft">10</span> วัน</strong></span>
+                            <span>เหลือเวลา: <strong class="text-red-600 font-bold"><span id="daysLeft">–</span> วัน</strong></span>
                         </div>
                         <span class="text-gray-300">|</span>
                         <div class="flex items-center gap-1">
                             <i class="fa-solid fa-rocket text-red-600"></i>
-                            <span>ต้องขายอีก: <strong class="text-gray-900 font-bold"><span id="neededUnits">27</span> ตัว (เฉลี่ย <span id="neededPerDay">2.7</span> ตัว/วัน)</strong></span>
+                            <span>ต้องขายอีก: <strong class="text-gray-900 font-bold"><span id="neededUnits">–</span> ตัว (เฉลี่ย <span id="neededPerDay">–</span> ตัว/วัน)</strong></span>
                         </div>
                     </div>
                 </div>
@@ -310,7 +311,7 @@
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 leading-tight">พ้อยต์สะสม:</p>
-                        <p class="text-sm font-extrabold text-gray-900"><span id="accPoints">22.7</span> <span class="text-xs font-medium">Points</span></p>
+                        <p class="text-sm font-extrabold text-gray-900"><span id="accPoints">–</span> <span class="text-xs font-medium">Points</span></p>
                     </div>
                 </div>
 
@@ -320,17 +321,17 @@
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 leading-tight">เรทค่าคอมปัจจุบัน:</p>
-                        <p id="currentCommRate" class="text-base font-extrabold text-gray-900">770บาท</p>
+                        <p id="currentCommRate" class="text-base font-extrabold text-gray-900">–</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 pl-2.5">
+                <div id="nextRateBox" class="flex items-center gap-2 pl-2.5">
                     <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-base shrink-0">
                         <i class="fa-solid fa-chart-line"></i>
                     </div>
                     <div>
-                        <p class="text-[11px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600 font-bold"><span id="pointsNeeded">2</span> Points</strong></p>
-                        <p class="text-[10px] text-gray-500 leading-tight">เพื่อปรับเรทค่าคอมขึ้นเป็น <strong class="text-red-600"><span id="nextCommRate">800บาท</span></strong></p>
+                        <p class="text-[11px] text-gray-700 leading-tight">ทำอีก <strong class="text-red-600 font-bold"><span id="pointsNeeded">–</span> Points</strong></p>
+                        <p class="text-[10px] text-gray-500 leading-tight">เพื่อปรับเรทค่าคอมขึ้นเป็น <strong class="text-red-600"><span id="nextCommRate">–</span></strong></p>
                     </div>
                 </div>
             </div>
@@ -353,7 +354,7 @@
                         <p class="text-[11px] text-gray-200 mt-1">ประวัติการได้พ้อยต์ โบนัส และรายการหักทั้งหมด</p>
                     </div>
                 </div>
-                <span id="activityTotalBadge" class="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">4 รายการ</span>
+                <span id="activityTotalBadge" class="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">0 รายการ</span>
             </div>
 
             <!-- Filter Pills -->
@@ -378,10 +379,10 @@
         <div class="bg-gradient-to-r from-gray-900 via-red-900 to-red-700 rounded-2xl p-4 text-white shadow-md flex justify-between items-center">
             <div>
                 <p class="text-xs text-gray-200">สรุปบัญชีของฉัน (PBD Smart Account)</p>
-                <p class="text-xl font-extrabold mt-0.5">สุทธิ: ฿ <span id="walletViewNet">27,450.00</span></p>
+                <p class="text-xl font-extrabold mt-0.5">สุทธิ (ประมาณการ): ฿ <span id="walletViewNet">–</span></p>
             </div>
             <div class="text-right">
-                <span class="text-xs bg-amber-400 text-black font-bold px-2.5 py-1 rounded-full">รอหัก ฿<span id="walletViewPending">300</span></span>
+                <span class="text-xs bg-amber-400 text-black font-bold px-2.5 py-1 rounded-full">รอหัก ฿<span id="walletViewPending">0</span></span>
             </div>
         </div>
 
@@ -408,7 +409,7 @@
             <div id="walletSubContent-sold" class="hidden p-4 space-y-2.5">
                 <div class="flex justify-between items-center bg-red-50 px-3 py-2 rounded-xl border border-red-100 text-xs">
                     <span class="font-semibold text-gray-700">รวมจำนวนที่ขายได้พีเรียดนี้:</span>
-                    <strong class="text-red-600 text-sm"><span id="accountTotalSoldUnits">23</span> ตัว</strong>
+                    <strong class="text-red-600 text-sm"><span id="accountTotalSoldUnits">–</span> ตัว</strong>
                 </div>
                 <div id="accountSoldProductsList" class="space-y-2.5"></div>
             </div>
@@ -443,21 +444,21 @@
                     </button>
                 </div>
 
-                <h2 id="profileCardName" class="text-xl font-extrabold text-gray-900">คุณณัฐวรรธน์</h2>
+                <h2 id="profileCardName" class="text-xl font-extrabold text-gray-900">–</h2>
                 <p class="text-xs text-gray-500 mb-4">พนักงานองค์กร PBD Group</p>
 
                 <div class="grid grid-cols-3 gap-2 bg-gray-50 p-3 rounded-2xl border border-gray-200/80 text-center">
                     <div>
                         <p class="text-[10px] text-gray-500">รหัสพนักงาน</p>
-                        <p id="profileCardEmpId" class="text-xs font-extrabold text-gray-900 mt-0.5">EMP-001</p>
+                        <p id="profileCardEmpId" class="text-xs font-extrabold text-gray-900 mt-0.5">–</p>
                     </div>
                     <div class="border-x border-gray-200">
                         <p class="text-[10px] text-gray-500">สาขา</p>
-                        <p id="profileCardBranch" class="text-xs font-extrabold text-red-600 mt-0.5">สุราษฎร์ธานี</p>
+                        <p id="profileCardBranch" class="text-xs font-extrabold text-red-600 mt-0.5">–</p>
                     </div>
                     <div>
                         <p class="text-[10px] text-gray-500">ตำแหน่ง</p>
-                        <p id="profileCardRole" class="text-xs font-extrabold text-gray-900 mt-0.5">Sales</p>
+                        <p id="profileCardRole" class="text-xs font-extrabold text-gray-900 mt-0.5">–</p>
                     </div>
                 </div>
             </div>
@@ -469,10 +470,10 @@
                 <i class="fa-solid fa-user-plus"></i> QR Code แนะนำเพื่อนสมัครงาน
             </div>
             <h3 class="text-sm font-bold text-gray-900">สแกนเพื่อสมัครงานพร้อมรับโบนัสแนะนำเพื่อน</h3>
-            <p class="text-xs text-gray-500 mt-0.5">ผู้แนะนำ: <strong id="qrRefName" class="text-gray-800">คุณณัฐวรรธน์ (EMP-001)</strong></p>
+            <p class="text-xs text-gray-500 mt-0.5">ผู้แนะนำ: <strong id="qrRefName" class="text-gray-800">–</strong></p>
 
             <div class="my-4 inline-block p-3 bg-white border-2 border-red-100 rounded-2xl shadow-sm">
-                <img id="referralQrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://pbdgroupsystem.github.io/?ref=EMP-001" alt="Referral QR Code" class="w-44 h-44 mx-auto rounded-lg">
+                <img id="referralQrImage" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="Referral QR Code" class="w-44 h-44 mx-auto rounded-lg">
             </div>
 
             <div class="flex gap-2 justify-center">
@@ -495,7 +496,7 @@
                     <i class="fa-solid fa-chart-pie text-xl text-yellow-300"></i>
                     <div>
                         <h3 class="font-bold text-base leading-none">Sales Dashboard</h3>
-                        <p class="text-[11px] text-gray-200 mt-0.5">สรุปผลงานการขายประจำเดือน (นับจำนวนเป็นตัว)</p>
+                        <p id="smNote" class="text-[11px] text-gray-200 mt-0.5">สรุปผลงานการขายพีเรียดนี้</p>
                     </div>
                 </div>
                 <button onclick="closeSection('salesDashboardModal')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">
@@ -507,15 +508,15 @@
                 <div class="grid grid-cols-3 gap-2.5 text-center">
                     <div class="p-3 rounded-2xl bg-red-50 border border-red-100">
                         <p class="text-gray-500 text-[11px]">ขายได้รวม</p>
-                        <p class="text-xl font-extrabold text-red-600 mt-0.5">23 ตัว</p>
+                        <p id="smUnits" class="text-xl font-extrabold text-red-600 mt-0.5">–</p>
                     </div>
                     <div class="p-3 rounded-2xl bg-amber-50 border border-amber-100">
                         <p class="text-gray-500 text-[11px]">พ้อยต์ที่ได้</p>
-                        <p class="text-xl font-extrabold text-amber-600 mt-0.5">22.7 Pts</p>
+                        <p id="smPoints" class="text-xl font-extrabold text-amber-600 mt-0.5">–</p>
                     </div>
                     <div class="p-3 rounded-2xl bg-green-50 border border-green-100">
                         <p class="text-gray-500 text-[11px]">โบนัสเงินสด</p>
-                        <p class="text-xl font-extrabold text-green-600 mt-0.5">฿9,800</p>
+                        <p id="smBonus" class="text-xl font-extrabold text-green-600 mt-0.5">–</p>
                     </div>
                 </div>
 
@@ -567,24 +568,8 @@
                 </div>
 
                 <div class="border-t border-gray-200 pt-2.5">
-                    <p class="text-[11px] font-bold text-gray-500 mb-2">⚡ หรือกดเลือกเบิกของด่วน (กรณีไม่มีแผ่น QR):</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="processScannedCode('ITEM-SHIRT|เบิกเสื้อฟอร์ม PBD|300')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between shadow-sm">
-                            <span>👕 เสื้อฟอร์ม</span>
-                            <strong class="text-red-600">฿300</strong>
-                        </button>
-                        <button onclick="processScannedCode('ITEM-CARD|เบิกสายคล้องบัตร|50')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between shadow-sm">
-                            <span>🪪 สายคล้องบัตร</span>
-                            <strong class="text-red-600">฿50</strong>
-                        </button>
-                        <button onclick="processScannedCode('ITEM-TOOL|เบิกชุดไขควงช่าง|450')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between shadow-sm">
-                            <span>🧰 ชุดเครื่องมือ</span>
-                            <strong class="text-red-600">฿450</strong>
-                        </button>
-                        <button onclick="promptManualCode()" class="p-2 bg-gray-800 text-white rounded-xl text-center font-bold hover:bg-gray-900 flex items-center justify-center gap-1 shadow-sm">
-                            <i class="fa-solid fa-keyboard"></i> กรอกรหัสเอง
-                        </button>
-                    </div>
+                    <p id="quickItemsTitle" class="text-[11px] font-bold text-gray-500 mb-2 hidden">⚡ หรือเลือกรายการเบิกของ (กรณีไม่มีแผ่น QR):</p>
+                    <div id="quickItems" class="grid grid-cols-2 gap-2 text-xs"></div>
                 </div>
             </div>
         </div>
@@ -598,7 +583,7 @@
                     <i class="fa-solid fa-gift text-xl text-yellow-300"></i>
                     <div>
                         <h3 class="font-bold text-base leading-none">สิทธิประโยชน์ & คูปองของฉัน</h3>
-                        <p class="text-[11px] text-gray-200 mt-0.5">เหรียญสะสม: <strong id="modalCoinBalance" class="text-yellow-300">1,250</strong> PBD Coin</p>
+                        <p class="text-[11px] text-gray-200 mt-0.5">เหรียญสะสม: <strong id="modalCoinBalance" class="text-yellow-300">–</strong> PBD Coin</p>
                     </div>
                 </div>
                 <button onclick="closeSection('rewardsModal')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
@@ -608,7 +593,7 @@
 
             <div class="flex border-b border-gray-200 bg-gray-50 text-xs font-bold">
                 <button id="tabBtnCoupons" onclick="switchRewardTab('myCoupons')" class="flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white">
-                    🎟️ คูปองพร้อมใช้ (<span id="availableCouponCount">2</span>)
+                    🎟️ คูปองพร้อมใช้ (<span id="availableCouponCount">0</span>)
                 </button>
                 <button id="tabBtnCatalog" onclick="switchRewardTab('catalog')" class="flex-1 py-3 text-gray-500 hover:text-gray-800">
                     🎁 แลกของรางวัล
@@ -712,855 +697,538 @@
     <!-- JavaScript Application Logic -->
     <!-- ========================================================================= -->
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycby-ilOWGoru2tNQGaL8N6-oxFX_F9COs5txeFHmgSOpm8IQsLvjRh5EuYYfXyyXtVyWUA/exec';
+        // ===== PBD Smart Wallet — ข้อมูลจริงจาก GAS Line-log dashboard (Wallet.gs) =====
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
         const DEFAULT_LIFF_ID = '2012225566-hFrR9T1Q';
 
         let html5QrScanner = null;
         let currentActivityFilter = 'all';
+        let idToken = '';
+        let lineDisplayName = '';
 
         let appState = {
-            lineUserId: '',
-            pictureUrl: '',
-            empId: 'EMP-001',
-            name: 'คุณณัฐวรรธน์',
-            branch: 'สาขาสุราษฎร์ธานี',
-            role: 'Sales',
-            netBalance: 27450.00,
-            pendingDeduct: 300,
-            pbdCoins: 2270,
-            salesGoalUnits: {
-                current: 23,
-                target: 50,
-                daysLeft: 10
-            },
-            soldProducts: [
-                { id: 'PRD-01', name: 'กล้องวงจรปิด โซล่าเซลล์ 4G', qty: 10, pointsPerUnit: 1, bonus: 4900, date: 'ต.ค. 2569' },
-                { id: 'PRD-02', name: 'กล้องวงจรปิด เลเซอร์ x2', qty: 10, pointsPerUnit: 1, bonus: 4900, date: 'ต.ค. 2569' },
-                { id: 'PRD-03', name: 'ไฟสปอตไลท์ โซล่าเซลล์ 500W', qty: 3, pointsPerUnit: 0.9, bonus: 0, date: 'ต.ค. 2569' }
-            ],
-            activities: [
-                { type: 'deduct', icon: 'fa-shirt', iconBg: 'bg-amber-400', title: 'สแกนเบิกเสื้อ (แอดมินสาขา)', amountText: '- ฿300', amountColor: 'text-red-600', badge: 'รอหัก', badgeStyle: 'bg-amber-100 text-amber-800', time: '15 ต.ค. 2569 10:24' },
-                { type: 'deduct', icon: 'fa-clock', iconBg: 'bg-red-600', title: 'หักมาสาย (สแกนหน้า 15 ต.ค.)', amountText: '- ฿60', amountColor: 'text-red-600', badge: 'หักแล้ว', badgeStyle: 'bg-green-100 text-green-800', time: '15 ต.ค. 2569 08:32' },
-                { type: 'earn', icon: 'fa-camera', iconBg: 'bg-green-600', title: 'ขายกล้องวงจรปิด เลเซอร์ x2 (2 ตัว)', amountText: '+ 10 Points', amountColor: 'text-green-600', badge: '', badgeStyle: '', time: '15 ต.ค. 2569 08:15' },
-                { type: 'earn', icon: 'fa-money-bill-wave', iconBg: 'bg-blue-600', title: 'ได้โบนัสเงินสด ค่าคอมขายสด', amountText: '+ ฿980', amountColor: 'text-green-600', badge: '', badgeStyle: '', time: '14 ต.ค. 2569 16:43' }
-            ],
-            coupons: [
-                { couponId: 'CPN-001', rewardName: 'บัตรกำนัล Starbucks 200฿', dateRedeemed: '14 ต.ค. 2569', status: 'Available', usedDate: null },
-                { couponId: 'CPN-002', rewardName: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', dateRedeemed: '12 ต.ค. 2569', status: 'Available', usedDate: null },
-                { couponId: 'CPN-000', rewardName: 'ใช้วันหยุดพิเศษ 1 วัน', dateRedeemed: '01 ต.ค. 2569', status: 'Used', usedDate: '05 ต.ค. 2569 09:15' }
-            ],
-            catalog: [
-                { rewardId: 'RWD-01', name: 'บัตรกำนัล Starbucks 200฿', cost: 500, icon: 'fa-mug-hot' },
-                { rewardId: 'RWD-02', name: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', cost: 300, icon: 'fa-gas-pump' },
-                { rewardId: 'RWD-03', name: 'เสื้อโปโล PBD Limited Edition', cost: 1000, icon: 'fa-shirt' }
-            ],
-            adminLogs: {
-                usage: [
-                    { couponId: 'CPN-000', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'ใช้วันหยุดพิเศษ 1 วัน', usedDate: '05 ต.ค. 2569 09:15' }
-                ],
-                redeem: [
-                    { txId: 'TX-102', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'บัตรกำนัล Starbucks 200฿', coinCost: 500, date: '14 ต.ค. 2569 14:20' },
-                    { txId: 'TX-101', empId: 'EMP-001 (ณัฐวรรธน์)', rewardName: 'คูปองส่วนลดน้ำมัน ปตท. 100฿', coinCost: 300, date: '12 ต.ค. 2569 11:05' }
-                ]
-            },
-            currentAdminTab: 'usage'
+            loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
+            netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null,
+            sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
+            history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
+
+        const $id = id => document.getElementById(id);
+        const esc = s => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const baht = n => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const num = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+
+        async function api(body) {
+            const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ idToken: idToken }, body)) });
+            const j = await r.json();
+            return j;
+        }
+        function apiError(j, title) {
+            Swal.fire(title || 'ทำรายการไม่สำเร็จ', esc(j && j.error || 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง'), 'error');
+        }
 
         function resolveLiffId() {
             const urlParams = new URLSearchParams(window.location.search);
             const paramLiffId = urlParams.get('liffId') || urlParams.get('liff_id');
-            if (paramLiffId) {
-                localStorage.setItem('PBD_LIFF_ID', paramLiffId.trim());
-                return paramLiffId.trim();
-            }
-            if (DEFAULT_LIFF_ID && DEFAULT_LIFF_ID !== 'YOUR_LIFF_ID') {
-                return DEFAULT_LIFF_ID.trim();
-            }
-            return localStorage.getItem('PBD_LIFF_ID') || '';
+            if (paramLiffId) { try { localStorage.setItem('PBD_LIFF_ID', paramLiffId.trim()); } catch (e) {} return paramLiffId.trim(); }
+            if (DEFAULT_LIFF_ID) return DEFAULT_LIFF_ID.trim();
+            try { return localStorage.getItem('PBD_LIFF_ID') || ''; } catch (e) { return ''; }
         }
+        function showConfigBtn(show) { const b = $id('ConfigBtn'); if (b) b.classList.toggle('hidden', !show); }
 
-        // เรนเดอร์รายการเคลื่อนไหวในแท็บ "รายการ"
+        // ---------- รายการเคลื่อนไหว ----------
+        function actStyle(a) {
+            if (a.kind === 'sale') return { icon: 'fa-camera', bg: 'bg-green-600', color: 'text-green-600', badge: '' };
+            if (a.kind === 'coin') return a.type === 'earn' ? { icon: 'fa-coins', bg: 'bg-amber-500', color: 'text-green-600', badge: '' } : { icon: 'fa-gift', bg: 'bg-gray-700', color: 'text-red-600', badge: 'bg-gray-100 text-gray-700' };
+            return { icon: 'fa-receipt', bg: a.badge === 'รอหัก' ? 'bg-amber-500' : 'bg-red-600', color: 'text-red-600', badge: a.badge === 'รอหัก' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800' };
+        }
         function renderActivityList() {
-            const container = document.getElementById('activityList');
-            const filtered = appState.activities.filter(act => {
-                if (currentActivityFilter === 'all') return true;
-                return act.type === currentActivityFilter;
-            });
-
-            document.getElementById('activityTotalBadge').innerText = `${filtered.length} รายการ`;
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="py-8 text-center text-gray-400 text-xs">ไม่พบรายการเคลื่อนไหว</div>`;
-                return;
-            }
-
-            container.innerHTML = filtered.map(act => `
+            const container = $id('activityList');
+            const filtered = appState.activities.filter(a => currentActivityFilter === 'all' || a.type === currentActivityFilter);
+            $id('activityTotalBadge').innerText = `${filtered.length} รายการ`;
+            if (!filtered.length) { container.innerHTML = `<div class="py-8 text-center text-gray-400 text-xs">${appState.loaded ? 'ไม่พบรายการเคลื่อนไหว' : 'กำลังโหลด…'}</div>`; return; }
+            container.innerHTML = filtered.map(a => { const s = actStyle(a); return `
                 <div class="py-3 flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-full ${act.iconBg} text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
-                            <i class="fa-solid ${act.icon}"></i>
-                        </div>
+                        <div class="w-8 h-8 rounded-full ${s.bg} text-white flex items-center justify-center text-xs shrink-0 shadow-sm"><i class="fa-solid ${s.icon}"></i></div>
                         <div class="min-w-0">
-                            <p class="font-semibold text-gray-800 truncate">${act.title}</p>
-                            <p class="text-[10px] text-gray-400">${act.time}</p>
+                            <p class="font-semibold text-gray-800 truncate">${esc(a.title)}</p>
+                            <p class="text-[10px] text-gray-400">${esc(a.time)}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                        <span class="font-bold ${act.amountColor}">${act.amountText}</span>
-                        ${act.badge ? `<span class="${act.badgeStyle} text-[10px] font-semibold px-2 py-0.5 rounded-full">${act.badge}</span>` : ''}
+                        <span class="font-bold ${s.color}">${esc(a.amount)}</span>
+                        ${a.badge ? `<span class="${s.badge} text-[10px] font-semibold px-2 py-0.5 rounded-full">${esc(a.badge)}</span>` : ''}
                     </div>
-                </div>
-            `).join('');
+                </div>`; }).join('');
         }
-
         function filterActivities(filterType) {
             currentActivityFilter = filterType;
             ['all', 'earn', 'deduct'].forEach(t => {
-                const btn = document.getElementById('actFilter-' + t);
-                if (t === filterType) {
-                    btn.className = 'px-3 py-1 rounded-full bg-red-600 text-white shadow-sm';
-                } else {
-                    btn.className = 'px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-200';
-                }
+                $id('actFilter-' + t).className = t === filterType ? 'px-3 py-1 rounded-full bg-red-600 text-white shadow-sm' : 'px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-200';
             });
             renderActivityList();
         }
 
-        // เรนเดอร์ข้อมูลหน้า "บัญชี" (รายการหัก, สินค้าที่ขาย, คูปองของฉัน)
-        function renderAccountView() {
-            document.getElementById('walletViewNet').innerText = appState.netBalance.toLocaleString('th-TH', { minimumFractionDigits: 2 });
-            document.getElementById('walletViewPending').innerText = appState.pendingDeduct.toLocaleString('th-TH');
-
-            // 1. รายการหัก
-            const deductions = appState.activities.filter(a => a.type === 'deduct');
-            const deductContainer = document.getElementById('accountDeductionList');
-            deductContainer.innerHTML = deductions.map(d => `
-                <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-full ${d.iconBg} text-white flex items-center justify-center text-xs">
-                            <i class="fa-solid ${d.icon}"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-900">${d.title}</p>
-                            <p class="text-[10px] text-gray-500">${d.time}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-extrabold text-red-600">${d.amountText}</p>
-                        <span class="${d.badgeStyle} text-[10px] font-semibold px-2 py-0.5 rounded-full">${d.badge}</span>
-                    </div>
-                </div>
-            `).join('') || `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีรายการหัก</div>`;
-
-            // 2. สินค้าที่ขาย
-            const totalUnits = appState.soldProducts.reduce((sum, p) => sum + p.qty, 0);
-            document.getElementById('accountTotalSoldUnits').innerText = totalUnits;
-            const soldHTML = appState.soldProducts.map(p => `
+        // ---------- หน้าบัญชี ----------
+        function soldHTML() {
+            if (!appState.soldProducts.length) return `<div class="text-center py-6 text-gray-400 text-xs">${appState.loaded ? 'ยังไม่มีรายการขายในระบบ Loyverse ของพีเรียดนี้' : 'กำลังโหลด…'}</div>`;
+            return appState.soldProducts.map(p => `
                 <div class="p-3 rounded-xl border border-gray-200 bg-white flex justify-between items-center shadow-sm">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm font-bold">
-                            ${p.qty}x
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-900">${p.name}</p>
-                            <p class="text-[10px] text-gray-500">พ้อยต์: +${p.qty * p.pointsPerUnit} Pts | โบนัส: +฿${p.bonus}</p>
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm font-bold shrink-0">${num(p.qty)}x</div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-gray-900 truncate">${esc(p.name)}</p>
+                            <p class="text-[10px] text-gray-500">พ้อยต์: +${num(p.qty * p.pointsPerUnit)} Pts | โบนัส: ${p.matched ? '+฿' + num(p.bonus) : 'ไม่มีในรายการสินค้า'}</p>
                         </div>
                     </div>
-                    <span class="bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded-lg">${p.qty} ตัว</span>
-                </div>
-            `).join('');
-            document.getElementById('accountSoldProductsList').innerHTML = soldHTML;
-            document.getElementById('salesModalProductBreakdown').innerHTML = soldHTML;
-
-            // 3. คูปองของฉันในหน้าบัญชี
-            const availCoupons = appState.coupons.filter(c => c.status === 'Available');
-            const accCouponsContainer = document.getElementById('accountCouponsList');
-            if (availCoupons.length === 0) {
-                accCouponsContainer.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีคูปองพร้อมใช้งาน</div>`;
-            } else {
-                accCouponsContainer.innerHTML = availCoupons.map(c => `
-                    <div class="border border-red-200 bg-red-50/40 rounded-2xl p-3 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-xs text-gray-900">${c.rewardName}</p>
-                            <p class="text-[10px] text-gray-500">รหัส: ${c.couponId} | แลกเมื่อ: ${c.dateRedeemed}</p>
-                        </div>
-                        <button onclick="useCoupon('${c.couponId}')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-red-700">
-                            ใช้สิทธิ์
-                        </button>
-                    </div>
-                `).join('');
-            }
+                    <span class="bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded-lg shrink-0">${num(p.qty)} ตัว</span>
+                </div>`).join('');
         }
+        function renderAccountView() {
+            $id('walletViewNet').innerText = baht(appState.netBalance);
+            $id('walletViewPending').innerText = num(appState.pendingDeduct);
+            const ded = appState.activities.filter(a => a.kind === 'expense');
+            $id('accountDeductionList').innerHTML = ded.map(d => { const s = actStyle(d); return `
+                <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-full ${s.bg} text-white flex items-center justify-center text-xs shrink-0"><i class="fa-solid ${s.icon}"></i></div>
+                        <div class="min-w-0"><p class="text-xs font-bold text-gray-900 truncate">${esc(d.title)}</p><p class="text-[10px] text-gray-500">${esc(d.time)}</p></div>
+                    </div>
+                    <div class="text-right shrink-0"><p class="text-xs font-extrabold text-red-600">${esc(d.amount)}</p><span class="${s.badge} text-[10px] font-semibold px-2 py-0.5 rounded-full">${esc(d.badge)}</span></div>
+                </div>`; }).join('') || `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีรายการหัก</div>`;
+            const totalUnits = appState.sales ? appState.sales.current : appState.soldProducts.reduce((s, p) => s + p.qty, 0);
+            $id('accountTotalSoldUnits').innerText = num(totalUnits);
+            const html = soldHTML();
+            $id('accountSoldProductsList').innerHTML = html;
+            $id('salesModalProductBreakdown').innerHTML = html;
+            $id('smUnits').innerText = num(totalUnits) + ' ตัว';
+            $id('smPoints').innerText = num(appState.points) + ' Pts';
+            $id('smBonus').innerText = '฿' + num(appState.cashBonus);
+            $id('smNote').innerText = appState.period ? 'พีเรียด ' + appState.period.label + ' · ยอดตัวจากใบแจ้งยอด · รายสินค้า/โบนัสจาก Loyverse' : '';
 
+            const avail = appState.coupons.filter(c => c.status === 'Available');
+            $id('accountCouponsList').innerHTML = avail.length ? avail.map(c => `
+                <div class="border border-red-200 bg-red-50/40 rounded-2xl p-3 flex justify-between items-center gap-2">
+                    <div class="min-w-0"><p class="font-bold text-xs text-gray-900">${esc(c.rewardName)}</p><p class="text-[10px] text-gray-500">รหัส: ${esc(c.couponId)} | แลกเมื่อ: ${esc(c.dateRedeemed)}</p></div>
+                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-red-700 shrink-0">ใช้สิทธิ์</button>
+                </div>`).join('') : `<div class="text-center py-6 text-gray-400 text-xs">ไม่มีคูปองพร้อมใช้งาน</div>`;
+        }
         function switchWalletSubTab(subTab) {
             ['deduct', 'sold', 'coupons'].forEach(t => {
-                document.getElementById('walletSubContent-' + t).classList.add('hidden');
-                document.getElementById('walletSubBtn-' + t).className = 'py-3 text-gray-500 hover:text-gray-800';
+                $id('walletSubContent-' + t).classList.add('hidden');
+                $id('walletSubBtn-' + t).className = 'py-3 text-gray-500 hover:text-gray-800';
             });
-            document.getElementById('walletSubContent-' + subTab).classList.remove('hidden');
-            document.getElementById('walletSubBtn-' + subTab).className = 'py-3 text-red-600 border-b-2 border-red-600 bg-white';
+            $id('walletSubContent-' + subTab).classList.remove('hidden');
+            $id('walletSubBtn-' + subTab).className = 'py-3 text-red-600 border-b-2 border-red-600 bg-white';
         }
 
-        // เรนเดอร์ข้อมูลหน้า "โปรไฟล์" และ QR แนะนำเพื่อนทำงาน
+        // ---------- โปรไฟล์ ----------
+        function refUrl() { return `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(appState.empId)}`; }
         function updateProfileView() {
-            document.getElementById('profileCardImage').src = document.getElementById('profileImage').src;
-            document.getElementById('profileCardName').innerText = appState.name;
-            document.getElementById('profileCardEmpId').innerText = appState.empId;
-            document.getElementById('profileCardBranch').innerText = appState.branch.replace('สาขา', '');
-            document.getElementById('profileCardRole').innerText = appState.role;
-            document.getElementById('userBranchHeader').innerText = appState.branch;
-            document.getElementById('qrRefName').innerText = `${appState.name} (${appState.empId})`;
-
-            const refUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(appState.empId)}`;
-            document.getElementById('referralQrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(refUrl)}`;
+            $id('profileCardImage').src = $id('profileImage').src;
+            $id('profileCardName').innerText = appState.name;
+            $id('profileCardEmpId').innerText = appState.empId;
+            $id('profileCardBranch').innerText = appState.branch || '–';
+            $id('profileCardRole').innerText = appState.role || '–';
+            $id('userBranchHeader').innerText = appState.branch ? 'สาขา ' + appState.branch : '';
+            $id('qrRefName').innerText = `${appState.name} (${appState.empId})`;
+            $id('referralQrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(refUrl())}`;
+        }
+        function copyReferralLink() {
+            try { if (navigator.clipboard) navigator.clipboard.writeText(refUrl()); } catch (e) {}
+            Swal.fire('คัดลอกลิงก์แล้ว', `ส่งลิงก์หรือให้เพื่อนสแกน QR Code เพื่ออ้างอิงรหัส ${esc(appState.empId)}`, 'success');
         }
 
-        function copyReferralLink() {
-            const refUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(appState.empId)}`;
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(refUrl);
+        // ---------- หน้าหลัก ----------
+        function updateDashboardUI() {
+            $id('userName').innerText = appState.name;
+            $id('userRole').innerText = appState.role || '';
+            $id('netBalance').innerText = baht(appState.netBalance);
+            $id('pendingDeduct').innerText = num(appState.pendingDeduct);
+            $id('pbdCoins').innerText = num(appState.pbdCoins);
+            $id('modalCoinBalance').innerText = num(appState.pbdCoins);
+
+            const s = appState.sales;
+            if (s) {
+                const cur = s.current || 0, target = s.target || 0, days = s.daysLeft || 0;
+                const pct = target ? Math.round(cur / target * 100) : 0;
+                const remain = Math.max(0, target - cur), perDay = days > 0 ? Math.round(remain / days * 10) / 10 : remain;
+                $id('currentSalesUnits').innerText = num(cur);
+                $id('targetSalesUnits').innerText = num(target);
+                $id('salesProgressBar').style.width = Math.min(100, pct) + '%';
+                $id('salesPercent').innerText = pct + '%';
+                $id('daysLeft').innerText = days;
+                $id('neededUnits').innerText = num(remain);
+                $id('neededPerDay').innerText = num(perDay);
+                $id('salesGoalNote').innerText = appState.period ? 'พีเรียด ' + appState.period.label + (s.team ? ' · ทีม ' + s.team : '') : '';
+            } else {
+                ['currentSalesUnits', 'targetSalesUnits', 'daysLeft', 'neededUnits', 'neededPerDay'].forEach(i => $id(i).innerText = '–');
+                $id('salesProgressBar').style.width = '0%'; $id('salesPercent').innerText = '–';
+                $id('salesGoalNote').innerText = appState.loaded ? (appState.salesNote || 'ยังไม่มีข้อมูลยอดขาย') : 'กำลังโหลด…';
             }
-            Swal.fire('คัดลอกลิงก์สำเร็จ!', `ส่งลิงก์หรือให้เพื่อนสแกน QR Code เพื่ออ้างอิงรหัส ${appState.empId} ได้เลยครับ`, 'success');
+            $id('accPoints').innerText = num(appState.points);
+            $id('currentCommRate').innerText = appState.rate ? num(appState.rate) + ' บาท' : 'ยังไม่ถึงขั้นต่ำ';
+            $id('pointsNeeded').innerText = num(appState.pointsNeeded);
+            $id('nextCommRate').innerText = appState.nextRate ? num(appState.nextRate) + ' บาท' : 'เรทสูงสุดแล้ว';
+            $id('nextRateBox').classList.toggle('invisible', !appState.nextRate);
+
+            const nPend = appState.activities.filter(a => a.kind === 'expense' && a.badge === 'รอหัก').length;
+            const nCoupon = appState.coupons.filter(c => c.status === 'Available').length;
+            const badge = nPend + nCoupon;
+            $id('notifBadge').innerText = badge; $id('notifBadge').classList.toggle('hidden', !badge);
+        }
+
+        // ---------- โหลดข้อมูล ----------
+        async function fetchUserData() {
+            try {
+                const d = await api({ wl: 'me' });
+                if (d.notRegistered) { appState.loaded = true; showRegister(d.lineUserId); return; }
+                if (!d.ok) { appState.loaded = true; apiError(d, 'โหลดข้อมูลไม่สำเร็จ'); return; }
+                Object.assign(appState, d, { loaded: true });
+                if (appState.history === undefined) appState.history = [];
+                renderAll();
+            } catch (e) {
+                appState.loaded = true;
+                Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจสัญญาณอินเทอร์เน็ต แล้วปิด-เปิดหน้านี้ใหม่', 'error');
+            }
+        }
+        function renderAll() {
+            updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems();
+        }
+        function showRegister(lineUserId) {
+            $id('userName').innerText = lineDisplayName || 'ยังไม่ได้ลงทะเบียน';
+            Swal.fire({
+                title: 'ยังไม่ได้ลงทะเบียนพนักงาน',
+                html: `<p class="text-xs text-gray-600 mb-2">กรอกรหัสพนักงาน ระบบจะส่งคำขอให้ผู้ดูแลระบบเปิดใช้งาน</p>
+                       <input id="regEmp" class="swal2-input text-sm" inputmode="numeric" placeholder="รหัสพนักงาน เช่น 2012">
+                       <input id="regName" class="swal2-input text-sm" placeholder="ชื่อ-นามสกุล">
+                       <p class="text-[10px] text-gray-400 mt-2">LINE ID: ${esc(lineUserId)}</p>`,
+                confirmButtonText: 'ส่งคำขอ', confirmButtonColor: '#dc2626', showCancelButton: true, cancelButtonText: 'ปิด',
+                preConfirm: () => {
+                    const empId = $id('regEmp').value.trim(), name = $id('regName').value.trim();
+                    if (!/^\d{1,6}$/.test(empId)) { Swal.showValidationMessage('กรอกรหัสพนักงานเป็นตัวเลข'); return false; }
+                    return { empId, name };
+                }
+            }).then(async r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title: 'กำลังส่งคำขอ…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try { const j = await api({ wl: 'register', empId: r.value.empId, name: r.value.name, lineName: lineDisplayName }); j.ok ? Swal.fire('ส่งคำขอแล้ว', 'รอผู้ดูแลระบบเปิดใช้งาน แล้วเปิดหน้านี้ใหม่', 'success') : apiError(j); }
+                catch (e) { apiError(null); }
+            });
         }
 
         async function initializeLiff() {
-            updateDashboardUI();
-            renderActivityList();
-            renderCouponsAndCatalog();
-            renderAccountView();
-            updateProfileView();
-
+            renderAll();
             const activeLiffId = resolveLiffId();
-            if (!activeLiffId) {
-                document.getElementById('liffConfigBtn').classList.remove('hidden');
-                return;
-            }
-
+            if (!activeLiffId) { showConfigBtn(true); return; }
             try {
                 await liff.init({ liffId: activeLiffId });
-
-                if (!liff.isLoggedIn()) {
-                    liff.login({ redirectUri: window.location.href });
-                    return;
-                }
-
+                if (!liff.isLoggedIn()) { liff.login({ redirectUri: window.location.href }); return; }
                 const profile = await liff.getProfile();
-                const idToken = liff.getDecodedIDToken ? liff.getDecodedIDToken() : null;
-
-                const linePicture = profile.pictureUrl || (idToken && idToken.picture) || '';
-                const lineName = profile.displayName || (idToken && idToken.name) || appState.name;
+                idToken = liff.getIDToken() || '';
                 appState.lineUserId = profile.userId || '';
-
-                if (linePicture) {
-                    appState.pictureUrl = linePicture;
-                    document.getElementById('profileImage').src = linePicture;
-                    document.getElementById('profileCardImage').src = linePicture;
-                }
-
-                if (lineName) {
-                    appState.name = lineName;
-                    document.getElementById('userName').innerText = lineName;
-                }
-
-                document.getElementById('liffConfigBtn').classList.add('hidden');
-                updateProfileView();
-
-                if (appState.lineUserId) {
-                    fetchUserData(appState.lineUserId);
-                }
+                lineDisplayName = profile.displayName || '';
+                if (profile.pictureUrl) { appState.pictureUrl = profile.pictureUrl; $id('profileImage').src = profile.pictureUrl; $id('profileCardImage').src = profile.pictureUrl; }
+                showConfigBtn(false);
+                await fetchUserData();
             } catch (err) {
-                console.error("LIFF Init Error:", err);
-                document.getElementById('liffConfigBtn').classList.remove('hidden');
+                console.error('LIFF Init Error:', err);
+                showConfigBtn(true);
+                $id('userName').innerText = 'เปิดผ่านแอป LINE';
+                Swal.fire('เชื่อมต่อ LINE ไม่ได้', 'เปิดหน้านี้จากลิงก์ในแอป LINE', 'warning');
             }
         }
 
-        // ระบบสแกน QR Code
+        // ---------- สแกน QR เบิกของ ----------
+        function renderQuickItems() {
+            const box = $id('quickItems'), items = appState.scanItems || [];
+            $id('quickItemsTitle').classList.toggle('hidden', !items.length);
+            box.innerHTML = items.map(it => `
+                <button onclick="processScannedCode('${esc(it.id)}')" class="p-2 bg-white border border-red-200 rounded-xl text-left hover:bg-red-50 flex items-center justify-between gap-1 shadow-sm">
+                    <span class="truncate">${esc(it.name)}</span><strong class="text-red-600 shrink-0">฿${num(it.amount)}</strong>
+                </button>`).join('') + `
+                <button onclick="promptManualCode()" class="p-2 bg-gray-800 text-white rounded-xl text-center font-bold hover:bg-gray-900 flex items-center justify-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-keyboard"></i> กรอกรายการเอง
+                </button>`;
+        }
         async function openScanner() {
-            document.getElementById('qrScannerModal').classList.remove('hidden');
-            const statusMsg = document.getElementById('cameraStatusMsg');
+            if (!idToken) { Swal.fire('เปิดผ่านแอป LINE', 'การสแกนเบิกของต้องเปิดจากลิงก์ในแอป LINE', 'info'); return; }
+            renderQuickItems();
+            $id('qrScannerModal').classList.remove('hidden');
+            const statusMsg = $id('cameraStatusMsg');
             statusMsg.classList.remove('hidden');
             statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><span>กำลังเปิดกล้องหลัง...</span>`;
-
             try {
-                if (typeof Html5Qrcode === 'undefined') {
-                    throw new Error('Scanner library not loaded');
-                }
-                if (html5QrScanner) {
-                    try { await html5QrScanner.stop(); } catch (e) {}
-                }
-                html5QrScanner = new Html5Qrcode("qr-reader");
-                await html5QrScanner.start(
-                    { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 210, height: 210 } },
-                    (decodedText) => {
-                        processScannedCode(decodedText);
-                    },
-                    () => {}
-                );
+                if (typeof Html5Qrcode === 'undefined') throw new Error('Scanner library not loaded');
+                if (html5QrScanner) { try { await html5QrScanner.stop(); } catch (e) {} }
+                html5QrScanner = new Html5Qrcode('qr-reader');
+                await html5QrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 210, height: 210 } }, t => processScannedCode(t), () => {});
                 statusMsg.classList.add('hidden');
             } catch (err) {
-                statusMsg.innerHTML = `
-                    <i class="fa-solid fa-camera-rotate text-2xl mb-1 text-amber-400"></i>
-                    <span class="font-bold">ไม่สามารถเปิดกล้องสดในหน้าต่างนี้ได้</span>
-                    <span class="text-[11px] text-gray-300 mt-1">กดปุ่ม <b>"กล้อง LINE"</b> หรือ <b>"เลือกรูป QR"</b> หรือกดปุ่มเบิกของด่วนด้านล่างได้เลยครับ</span>
-                `;
+                statusMsg.innerHTML = `<i class="fa-solid fa-camera-rotate text-2xl mb-1 text-amber-400"></i>
+                    <span class="font-bold">เปิดกล้องในหน้าต่างนี้ไม่ได้</span>
+                    <span class="text-[11px] text-gray-300 mt-1">กด <b>"กล้อง LINE"</b> หรือ <b>"เลือกรูป QR"</b> หรือเลือกรายการด้านล่าง</span>`;
             }
         }
-
         async function closeQrScannerModal() {
-            document.getElementById('qrScannerModal').classList.add('hidden');
-            if (html5QrScanner) {
-                try {
-                    await html5QrScanner.stop();
-                    html5QrScanner.clear();
-                } catch (e) {}
-                html5QrScanner = null;
-            }
+            $id('qrScannerModal').classList.add('hidden');
+            if (html5QrScanner) { try { await html5QrScanner.stop(); html5QrScanner.clear(); } catch (e) {} html5QrScanner = null; }
         }
-
         function tryLineNativeScan() {
             if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient() && liff.scanCodeV2) {
                 closeQrScannerModal();
-                liff.scanCodeV2().then(result => {
-                    if (result && result.value) {
-                        processScannedCode(result.value);
-                    }
-                }).catch(() => {
-                    Swal.fire('ไม่สามารถเปิดกล้อง LINE ได้', 'กรุณาใช้ปุ่มเลือกรูป QR หรือกดเลือกเบิกของด่วนแทนครับ', 'warning');
-                });
+                liff.scanCodeV2().then(r => { if (r && r.value) processScannedCode(r.value); })
+                    .catch(() => Swal.fire('เปิดกล้อง LINE ไม่ได้', 'ใช้ปุ่มเลือกรูป QR หรือเลือกรายการด่วนแทน', 'warning'));
             } else {
-                Swal.fire('แจ้งเตือน', 'ปุ่มกล้อง LINE ใช้ได้เมื่อเปิดผ่านลิงก์ liff.line.me ในแอป LINE เท่านั้น คุณสามารถใช้กล้องบนหน้าจอนี้ หรือกดเลือกรายการเบิกของด่วนได้เลยครับ', 'info');
+                Swal.fire('แจ้งเตือน', 'ปุ่มกล้อง LINE ใช้ได้เมื่อเปิดในแอป LINE เท่านั้น', 'info');
             }
         }
-
         async function scanQrFromFile(event) {
             const file = event.target.files[0];
             if (!file) return;
-            try {
-                const fileScanner = new Html5Qrcode("qr-reader");
-                const decodedText = await fileScanner.scanFile(file, true);
-                processScannedCode(decodedText);
-            } catch (err) {
-                Swal.fire('ไม่พบ QR Code ในรูปภาพ', 'กรุณาเลือกรูปภาพที่มี QR Code ชัดเจน หรือกดปุ่มเลือกรายการด่วนด้านล่างครับ', 'error');
-            }
+            try { const fileScanner = new Html5Qrcode('qr-reader'); processScannedCode(await fileScanner.scanFile(file, true)); }
+            catch (err) { Swal.fire('ไม่พบ QR Code ในรูป', 'เลือกรูปที่มี QR Code ชัดเจน หรือเลือกรายการด้านล่าง', 'error'); }
             event.target.value = '';
         }
-
         function promptManualCode() {
             closeQrScannerModal();
             Swal.fire({
-                title: 'กรอกรหัสเบิกของ / จำนวนเงิน',
-                html: `
-                    <input id="manualItemName" class="swal2-input text-sm" placeholder="ชื่อรายการ เช่น เบิกเสื้อฟอร์ม">
-                    <input id="manualItemAmount" type="number" class="swal2-input text-sm" placeholder="จำนวนเงินรอหัก (บาท) เช่น 300">
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'ยืนยันการเบิก',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#dc2626',
+                title: 'กรอกรายการเบิกของ',
+                html: `<input id="manualItemName" class="swal2-input text-sm" placeholder="ชื่อรายการ เช่น เบิกเสื้อฟอร์ม">
+                       <input id="manualItemAmount" type="number" inputmode="decimal" class="swal2-input text-sm" placeholder="จำนวนเงินรอหัก (บาท)">`,
+                showCancelButton: true, confirmButtonText: 'ถัดไป', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626',
                 preConfirm: () => {
-                    const name = document.getElementById('manualItemName').value.trim() || 'สแกนเบิกอุปกรณ์';
-                    const amt = parseFloat(document.getElementById('manualItemAmount').value) || 300;
-                    return `MANUAL|${name}|${amt}`;
+                    const name = $id('manualItemName').value.trim(), amt = parseFloat($id('manualItemAmount').value);
+                    if (!name) { Swal.showValidationMessage('กรอกชื่อรายการ'); return false; }
+                    if (!(amt > 0)) { Swal.showValidationMessage('กรอกจำนวนเงิน'); return false; }
+                    return { name, amt };
                 }
-            }).then(res => {
-                if (res.isConfirmed && res.value) {
-                    processScannedCode(res.value);
-                }
-            });
+            }).then(res => { if (res.isConfirmed) confirmDeduct({ item: res.value.name, amount: res.value.amt, code: 'MANUAL' }); });
         }
-
+        // รูปแบบ QR: "รหัสในแท็บ Scan_Items" หรือ "รหัส|ชื่อรายการ|จำนวนเงิน"
         async function processScannedCode(rawCode) {
             await closeQrScannerModal();
-
-            let itemCode = rawCode;
-            let itemName = `สแกน QR เบิกของ (${rawCode})`;
-            let deductAmount = 300;
-
-            if (rawCode.includes('|')) {
-                const parts = rawCode.split('|');
-                itemCode = parts[0];
-                itemName = parts[1] || itemName;
-                deductAmount = parseFloat(parts[2]) || 300;
-            }
-
+            const raw = String(rawCode || '').trim();
+            const it = (appState.scanItems || []).find(x => x.id === raw || raw.split('|')[0] === x.id);
+            if (it) return confirmDeduct({ itemId: it.id, item: it.name, amount: it.amount });
+            const p = raw.split('|');
+            if (p.length >= 3 && parseFloat(p[2]) > 0) return confirmDeduct({ code: p[0], item: p[1], amount: parseFloat(p[2]) });
+            Swal.fire('ไม่รู้จัก QR นี้', `รหัส: ${esc(raw)}<br>ให้แอดมินเพิ่มรหัสนี้ในแท็บ Scan_Items หรือกรอกรายการเอง`, 'warning');
+        }
+        function confirmDeduct(x) {
             Swal.fire({
-                title: 'ยืนยันการสแกนเบิกของ?',
-                html: `
-                    <div class="text-sm text-left bg-red-50 p-3 rounded-xl border border-red-200 space-y-1">
-                        <div><b>รายการ:</b> ${itemName}</div>
-                        <div><b>รหัสอ้างอิง:</b> ${itemCode}</div>
-                        <div><b>ยอดบันทึกเป็นรายการรอหัก:</b> <strong class="text-red-600">฿ ${deductAmount.toLocaleString()}</strong></div>
-                    </div>
-                `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'ยืนยันเบิกของ',
-                cancelButtonText: 'ยกเลิก'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    const nowStr = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
-
-                    appState.pendingDeduct += deductAmount;
-                    appState.activities.unshift({
-                        type: 'deduct',
-                        icon: 'fa-qrcode',
-                        iconBg: 'bg-amber-500',
-                        title: itemName,
-                        amountText: `- ฿${deductAmount.toLocaleString()}`,
-                        amountColor: 'text-red-600',
-                        badge: 'รอหัก',
-                        badgeStyle: 'bg-amber-100 text-amber-800',
-                        time: nowStr
-                    });
-
-                    updateDashboardUI();
-                    renderActivityList();
-                    renderAccountView();
-
-                    try {
-                        const formData = new URLSearchParams();
-                        formData.append('action', 'scan_deduct');
-                        formData.append('empId', appState.empId);
-                        formData.append('expenseType', itemName);
-                        formData.append('amount', deductAmount);
-                        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                    } catch (e) {}
-
-                    Swal.fire('บันทึกสำเร็จ!', `เพิ่มรายการ "${itemName}" (รอหัก ฿${deductAmount.toLocaleString()}) เรียบร้อยแล้ว`, 'success');
-                }
+                title: 'ยืนยันการเบิกของ?',
+                html: `<div class="text-sm text-left bg-red-50 p-3 rounded-xl border border-red-200 space-y-1">
+                        <div><b>รายการ:</b> ${esc(x.item)}</div>
+                        <div><b>บันทึกเป็นรายการรอหัก:</b> <strong class="text-red-600">฿ ${num(x.amount)}</strong></div>
+                       </div>`,
+                icon: 'question', showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ยืนยันเบิกของ', cancelButtonText: 'ยกเลิก'
+            }).then(async res => {
+                if (!res.isConfirmed) return;
+                Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const j = await api(Object.assign({ wl: 'scan' }, x));
+                    if (!j.ok) return apiError(j);
+                    await fetchUserData();
+                    Swal.fire('บันทึกแล้ว', `"${esc(j.item)}" รอหัก ฿${num(j.amount)}`, 'success');
+                } catch (e) { apiError(null); }
             });
         }
 
         function configureLiffIdPrompt() {
-            const currentId = resolveLiffId();
             Swal.fire({
                 title: 'เชื่อมต่อ LINE LIFF',
-                html: `<p class="text-xs text-gray-600 mb-2">กรอก <b>LIFF ID</b> จากหน้า LINE Developers เพื่อดึงรูปโปรไฟล์และชื่อ LINE ของคุณโดยอัตโนมัติ</p>`,
-                input: 'text',
-                inputValue: currentId,
-                inputPlaceholder: 'xxxx-xxxxxxxx',
-                showCancelButton: true,
-                confirmButtonText: 'บันทึกและเชื่อมต่อ',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#dc2626'
-            }).then((res) => {
-                if (res.isConfirmed && res.value) {
-                    localStorage.setItem('PBD_LIFF_ID', res.value.trim());
-                    window.location.reload();
-                }
-            });
+                html: `<p class="text-xs text-gray-600 mb-2">กรอก <b>LIFF ID</b> จาก LINE Developers</p>`,
+                input: 'text', inputValue: resolveLiffId(), inputPlaceholder: 'xxxx-xxxxxxxx',
+                showCancelButton: true, confirmButtonText: 'บันทึกและเชื่อมต่อ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626'
+            }).then(res => { if (res.isConfirmed && res.value) { try { localStorage.setItem('PBD_LIFF_ID', res.value.trim()); } catch (e) {} window.location.reload(); } });
         }
 
-        async function fetchUserData(lineUserId) {
-            try {
-                const response = await fetch(`${GAS_URL}?view=profile&lineUserId=${lineUserId}`);
-                const data = await response.json();
-                if (data.status === 'success') {
-                    appState.empId = data.empId || appState.empId;
-                    appState.name = data.name || appState.name;
-                    appState.role = data.role || appState.role;
-                    appState.branch = data.branch || appState.branch;
-                    appState.netBalance = data.netBalance ?? appState.netBalance;
-                    appState.pendingDeduct = data.pendingDeduct ?? appState.pendingDeduct;
-                    appState.pbdCoins = data.pbdCoins ?? appState.pbdCoins;
-                    updateDashboardUI();
-                    updateProfileView();
-                    renderAccountView();
-                }
-            } catch (error) {
-                console.warn('Using local state:', error);
-            }
-        }
-
-        function updateDashboardUI() {
-            document.getElementById('userName').innerText = appState.name;
-            document.getElementById('userRole').innerText = appState.role;
-            document.getElementById('netBalance').innerText = appState.netBalance.toLocaleString('th-TH', { minimumFractionDigits: 2 });
-            document.getElementById('pendingDeduct').innerText = appState.pendingDeduct.toLocaleString('th-TH');
-            document.getElementById('pbdCoins').innerText = appState.pbdCoins.toLocaleString('th-TH');
-            document.getElementById('modalCoinBalance').innerText = appState.pbdCoins.toLocaleString('th-TH');
-
-            // คำนวณเป้าหมายยอดขายเป็นตัว (Units)
-            const cur = appState.salesGoalUnits.current;
-            const target = appState.salesGoalUnits.target;
-            const days = appState.salesGoalUnits.daysLeft;
-            const pct = Math.min(100, Math.round((cur / target) * 100));
-            const remainUnits = Math.max(0, target - cur);
-            const perDay = days > 0 ? (remainUnits / days).toFixed(1).replace('.0', '') : remainUnits;
-
-            document.getElementById('currentSalesUnits').innerText = cur.toLocaleString('th-TH');
-            document.getElementById('targetSalesUnits').innerText = target.toLocaleString('th-TH');
-            document.getElementById('salesProgressBar').style.width = pct + '%';
-            document.getElementById('salesPercent').innerText = pct + '%';
-            document.getElementById('daysLeft').innerText = days;
-            document.getElementById('neededUnits').innerText = remainUnits;
-            document.getElementById('neededPerDay').innerText = perDay;
-        }
-
+        // ---------- คูปอง / ของรางวัล ----------
         function renderCouponsAndCatalog() {
-            const availList = appState.coupons.filter(c => c.status === 'Available');
-            const usedList = appState.coupons.filter(c => c.status === 'Used');
-            document.getElementById('availableCouponCount').innerText = availList.length;
-            document.getElementById('modalCoinBalance').innerText = appState.pbdCoins.toLocaleString('th-TH');
-
-            const availContainer = document.getElementById('myCouponsContainer');
-            if (availList.length === 0) {
-                availContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">ไม่มีคูปองที่พร้อมใช้งาน</div>`;
-            } else {
-                availContainer.innerHTML = availList.map(c => `
-                    <div class="border border-red-200 bg-red-50/30 rounded-2xl p-3.5 flex justify-between items-center shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 bg-red-600 text-white rounded-xl flex items-center justify-center text-xl shadow">
-                                <i class="fa-solid fa-ticket"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-sm text-gray-900">${c.rewardName}</p>
-                                <p class="text-[11px] text-gray-500">รหัส: <strong>${c.couponId}</strong> | แลกเมื่อ: ${c.dateRedeemed}</p>
-                            </div>
-                        </div>
-                        <button onclick="useCoupon('${c.couponId}')" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:brightness-110 active:scale-95 transition shrink-0">
-                            ใช้สิทธิ์ (Use)
-                        </button>
+            const avail = appState.coupons.filter(c => c.status === 'Available'), used = appState.coupons.filter(c => c.status === 'Used');
+            $id('availableCouponCount').innerText = avail.length;
+            $id('modalCoinBalance').innerText = num(appState.pbdCoins);
+            $id('myCouponsContainer').innerHTML = avail.length ? avail.map(c => `
+                <div class="border border-red-200 bg-red-50/30 rounded-2xl p-3.5 flex justify-between items-center gap-2 shadow-sm">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-11 h-11 bg-red-600 text-white rounded-xl flex items-center justify-center text-xl shadow shrink-0"><i class="fa-solid fa-ticket"></i></div>
+                        <div class="min-w-0"><p class="font-bold text-sm text-gray-900">${esc(c.rewardName)}</p><p class="text-[11px] text-gray-500">รหัส: <strong>${esc(c.couponId)}</strong> | แลกเมื่อ: ${esc(c.dateRedeemed)}</p></div>
                     </div>
-                `).join('');
-            }
-
-            const catalogContainer = document.getElementById('catalogContainer');
-            catalogContainer.innerHTML = appState.catalog.map(item => `
-                <div class="border border-gray-200 rounded-2xl p-3.5 flex justify-between items-center shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl">
-                            <i class="fa-solid ${item.icon}"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm text-gray-900">${item.name}</p>
-                            <p class="text-xs font-bold text-amber-600"><i class="fa-solid fa-coins mr-1"></i>${item.cost} PBD Coin</p>
-                        </div>
+                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:brightness-110 active:scale-95 transition shrink-0">ใช้สิทธิ์</button>
+                </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ไม่มีคูปองที่พร้อมใช้งาน</div>`;
+            $id('catalogContainer').innerHTML = appState.catalog.length ? appState.catalog.map(item => `
+                <div class="border border-gray-200 rounded-2xl p-3.5 flex justify-between items-center gap-2 shadow-sm">
+                    <div class="flex items-center gap-3 min-w-0">
+                        ${item.image ? `<img src="${esc(item.image)}" alt="" class="w-11 h-11 rounded-xl object-cover shrink-0">` : `<div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-gift"></i></div>`}
+                        <div class="min-w-0"><p class="font-bold text-sm text-gray-900">${esc(item.name)}</p><p class="text-xs font-bold text-amber-600"><i class="fa-solid fa-coins mr-1"></i>${num(item.cost)} PBD Coin</p></div>
                     </div>
-                    <button onclick="redeemReward('${item.rewardId}', '${item.name}', ${item.cost})" class="bg-gray-900 text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-red-600 transition shrink-0">
-                        แลกเลย
-                    </button>
-                </div>
-            `).join('');
-
-            const usedContainer = document.getElementById('usedCouponsContainer');
-            if (usedList.length === 0) {
-                usedContainer.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีประวัติการใช้คูปอง</div>`;
-            } else {
-                usedContainer.innerHTML = usedList.map(c => `
-                    <div class="border border-gray-200 bg-gray-50 rounded-2xl p-3.5 flex justify-between items-center opacity-75">
-                        <div>
-                            <p class="font-bold text-sm text-gray-700 line-through">${c.rewardName}</p>
-                            <p class="text-[11px] text-gray-500">รหัส: ${c.couponId} | ใช้เมื่อ: ${c.usedDate}</p>
-                        </div>
-                        <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold">ใช้แล้ว (Used)</span>
-                    </div>
-                `).join('');
-            }
+                    <button onclick="redeemReward('${esc(item.rewardId)}')" class="${appState.pbdCoins >= item.cost ? 'bg-gray-900 hover:bg-red-600' : 'bg-gray-300'} text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0">แลกเลย</button>
+                </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีของรางวัล</div>`;
+            $id('usedCouponsContainer').innerHTML = used.length ? used.map(c => `
+                <div class="border border-gray-200 bg-gray-50 rounded-2xl p-3.5 flex justify-between items-center gap-2 opacity-75">
+                    <div class="min-w-0"><p class="font-bold text-sm text-gray-700 line-through">${esc(c.rewardName)}</p><p class="text-[11px] text-gray-500">รหัส: ${esc(c.couponId)} | ใช้เมื่อ: ${esc(c.usedDate)}</p></div>
+                    <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold shrink-0">ใช้แล้ว</span>
+                </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีประวัติการใช้คูปอง</div>`;
         }
-
         function useCoupon(couponId) {
-            const target = appState.coupons.find(c => c.couponId === couponId);
-            if (!target) return;
-
+            const c = appState.coupons.find(x => x.couponId === couponId);
+            if (!c) return;
             Swal.fire({
-                title: 'คุณต้องการใช้สิทธิ์คูปองนี้ใช่หรือไม่?',
-                html: `<div class="text-sm text-gray-600">คูปอง: <strong class="text-red-600">${target.rewardName}</strong> (${couponId})<br>เมื่อกดยืนยัน สถานะจะเปลี่ยนเป็น <b>"ใช้แล้ว (Used)"</b> ทันที</div>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'ยืนยันใช้สิทธิ์',
-                cancelButtonText: 'ยกเลิก'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({ title: 'กำลังอัปเดตสถานะคูปอง...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-                    const nowStr = new Date().toLocaleString('th-TH');
-                    try {
-                        const formData = new URLSearchParams();
-                        formData.append('action', 'use_coupon');
-                        formData.append('couponId', couponId);
-                        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                    } catch (e) {}
-
-                    target.status = 'Used';
-                    target.usedDate = nowStr;
-                    appState.adminLogs.usage.unshift({
-                        couponId: target.couponId,
-                        empId: `${appState.empId} (${appState.name})`,
-                        rewardName: target.rewardName,
-                        usedDate: nowStr
-                    });
-
-                    renderCouponsAndCatalog();
-                    renderAccountView();
-                    switchRewardTab('usedCoupons');
-                    Swal.fire('ใช้คูปองสำเร็จ!', 'ระบบได้บันทึกเวลาการใช้สิทธิ์และส่งข้อมูลไปยังแอดมินกิจกรรมเรียบร้อยแล้ว', 'success');
-                }
+                title: 'ใช้สิทธิ์คูปองนี้?',
+                html: `<div class="text-sm text-gray-600">คูปอง: <strong class="text-red-600">${esc(c.rewardName)}</strong> (${esc(couponId)})<br>กดยืนยันแล้วสถานะจะเป็น <b>"ใช้แล้ว"</b> ทันที — ให้กดต่อหน้าแอดมินกิจกรรม</div>`,
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280', confirmButtonText: 'ยืนยันใช้สิทธิ์', cancelButtonText: 'ยกเลิก'
+            }).then(async r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const j = await api({ wl: 'use', couponId: couponId });
+                    if (!j.ok) return apiError(j);
+                    await fetchUserData(); switchRewardTab('usedCoupons');
+                    Swal.fire('ใช้คูปองแล้ว', `${esc(c.rewardName)} · ${esc(j.usedDate)}`, 'success');
+                } catch (e) { apiError(null); }
             });
         }
-
-        function redeemReward(rewardId, name, cost) {
-            if (appState.pbdCoins < cost) {
-                Swal.fire('เหรียญไม่เพียงพอ', `คุณต้องใช้ ${cost} PBD Coin ในการแลกรางวัลนี้`, 'error');
-                return;
-            }
+        function redeemReward(rewardId) {
+            const item = appState.catalog.find(x => x.rewardId === rewardId);
+            if (!item) return;
+            if (appState.pbdCoins < item.cost) { Swal.fire('เหรียญไม่พอ', `ต้องใช้ ${num(item.cost)} PBD Coin (มี ${num(appState.pbdCoins)})`, 'error'); return; }
             Swal.fire({
-                title: 'ยืนยันการแลกของรางวัล?',
-                text: `ใช้ ${cost} PBD Coin เพื่อแลก "${name}"`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                confirmButtonText: 'ยืนยันแลกรางวัล',
-                cancelButtonText: 'ยกเลิก'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    appState.pbdCoins -= cost;
-                    const newId = 'CPN-' + Math.floor(100 + Math.random() * 900);
-                    const nowStr = new Date().toLocaleString('th-TH');
-                    appState.coupons.unshift({
-                        couponId: newId,
-                        rewardName: name,
-                        dateRedeemed: 'วันนี้',
-                        status: 'Available',
-                        usedDate: null
-                    });
-                    appState.adminLogs.redeem.unshift({
-                        txId: 'TX-' + Math.floor(200 + Math.random() * 700),
-                        empId: `${appState.empId} (${appState.name})`,
-                        rewardName: name,
-                        coinCost: cost,
-                        date: nowStr
-                    });
-                    updateDashboardUI();
-                    renderCouponsAndCatalog();
-                    renderAccountView();
-                    switchRewardTab('myCoupons');
-                    Swal.fire('แลกสำเร็จ!', `คุณได้รับคูปอง ${name} เรียบร้อยแล้ว`, 'success');
-                }
+                title: 'ยืนยันแลกของรางวัล?', text: `ใช้ ${num(item.cost)} PBD Coin แลก "${item.name}"`, icon: 'question',
+                showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'ยืนยันแลก', cancelButtonText: 'ยกเลิก'
+            }).then(async r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title: 'กำลังแลก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const j = await api({ wl: 'redeem', rewardId: rewardId });
+                    if (!j.ok) return apiError(j);
+                    await fetchUserData(); switchRewardTab('myCoupons');
+                    Swal.fire('แลกสำเร็จ', `ได้คูปอง ${esc(j.rewardName)} (${esc(j.couponId)})`, 'success');
+                } catch (e) { apiError(null); }
             });
         }
-
         function switchRewardTab(tab) {
-            document.getElementById('tabContentMyCoupons').classList.add('hidden');
-            document.getElementById('tabContentCatalog').classList.add('hidden');
-            document.getElementById('tabContentUsed').classList.add('hidden');
-
-            ['tabBtnCoupons', 'tabBtnCatalog', 'tabBtnUsed'].forEach(id => {
-                const btn = document.getElementById(id);
-                btn.className = 'flex-1 py-3 text-gray-500 hover:text-gray-800';
-            });
-
-            if (tab === 'myCoupons') {
-                document.getElementById('tabContentMyCoupons').classList.remove('hidden');
-                document.getElementById('tabBtnCoupons').className = 'flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white';
-            } else if (tab === 'catalog') {
-                document.getElementById('tabContentCatalog').classList.remove('hidden');
-                document.getElementById('tabBtnCatalog').className = 'flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white';
-            } else {
-                document.getElementById('tabContentUsed').classList.remove('hidden');
-                document.getElementById('tabBtnUsed').className = 'flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white';
-            }
+            ['tabContentMyCoupons', 'tabContentCatalog', 'tabContentUsed'].forEach(i => $id(i).classList.add('hidden'));
+            ['tabBtnCoupons', 'tabBtnCatalog', 'tabBtnUsed'].forEach(i => $id(i).className = 'flex-1 py-3 text-gray-500 hover:text-gray-800');
+            const on = 'flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white';
+            if (tab === 'myCoupons') { $id('tabContentMyCoupons').classList.remove('hidden'); $id('tabBtnCoupons').className = on; }
+            else if (tab === 'catalog') { $id('tabContentCatalog').classList.remove('hidden'); $id('tabBtnCatalog').className = on; }
+            else { $id('tabContentUsed').classList.remove('hidden'); $id('tabBtnUsed').className = on; }
         }
 
+        // ---------- แอดมินกิจกรรม ----------
         function switchAdminTab(tab) {
             appState.currentAdminTab = tab;
-            document.getElementById('adminTabUsage').className = tab === 'usage'
-                ? 'flex-1 py-2.5 text-red-600 border-b-2 border-red-600 bg-white'
-                : 'flex-1 py-2.5 text-gray-500';
-            document.getElementById('adminTabRedeem').className = tab === 'redeem'
-                ? 'flex-1 py-2.5 text-red-600 border-b-2 border-red-600 bg-white'
-                : 'flex-1 py-2.5 text-gray-500';
+            $id('adminTabUsage').className = tab === 'usage' ? 'flex-1 py-2.5 text-red-600 border-b-2 border-red-600 bg-white' : 'flex-1 py-2.5 text-gray-500';
+            $id('adminTabRedeem').className = tab === 'redeem' ? 'flex-1 py-2.5 text-red-600 border-b-2 border-red-600 bg-white' : 'flex-1 py-2.5 text-gray-500';
             renderAdminLogs();
         }
-
         function renderAdminLogs() {
-            const q = (document.getElementById('adminSearchInput').value || '').toLowerCase();
-            const container = document.getElementById('adminLogContainer');
-
+            const q = ($id('adminSearchInput').value || '').toLowerCase(), box = $id('adminLogContainer'), L = appState.adminLogs || { usage: [], redeem: [] };
+            const has = (...xs) => xs.some(x => String(x || '').toLowerCase().includes(q));
             if (appState.currentAdminTab === 'usage') {
-                const list = appState.adminLogs.usage.filter(item =>
-                    item.empId.toLowerCase().includes(q) ||
-                    item.rewardName.toLowerCase().includes(q) ||
-                    item.couponId.toLowerCase().includes(q)
-                );
-                container.innerHTML = list.map(item => `
-                    <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-gray-900">${item.rewardName} <span class="text-red-600">(${item.couponId})</span></p>
-                            <p class="text-[11px] text-gray-600">พนักงาน: ${item.empId}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Used</span>
-                            <p class="text-[10px] text-gray-500 mt-1">${item.usedDate}</p>
-                        </div>
-                    </div>
-                `).join('') || `<div class="text-center py-6 text-gray-400">ไม่พบรายการ</div>`;
+                box.innerHTML = L.usage.filter(i => has(i.empId, i.rewardName, i.couponId)).map(i => `
+                    <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center gap-2">
+                        <div class="min-w-0"><p class="font-bold text-gray-900">${esc(i.rewardName)} <span class="text-red-600">(${esc(i.couponId)})</span></p><p class="text-[11px] text-gray-600">พนักงาน: ${esc(i.empId)}</p></div>
+                        <div class="text-right shrink-0"><span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">ใช้แล้ว</span><p class="text-[10px] text-gray-500 mt-1">${esc(i.usedDate)}</p></div>
+                    </div>`).join('') || `<div class="text-center py-6 text-gray-400">ไม่พบรายการ</div>`;
             } else {
-                const list = appState.adminLogs.redeem.filter(item =>
-                    item.empId.toLowerCase().includes(q) ||
-                    item.rewardName.toLowerCase().includes(q)
-                );
-                container.innerHTML = list.map(item => `
-                    <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-gray-900">${item.rewardName}</p>
-                            <p class="text-[11px] text-gray-600">พนักงาน: ${item.empId}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-bold text-amber-600">-${item.coinCost} Coin</span>
-                            <p class="text-[10px] text-gray-500 mt-1">${item.date}</p>
-                        </div>
-                    </div>
-                `).join('') || `<div class="text-center py-6 text-gray-400">ไม่พบรายการ</div>`;
+                box.innerHTML = L.redeem.filter(i => has(i.empId, i.rewardName)).map(i => `
+                    <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center gap-2">
+                        <div class="min-w-0"><p class="font-bold text-gray-900">${esc(i.rewardName)}</p><p class="text-[11px] text-gray-600">พนักงาน: ${esc(i.empId)}</p></div>
+                        <div class="text-right shrink-0"><span class="font-bold text-amber-600">-${num(i.coinCost)} Coin</span><p class="text-[10px] text-gray-500 mt-1">${esc(i.date)}</p></div>
+                    </div>`).join('') || `<div class="text-center py-6 text-gray-400">ไม่พบรายการ</div>`;
             }
         }
 
+        // ---------- เมนู / หน้าต่าง ----------
         function openSection(id) {
-            if (id === 'rewardsModal') {
-                renderCouponsAndCatalog();
-                document.getElementById('rewardsModal').classList.remove('hidden');
-            } else if (id === 'adminModal') {
-                renderAdminLogs();
-                document.getElementById('adminModal').classList.remove('hidden');
-            } else if (id === 'salesDashboardModal') {
-                renderAccountView();
-                document.getElementById('salesDashboardModal').classList.remove('hidden');
-            } else if (id === 'historyModal') {
+            if (id === 'rewardsModal') { renderCouponsAndCatalog(); $id('rewardsModal').classList.remove('hidden'); }
+            else if (id === 'adminModal') { if (!appState.isAdmin) return Swal.fire('เฉพาะแอดมิน', 'เมนูนี้สำหรับแอดมินกิจกรรม/ผู้บริหาร', 'info'); renderAdminLogs(); $id('adminModal').classList.remove('hidden'); }
+            else if (id === 'salesDashboardModal') { renderAccountView(); $id('salesDashboardModal').classList.remove('hidden'); }
+            else if (id === 'historyModal') {
+                const h = appState.history || [];
                 Swal.fire({
-                    title: '📊 ประวัติรายได้และยอดขายย้อนหลัง',
-                    html: `<div class="text-left text-xs space-y-2">
-                        <div class="flex justify-between border-b pb-1"><span>กันยายน 2569 (ขาย 48 ตัว):</span><strong class="text-green-600">฿ 18,200.00</strong></div>
-                        <div class="flex justify-between border-b pb-1"><span>สิงหาคม 2569 (ขาย 42 ตัว):</span><strong class="text-green-600">฿ 16,900.00</strong></div>
-                        <div class="flex justify-between pb-1"><span>กรกฎาคม 2569 (ขาย 38 ตัว):</span><strong class="text-green-600">฿ 15,100.00</strong></div>
-                    </div>`,
+                    title: '📊 ยอดขายย้อนหลัง',
+                    html: h.length ? `<div class="text-left text-xs space-y-2">${h.map(x => `
+                        <div class="flex justify-between gap-2 border-b pb-1"><span>${esc(x.start)} – ${esc(x.end)} · ขาย ${x.units === null ? '–' : num(x.units)} ตัว · ${x.points === null ? '–' : num(x.points)} พ้อย</span>
+                        <strong class="text-green-600 shrink-0">${x.estCommission ? '฿ ' + num(x.estCommission) : '–'}</strong></div>`).join('')}
+                        <p class="text-[10px] text-gray-400">ค่าคอม = พ้อย × เรทตามขั้น (ประมาณการ)</p></div>`
+                        : `<div class="text-xs text-gray-500">ยังไม่มีประวัติพีเรียดก่อนหน้า</div>`,
                     confirmButtonColor: '#dc2626'
                 });
             }
         }
-
-        function closeSection(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
+        function closeSection(id) { $id(id).classList.add('hidden'); }
         function openMoreExtensions() {
+            const leader = appState.leader && appState.leader.length, admin = appState.isAdmin;
             Swal.fire({
-                title: 'เมนูส่วนขยาย (Role-Based)',
-                html: `
-                    <div class="grid grid-cols-1 gap-2.5 mt-2 text-left">
-                        <button onclick="Swal.close(); openLeaderReport();" class="p-3 rounded-xl border border-red-200 bg-red-50 flex items-center gap-3">
-                            <i class="fa-solid fa-file-lines text-red-600 text-xl"></i>
-                            <div>
-                                <div class="font-bold text-sm text-gray-900">📋 ใบแจ้งยอด (สำหรับหัวหน้าทีม)</div>
-                                <div class="text-[11px] text-gray-500">สรุปยอดขายรายทีมและสถานะสแกนหน้านอกพื้นที่</div>
-                            </div>
-                        </button>
-                        <button onclick="Swal.close(); openSection('adminModal');" class="p-3 rounded-xl border border-gray-300 bg-gray-100 flex items-center gap-3">
-                            <i class="fa-solid fa-shield-halved text-gray-800 text-xl"></i>
-                            <div>
-                                <div class="font-bold text-sm text-gray-900">🛡️ ระบบตรวจสอบคูปอง (Activity Admin)</div>
-                                <div class="text-[11px] text-gray-500">ดูประวัติการแลกและกดใช้สิทธิ์แบบ Real-time</div>
-                            </div>
-                        </button>
-                        <button onclick="Swal.close(); configureLiffIdPrompt();" class="p-3 rounded-xl border border-amber-300 bg-amber-50 flex items-center gap-3">
-                            <i class="fa-brands fa-line text-green-600 text-xl"></i>
-                            <div>
-                                <div class="font-bold text-sm text-gray-900">ตั้งค่า LIFF ID (ดึงโปรไฟล์ LINE)</div>
-                                <div class="text-[11px] text-gray-500">ผูก LIFF ID เพื่อดึงรูปและชื่อจาก LINE</div>
-                            </div>
-                        </button>
-                    </div>
-                `,
-                showConfirmButton: false,
-                showCloseButton: true
-            });
-        }
-
-        function requestVerify() {
-            Swal.fire({
-                title: 'ขอตรวจสอบยอด',
-                input: 'textarea',
-                inputPlaceholder: 'ระบุรายละเอียดรายการที่ต้องการให้ฝ่ายบัญชี/แอดมินตรวจสอบ...',
-                showCancelButton: true,
-                confirmButtonText: 'ส่งคำขอ',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#dc2626'
-            }).then(res => {
-                if (res.isConfirmed && res.value) {
-                    Swal.fire('ส่งเรื่องสำเร็จ', 'แอดมินได้รับเรื่องขอตรวจสอบยอดของคุณแล้ว', 'success');
-                }
-            });
-        }
-
-        function openLeaderReport() {
-            Swal.fire({
-                title: '📋 ใบแจ้งยอด (สำหรับหัวหน้าทีม)',
-                text: 'สรุปยอดขายรายทีม (นับเป็นตัว) และสถานะการสแกนหน้านอกพื้นที่ของสมาชิกในทีม',
-                icon: 'info',
-                confirmButtonColor: '#dc2626'
-            });
-        }
-
-        function showNotifications() {
-            Swal.fire({
-                title: '🔔 การแจ้งเตือน (2)',
-                html: `<div class="text-left text-xs space-y-2">
-                    <div class="p-2.5 bg-red-50 rounded-lg border border-red-100"><b>รายการรอหักใหม่:</b> สแกนเบิกเสื้อ -฿300 (15 ต.ค. 10:24)</div>
-                    <div class="p-2.5 bg-green-50 rounded-lg border border-green-100"><b>โบนัสพิเศษเข้าแล้ว!</b> ได้โบนัสเงินสด ค่าคอมพิเศษ +฿150</div>
+                title: 'เมนูส่วนขยาย',
+                html: `<div class="grid grid-cols-1 gap-2.5 mt-2 text-left">
+                    ${leader ? `<button onclick="Swal.close(); openLeaderReport();" class="p-3 rounded-xl border border-red-200 bg-red-50 flex items-center gap-3">
+                        <i class="fa-solid fa-file-lines text-red-600 text-xl"></i>
+                        <div><div class="font-bold text-sm text-gray-900">📋 ใบแจ้งยอดทีม</div><div class="text-[11px] text-gray-500">ยอดขายรายคนในทีม (จากใบแจ้งยอด)</div></div></button>` : ''}
+                    ${admin ? `<button onclick="Swal.close(); openSection('adminModal');" class="p-3 rounded-xl border border-gray-300 bg-gray-100 flex items-center gap-3">
+                        <i class="fa-solid fa-shield-halved text-gray-800 text-xl"></i>
+                        <div><div class="font-bold text-sm text-gray-900">🛡️ ระบบตรวจสอบคูปอง</div><div class="text-[11px] text-gray-500">ประวัติการแลกและการใช้สิทธิ์ของทุกคน</div></div></button>` : ''}
+                    ${!leader && !admin ? `<div class="text-xs text-gray-500 text-center py-2">ยังไม่มีเมนูเพิ่มเติมสำหรับตำแหน่งของคุณ</div>` : ''}
                 </div>`,
+                showConfirmButton: false, showCloseButton: true
+            });
+        }
+        function requestVerify() {
+            if (!idToken) { Swal.fire('เปิดผ่านแอป LINE', 'ต้องเปิดจากลิงก์ในแอป LINE', 'info'); return; }
+            Swal.fire({
+                title: 'ขอตรวจสอบยอด', input: 'textarea', inputPlaceholder: 'ระบุรายการที่ต้องการให้แอดมินตรวจสอบ เช่น ยอดวันที่ 20 ขาดไป 1 ตัว',
+                showCancelButton: true, confirmButtonText: 'ส่งคำขอ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626',
+                inputValidator: v => !v || !v.trim() ? 'กรุณาระบุรายละเอียด' : undefined
+            }).then(async r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title: 'กำลังส่ง…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try { const j = await api({ wl: 'verify', text: r.value }); j.ok ? Swal.fire('ส่งเรื่องแล้ว', 'ผู้ดูแลระบบได้รับเรื่องทาง LINE แล้ว', 'success') : apiError(j); }
+                catch (e) { apiError(null); }
+            });
+        }
+        function openLeaderReport() {
+            const teams = appState.leader || [];
+            const col = s => s === 'เขียว' ? 'text-green-600' : s === 'เหลือง' ? 'text-amber-600' : s === 'แดง' ? 'text-red-600' : 'text-gray-500';
+            Swal.fire({
+                title: '📋 ใบแจ้งยอดทีม',
+                html: `<div class="text-left text-xs space-y-3 max-h-[60vh] overflow-y-auto">${teams.map(t => `
+                    <div class="border rounded-xl p-2.5">
+                        <div class="flex justify-between font-bold mb-1"><span>ทีม ${esc(t.team)} · ${esc(t.leader)}</span><span class="${col(t.status)}">${num(t.sold)}/${num(t.target)} ตัว</span></div>
+                        ${t.members.map(m => `<div class="flex justify-between border-t py-1"><span>${esc(m.name)} <span class="text-gray-400">${esc(m.role || '')}</span></span><span class="${col(m.status)} font-semibold">${num(m.sold)}/${num(m.target)}</span></div>`).join('')}
+                    </div>`).join('') || 'ไม่พบข้อมูลทีม'}
+                    <p class="text-[10px] text-gray-400">${appState.period ? 'พีเรียด ' + esc(appState.period.label) : ''}</p></div>`,
                 confirmButtonColor: '#dc2626'
             });
         }
+        function showNotifications() {
+            const pend = appState.activities.filter(a => a.kind === 'expense' && a.badge === 'รอหัก'), cp = appState.coupons.filter(c => c.status === 'Available');
+            const rows = pend.map(a => `<div class="p-2.5 bg-red-50 rounded-lg border border-red-100"><b>รายการรอหัก:</b> ${esc(a.title)} ${esc(a.amount)} <span class="text-gray-400">(${esc(a.time)})</span></div>`)
+                .concat(cp.map(c => `<div class="p-2.5 bg-green-50 rounded-lg border border-green-100"><b>คูปองพร้อมใช้:</b> ${esc(c.rewardName)} (${esc(c.couponId)})</div>`));
+            Swal.fire({ title: `🔔 การแจ้งเตือน (${rows.length})`, html: `<div class="text-left text-xs space-y-2">${rows.join('') || '<div class="text-gray-500 text-center">ไม่มีการแจ้งเตือน</div>'}</div>`, confirmButtonColor: '#dc2626' });
+        }
 
-        // สลับหน้าจอหลักทั้ง 4 แท็บ (หน้าหลัก, รายการ, บัญชี, โปรไฟล์)
+        // สลับหน้าจอหลัก (หน้าหลัก, รายการ, บัญชี, โปรไฟล์)
         function switchTab(tabName, subOption) {
-            ['home', 'list', 'wallet', 'profile'].forEach(view => {
-                const viewEl = document.getElementById('view-' + view);
-                if (viewEl) viewEl.classList.add('hidden');
-            });
-
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.classList.remove('text-red-600');
-                btn.classList.add('text-gray-700');
-            });
-            document.querySelectorAll('.nav-indicator').forEach(ind => {
-                ind.classList.remove('bg-red-600');
-                ind.classList.add('bg-transparent');
-            });
-
-            const targetView = document.getElementById('view-' + tabName);
-            if (targetView) targetView.classList.remove('hidden');
-
-            const activeBtn = document.getElementById('nav-' + tabName);
-            const activeInd = document.getElementById('ind-' + tabName);
-            if (activeBtn) {
-                activeBtn.classList.remove('text-gray-700');
-                activeBtn.classList.add('text-red-600');
-            }
-            if (activeInd) {
-                activeInd.classList.remove('bg-transparent');
-                activeInd.classList.add('bg-red-600');
-            }
-
-            if (tabName === 'list') {
-                renderActivityList();
-            } else if (tabName === 'wallet') {
-                renderAccountView();
-                if (subOption) switchWalletSubTab(subOption);
-            } else if (tabName === 'profile') {
-                updateProfileView();
-            }
-
+            ['home', 'list', 'wallet', 'profile'].forEach(v => { const el = $id('view-' + v); if (el) el.classList.add('hidden'); });
+            document.querySelectorAll('.nav-item').forEach(b => { b.classList.remove('text-red-600'); b.classList.add('text-gray-700'); });
+            document.querySelectorAll('.nav-indicator').forEach(i => { i.classList.remove('bg-red-600'); i.classList.add('bg-transparent'); });
+            const v = $id('view-' + tabName); if (v) v.classList.remove('hidden');
+            const b = $id('nav-' + tabName), i = $id('ind-' + tabName);
+            if (b) { b.classList.remove('text-gray-700'); b.classList.add('text-red-600'); }
+            if (i) { i.classList.remove('bg-transparent'); i.classList.add('bg-red-600'); }
+            if (tabName === 'list') renderActivityList();
+            else if (tabName === 'wallet') { renderAccountView(); if (subOption) switchWalletSubTab(subOption); }
+            else if (tabName === 'profile') updateProfileView();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        window.onload = () => {
-            initializeLiff();
-        };
+        window.onload = () => { initializeLiff(); };
     </script>
 </body>
 </html>
