@@ -218,21 +218,7 @@
             </button>
         </section>
 
-        <section id="mgMerchBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
-            <div class="flex items-center gap-2 mb-2">
-                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-mug-hot"></i></div>
-                <div><h2 class="text-base font-bold text-gray-900 leading-none">ร้านค้ารับคูปอง</h2><p class="text-[10px] text-gray-500 mt-1">ส่งลิงก์ให้พนักงานร้าน เปิดหน้าสแกน QR คูปอง + ดูประวัติ</p></div>
-            </div>
-            <div id="mgMerchants" class="space-y-1.5"></div>
-        </section>
 
-        <section id="mgEventsBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
-            <div class="flex items-center gap-2 mb-2">
-                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div>
-                <div><h2 class="text-base font-bold text-gray-900 leading-none">การตอบรับกิจกรรม</h2><p class="text-[10px] text-gray-500 mt-1">เพิ่ม/แก้กิจกรรมที่ชีต Wallet แท็บ Events · กดดูรายชื่อ</p></div>
-            </div>
-            <div id="mgEvents" class="space-y-1.5"></div>
-        </section>
 
         <section id="mgBranchBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
             <div class="flex items-center gap-2 mb-3">
@@ -442,6 +428,13 @@
     <!-- VIEW 2: หน้ารายการ (LIST VIEW - ย้ายรายการเคลื่อนไหวล่าสุดมาไว้หน้านี้) -->
     <!-- ========================================================================= -->
     <main id="view-list" class="hidden relative z-10 mx-4 mt-2 space-y-4">
+        <section id="mgEventsBox" data-mode="mgmt" class="hidden bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div>
+                <div><h2 class="text-base font-bold text-gray-900 leading-none">การตอบรับกิจกรรม</h2><p class="text-[10px] text-gray-500 mt-1">เพิ่ม/แก้กิจกรรมที่ชีต Wallet แท็บ Events · กดดูรายชื่อ</p></div>
+            </div>
+            <div id="mgEvents" class="space-y-1.5"></div>
+        </section>
         <!-- สินค้าที่ขาย + PBD Coin ที่ได้ -->
         <section data-mode="sales" class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
             <div class="flex items-center justify-between mb-3">
@@ -487,6 +480,13 @@
     <!-- VIEW 3: หน้าบัญชี (ACCOUNT / WALLET VIEW - รายการหัก, สินค้าที่ขาย, คูปองของฉัน) -->
     <!-- ========================================================================= -->
     <main id="view-wallet" class="hidden relative z-10 mx-4 mt-2 space-y-4">
+        <section id="mgMerchBox" data-mode="mgmt" class="hidden bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-mug-hot"></i></div>
+                <div><h2 class="text-base font-bold text-gray-900 leading-none">ร้านค้ารับคูปอง</h2><p class="text-[10px] text-gray-500 mt-1">ส่งลิงก์ให้พนักงานร้าน เปิดหน้าสแกน QR คูปอง + ดูประวัติ</p></div>
+            </div>
+            <div id="mgMerchants" class="space-y-1.5"></div>
+        </section>
         <!-- Mini Summary Banner -->
         <div class="bg-gradient-to-r from-gray-900 via-red-900 to-red-700 rounded-2xl p-4 text-white shadow-md flex justify-between items-center">
             <div>
@@ -553,9 +553,6 @@
             <div class="px-5 pb-5 relative">
                 <div class="flex justify-between items-end -mt-10 mb-3">
                     <img id="profileCardImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" referrerpolicy="no-referrer" alt="Profile" class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg object-cover bg-white">
-                    <button onclick="configureLiffIdPrompt()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-xl border border-gray-300 flex items-center gap-1.5">
-                        <i class="fa-brands fa-line text-green-600"></i> ตั้งค่า LIFF ID
-                    </button>
                 </div>
 
                 <h2 id="profileCardName" class="text-xl font-extrabold text-gray-900">–</h2>
