@@ -210,6 +210,14 @@
             <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-3 text-center"><p class="text-[10px] text-gray-500">คูปองรอใช้</p><p id="mgCoupons" class="text-base font-extrabold text-gray-900">0</p><p class="text-[10px] text-gray-400">เหรียญแจก <span id="mgCoinsEarned">0</span></p></div>
         </section>
 
+        <section id="mgFineBox" data-mode="mgmt" class="hidden relative z-10 mx-4">
+            <button onclick="openAllFines()" class="w-full bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 flex items-center justify-between gap-3 text-left active:scale-[.99] transition">
+                <span class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg"><i class="fa-solid fa-gavel"></i></span>
+                    <span><span class="block text-sm font-bold text-gray-900">ค่าใช้จ่าย / ค่าปรับ ขาด ลา สาย ทุกคน</span><span id="mgFineSub" class="block text-[11px] text-gray-500">พีเรียดนี้</span></span></span>
+                <span class="text-right shrink-0"><span class="block text-[10px] text-gray-500">ค่าปรับรวม</span><strong class="text-red-600">฿<span id="mgFineTotal">0</span></strong></span>
+            </button>
+        </section>
+
         <section id="mgMerchBox" data-mode="mgmt" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
             <div class="flex items-center gap-2 mb-2">
                 <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-mug-hot"></i></div>
@@ -270,7 +278,7 @@
                 <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </span>
-                <span>มีรายการรอหัก (Pending): <strong class="font-bold text-yellow-200">฿ <span id="pendingDeduct">0</span></strong></span>
+                <span>รอหัก: <strong class="font-bold text-yellow-200">฿<span id="pendingDeduct">0</span></strong> · ค่าปรับ: <strong class="font-bold text-yellow-200">฿<span id="fineTotalPill">0</span></strong></span>
                 <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
             </div>
         </section>
@@ -381,18 +389,6 @@
             </div>
         </section>
 
-        <!-- สินค้าที่ขาย + PBD Coin ที่ได้ -->
-        <section data-mode="sales" class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
-                    <div><h2 class="text-base font-bold text-gray-900 leading-none">ขายอะไร ได้กี่ Coin</h2><p id="homeSoldNote" class="text-[10px] text-gray-500 mt-1">พีเรียดนี้ · 1 พ้อย = 100 PBD Coin</p></div>
-                </div>
-                <div class="text-right"><p class="text-[10px] text-gray-500">Coin จากยอดขาย</p><p class="text-base font-extrabold text-amber-600">+<span id="homeSoldCoins">0</span></p></div>
-            </div>
-            <div id="homeSoldList" class="space-y-2"></div>
-        </section>
-
         <!-- Commission Status Card -->
         <section data-mode="sales" class="relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
             <div class="flex items-center justify-between mb-3">
@@ -446,6 +442,18 @@
     <!-- VIEW 2: หน้ารายการ (LIST VIEW - ย้ายรายการเคลื่อนไหวล่าสุดมาไว้หน้านี้) -->
     <!-- ========================================================================= -->
     <main id="view-list" class="hidden relative z-10 mx-4 mt-2 space-y-4">
+        <!-- สินค้าที่ขาย + PBD Coin ที่ได้ -->
+        <section data-mode="sales" class="bg-white rounded-2xl shadow-md border border-gray-200/80 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+                    <div><h2 class="text-base font-bold text-gray-900 leading-none">ขายอะไร ได้กี่ Coin</h2><p id="homeSoldNote" class="text-[10px] text-gray-500 mt-1">พีเรียดนี้ · 1 พ้อย = 100 PBD Coin</p></div>
+                </div>
+                <div class="text-right"><p class="text-[10px] text-gray-500">Coin จากยอดขาย</p><p class="text-base font-extrabold text-amber-600">+<span id="homeSoldCoins">0</span></p></div>
+            </div>
+            <div id="homeSoldList" class="space-y-2"></div>
+        </section>
+
         <div class="bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
             <!-- Header -->
             <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
@@ -506,6 +514,8 @@
 
             <!-- Sub-Tab 1: รายการหัก (Deductions) -->
             <div id="walletSubContent-deduct" class="p-4 space-y-2.5">
+                <div id="accountFinesBox" class="space-y-2"></div>
+                <p class="text-[11px] font-bold text-gray-500 pt-1">ค่าใช้จ่าย / รายการเบิก</p>
                 <div id="accountDeductionList" class="space-y-2.5"></div>
             </div>
 
@@ -813,7 +823,7 @@
         let appState = {
             loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
             netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
-            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100,
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100, fines: null, fineTotal: 0,
             sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
             history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
@@ -852,6 +862,10 @@
                 $id('mgTopTeams').innerHTML = (o.topTeams || []).map(row).join('') || '<span class="text-gray-400">–</span>';
                 $id('mgLowTeams').innerHTML = (o.lowTeams || []).map(row).join('') || '<span class="text-gray-400">–</span>';
             }
+            const AF = o.allFines;
+            $id('mgFineBox').classList.toggle('hidden', o.pendingCount === undefined);
+            $id('mgFineTotal').innerText = num(AF ? AF.total : 0);
+            $id('mgFineSub').innerText = AF ? `ค่าปรับ ${num(AF.people.length)} คน · รูปเช็คอิน ${num(AF.teams.length)} ทีม · ลา/ขาด ${num(AF.leave.length)} รายการ` : 'ยังไม่มีข้อมูล';
             const ms = o.merchants || [];
             $id('mgMerchBox').classList.toggle('hidden', !ms.length);
             $id('mgMerchants').innerHTML = ms.map((m, i) => `<div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-gray-50 text-xs">
@@ -951,6 +965,35 @@
                        <p class="text-[10px] text-gray-400 mt-2">รายชื่อทั้งหมดอยู่ที่แท็บ Event_Responses</p>` });
         }
 
+        // ---------- ค่าปรับ ขาด ลา สาย ----------
+        function finesHTML(f) {
+            if (!f) return `<div class="p-3 rounded-xl bg-gray-50 text-xs text-gray-500 text-center">${appState.loaded ? 'ยังไม่มีข้อมูลค่าปรับ (ไม่พบชื่อในใบแจ้งยอด)' : 'กำลังโหลด…'}</div>`;
+            const it = f.items || [], lv = f.leave || [];
+            return `<div class="rounded-xl border border-red-200 overflow-hidden">
+                <div class="flex justify-between items-center px-3 py-2 bg-red-50 text-xs"><span class="font-bold text-red-700"><i class="fa-solid fa-gavel"></i> ค่าปรับพีเรียดนี้</span><strong class="text-red-600 text-sm">฿${num(f.total)}</strong></div>
+                <div class="p-2.5 space-y-1.5 bg-white">
+                ${it.length ? it.map(x => `<div class="flex justify-between gap-2 text-xs"><span class="min-w-0"><strong>${esc(x.type)}</strong> <span class="text-gray-500">${num(x.count)} ครั้ง</span>${x.days ? '<br><span class="text-[10px] text-gray-400 break-words">วันที่ ' + esc(x.days) + '</span>' : ''}</span><span class="font-bold text-red-600 shrink-0">฿${num(x.amount)}</span></div>`).join('') : '<p class="text-xs text-green-600 text-center py-1"><i class="fa-solid fa-circle-check"></i> ไม่มีค่าปรับ</p>'}
+                ${lv.length ? '<div class="pt-1.5 mt-1 border-t border-dashed border-gray-200"><p class="text-[10px] font-bold text-gray-500 mb-1">ลา / ขาด (จากใบแจ้งยอด)</p>' + lv.map(l => `<div class="flex justify-between text-[11px]"><span>${esc(l.type)} <span class="text-gray-400">วันที่ ${esc(l.days)}</span></span><span class="font-semibold">${num(l.count)} วัน</span></div>`).join('') + '</div>' : ''}
+                <p class="text-[9px] text-gray-400 pt-1">ข้อมูล ณ ${esc(f.asOf || '-')} · หักออกจากยอดเงินสุทธิแล้ว</p>
+                </div></div>`;
+        }
+        function openAllFines(tab) {
+            if (adminOnly()) return;
+            const o = appState.overview || {}, F = o.allFines || { people: [], teams: [], leave: [] }, ex = o.expensesAll || [];
+            tab = tab || 'fine';
+            const tabs = [['fine', 'ค่าปรับรายคน'], ['photo', 'รูปเช็คอิน'], ['leave', 'ลา/ขาด'], ['exp', 'ค่าใช้จ่าย']];
+            const row = (l, r, sub) => `<div class="flex justify-between gap-2 p-2 rounded-lg bg-gray-50 text-xs"><span class="min-w-0">${l}${sub ? '<br><span class="text-[10px] text-gray-500">' + sub + '</span>' : ''}</span><strong class="shrink-0">${r}</strong></div>`;
+            const body = tab === 'fine' ? F.people.map(p => row(`<strong>${esc(p.name)}</strong> <span class="text-gray-400">${esc(p.branch)} ${esc(p.role || '')}</span>`, '<span class="text-red-600">฿' + num(p.total) + '</span>',
+                    [p.late ? 'สาย ' + p.late + ' (฿' + num(p.lateFine) + ')' : '', p.kh ? 'ขง ' + p.kh + ' (฿' + num(p.khFine) + ')' : '', p.noScan ? 'ไม่สแกน ' + p.noScan + ' (฿' + num(p.noScanFine) + ')' : ''].filter(Boolean).join(' · ')))
+                : tab === 'photo' ? F.teams.map(t => row(`<strong>ทีม ${esc(t.team)}</strong> <span class="text-gray-400">${esc(t.leader || '')}</span>`, '<span class="text-red-600">฿' + num(t.total) + '</span>', 'ส่งสาย ' + t.late + ' · ไม่ส่ง ' + t.miss + ' รอบ'))
+                : tab === 'leave' ? F.leave.map(l => row(`<strong>${esc(l.name)}</strong> <span class="text-gray-400">${esc(l.branch)} ${esc(l.team)}</span>`, num(l.count) + ' วัน', esc(l.type) + ' · วันที่ ' + esc(l.days)))
+                : ex.map(e => row(`<strong>${esc(e.name || e.empId)}</strong> <span class="text-gray-400">${esc(e.item)}</span>`, '฿' + num(e.amount), esc(e.date) + ' · ' + esc(e.status)));
+            Swal.fire({ title: 'ค่าใช้จ่าย / ค่าปรับ ทุกคน', confirmButtonText: 'ปิด', confirmButtonColor: '#6b7280', width: 560,
+                html: `<div class="flex gap-1 justify-center mb-2 flex-wrap">${tabs.map(t => `<button onclick="openAllFines('${t[0]}')" class="px-2.5 py-1 rounded-full text-xs font-semibold ${t[0] === tab ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'}">${t[1]}</button>`).join('')}</div>
+                       <p class="text-xs text-gray-500 mb-2">ค่าปรับรวม ฿${num(F.total || 0)}${F.asOf ? ' · ข้อมูล ณ ' + esc(F.asOf) : ''}</p>
+                       <div class="text-left space-y-1.5 max-h-[55vh] overflow-y-auto">${body.join('') || '<p class="text-center text-gray-400 text-sm py-4">ไม่มีรายการ</p>'}</div>` });
+        }
+
         /** ปุ่ม Sales Dashboard → PBD Dashboard ส่วนตัว (ลิงก์ ?k= จากระบบ) · ไม่มีลิงก์ = แสดงสรุปยอดในแอปแทน */
         function openPersonalDashboard() {
             const url = appState.dashUrl;
@@ -1035,6 +1078,7 @@
         function renderAccountView() {
             $id('walletViewNet').innerText = baht(appState.netBalance);
             $id('walletViewPending').innerText = num(appState.pendingDeduct);
+            $id('accountFinesBox').innerHTML = finesHTML(appState.fines);
             const ded = appState.activities.filter(a => a.kind === 'expense');
             $id('accountDeductionList').innerHTML = ded.map(d => { const s = actStyle(d); return `
                 <div class="p-3 rounded-xl border border-gray-200 bg-gray-50 flex justify-between items-center gap-2">
@@ -1095,6 +1139,7 @@
             $id('userName').innerText = appState.name;
             $id('userRole').innerText = appState.role || '';
             $id('netBalance').innerText = baht(appState.netBalance);
+            $id('fineTotalPill').innerText = num(appState.fineTotal || 0);
             $id('pendingDeduct').innerText = num(appState.pendingDeduct);
             $id('pbdCoins').innerText = num(appState.pbdCoins);
             $id('modalCoinBalance').innerText = num(appState.pbdCoins);
