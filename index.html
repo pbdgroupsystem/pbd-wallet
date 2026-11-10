@@ -124,6 +124,16 @@
         .aw-medal { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--c); color: #111; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #0b0b0d; }
         @keyframes awIn { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
         .aw-in { animation: awIn .45s ease both; }
+        .aw-gold { border-color: #F5C542 !important; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #F5C542, 0 6px 18px rgba(245,197,66,.65) !important; }
+        .aw-silver { border-color: #C9CED6 !important; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #B8BEC7, 0 6px 18px rgba(184,190,199,.7) !important; }
+        .aw-bronze { border-color: #D08A4C !important; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #C8783A, 0 6px 18px rgba(200,120,58,.6) !important; }
+        .aw-diamond { border-color: #a5f3fc !important; animation: awDia 3s linear infinite; }
+        @keyframes awDia { 0%,100% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #67e8f9, 0 0 22px rgba(103,232,249,.85); } 50% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #a78bfa, 0 0 22px rgba(167,139,250,.85); } }
+        .aw-crown { position: absolute; top: -17px; left: 50%; transform: translateX(-50%) rotate(-8deg); font-size: 20px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); cursor: pointer; z-index: 2; }
+        .aw-gold-c { color: #F5B700; } .aw-silver-c { color: #A8AFB9; } .aw-bronze-c { color: #C8783A; }
+        .aw-diamond-c { background: linear-gradient(90deg,#22d3ee,#a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .aw-hbadge { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; color: #111; cursor: pointer; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .aw-gold-b { background: #F5C542; } .aw-silver-b { background: #D7DCE3; } .aw-bronze-b { background: #E8A86E; } .aw-diamond-b { background: linear-gradient(90deg,#a5f3fc,#c4b5fd); }
         .aw-pic { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
     </style>
 </head>
@@ -168,16 +178,6 @@
         <!-- ===== กิจกรรม / ประชุม (แบนเนอร์ + ตอบรับ) ===== -->
         <section id="eventsBox" class="hidden relative z-10 mx-4 mt-1 space-y-3"></section>
 
-        <!-- ===== Chart รางวัลครึ่งปีหลัง (พ้อย) ===== -->
-        <section id="awardBox" class="hidden relative z-10 mx-4 rounded-3xl overflow-hidden award-card text-white">
-            <div class="px-4 pt-4 text-center">
-                <p class="text-[10px] tracking-[.3em] text-red-300 font-semibold">PBD AWARD CHART</p>
-                <h2 class="text-xl font-extrabold leading-tight mt-0.5">อันดับรางวัล<span id="awardYear"></span></h2>
-                <p id="awardSub" class="text-[11px] text-gray-400 mt-0.5"></p>
-            </div>
-            <div id="awardChips" class="aw-chips flex gap-1.5 overflow-x-auto px-4 pt-3 pb-1"></div>
-            <div id="awardBody" class="px-3 pb-4"></div>
-        </section>
 
         <!-- ===== หน้าแบบบริหาร (ผู้ดูแลระบบ / ผู้บริหาร / ตำแหน่งที่ไม่ใช่ฝ่ายขาย) ===== -->
         <section data-mode="mgmt" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
@@ -330,12 +330,13 @@
                         <span class="text-xs font-semibold text-gray-800">ขอตรวจสอบยอด</span>
                     </button>
 
-                    <!-- Item 4: แนะนำเพื่อนทำงาน (ลิงก์ไปหน้าโปรไฟล์พร้อม QR) -->
-                    <button onclick="switchTab('profile')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                            <i class="fa-solid fa-user-plus"></i>
+                    <!-- Item 4: PBD Award (Chart รางวัล · QR แนะนำเพื่อนทำงานยังอยู่ในหน้าโปรไฟล์) -->
+                    <button onclick="openAward()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-900 to-red-800 text-yellow-300 flex items-center justify-center text-2xl shadow-sm relative">
+                            <i class="fa-solid fa-trophy"></i>
+                            <span class="absolute -top-1 -right-1 bg-amber-400 text-black text-[8px] font-extrabold px-1.5 rounded-full shadow">NEW</span>
                         </div>
-                        <span class="text-xs font-semibold text-gray-800">แนะนำเพื่อนทำงาน</span>
+                        <span class="text-xs font-bold text-gray-800">PBD Award</span>
                     </button>
 
                     <!-- Item 5: แลกสิทธิประโยชน์ -->
@@ -724,6 +725,21 @@
     </div>
 
     <!-- Rewards & My Coupons Modal -->
+    <!-- ===== PBD Award (Chart รางวัลครึ่งปีหลัง · จัดอันดับด้วยพ้อย) ===== -->
+    <div id="awardModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeSection('awardModal')">
+        <div class="award-card w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto shadow-2xl animate-slide-up text-white relative">
+            <button onclick="closeSection('awardModal')" class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><i class="fa-solid fa-xmark"></i></button>
+            <div class="px-4 pt-5 text-center">
+                <p class="text-[10px] tracking-[.3em] text-red-300 font-semibold"><i class="fa-solid fa-trophy text-yellow-300"></i> PBD AWARD</p>
+                <h2 class="text-xl font-extrabold leading-tight mt-0.5">อันดับรางวัล<span id="awardYear"></span></h2>
+                <p id="awardSub" class="text-[11px] text-gray-400 mt-0.5"></p>
+                <div id="awardMine" class="hidden mt-2"></div>
+            </div>
+            <div id="awardChips" class="aw-chips flex gap-1.5 overflow-x-auto px-4 pt-3 pb-1"></div>
+            <div id="awardBody" class="px-3 pb-6"><p class="text-center text-sm text-gray-400 py-10">กำลังโหลดอันดับ…</p></div>
+        </div>
+    </div>
+
     <div id="rewardsModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl animate-slide-up">
             <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
@@ -1258,19 +1274,24 @@
         const AW_COLOR = { sales: '#ef4444', sup: '#f59e0b', branch: '#3b82f6', srep: '#ec4899', vrep: '#a855f7' };
         async function loadAwards() {
             if (awLoading || AW) return; awLoading = true;
-            try { const j = await api({ wl: 'awards' }); if (j && j.ok && j.cats && j.cats.some(c => c.items.length)) { AW = j; renderAwards(); } } catch (e) { }
+            try { const j = await api({ wl: 'awards' }); if (j && j.ok && j.cats && j.cats.some(c => c.items.length)) { AW = j; renderAwards(); applyAwardRing(); } } catch (e) { }
             awLoading = false;
+            if (!AW && $id('awardBody')) $id('awardBody').innerHTML = '<p class="text-center text-sm text-gray-400 py-10">ยังไม่มีข้อมูลอันดับ</p>';
         }
         function awInitial(n) { const t = String(n || '?').trim().replace(/^[เแโใไ]/, ''); return esc(t.charAt(0) || '?'); }
+        // Sale/Supervisor Representative: แสดงเฉพาะอันดับ 1
+        const AW_ONE = { srep: 1, vrep: 1 };
         function renderAwards() {
-            const box = $id('awardBox'); if (!AW || !box) return;
+            if (!AW || !$id('awardBody')) return;
             const cats = AW.cats.filter(c => c.items.length); if (!cats.length) return;
             if (awCat >= cats.length) awCat = 0;
-            box.classList.remove('hidden');
+            const mine = AW.mine || [];
+            $id('awardMine').classList.toggle('hidden', !mine.length);
+            $id('awardMine').innerHTML = mine.length ? '<span class="inline-flex flex-wrap justify-center gap-1">' + mine.map(m => '<span class="text-[11px] font-bold px-2.5 py-1 rounded-full" style="background:' + AW_TIER[m.rank].bg + ';color:#111"><i class="fa-solid fa-crown"></i> คุณได้ ' + esc(m.title) + ' อันดับ ' + m.rank + '</span>').join('') + '</span>' : '';
             $id('awardYear').innerText = ' ครึ่งปีหลัง ' + AW.year;
             $id('awardSub').innerText = AW.range + ' · จัดอันดับด้วยพ้อย · ข้อมูลถึง ' + AW.last + ' (' + AW.done + '/12 พีเรียด)';
             $id('awardChips').innerHTML = cats.map((c, i) => '<button type="button" class="aw-chip' + (i === awCat ? ' on' : '') + '" onclick="awPick(' + i + ')">' + esc(c.title) + '</button>').join('');
-            const c = cats[awCat], col = AW_COLOR[c.key] || '#ef4444', it = c.items, unit = c.key === 'branch' ? 'พ้อยสาขา' : 'พ้อย';
+            const c = cats[awCat], col = AW_COLOR[c.key] || '#ef4444', it = AW_ONE[c.key] ? c.items.filter(x => x.rank === 1).slice(0, 1) : c.items, unit = c.key === 'branch' ? 'พ้อยสาขา' : 'พ้อย';
             const spot = (x, r) => !x ? '<div></div>' :
                 '<div class="text-center aw-in" style="animation-delay:' + (r === 1 ? 0 : r === 2 ? .12 : .24) + 's">'
                 + '<div class="aw-ring r' + r + '">' + awFace(x) + '<span class="aw-medal">' + r + '</span></div>'
@@ -1301,6 +1322,26 @@
         function awGap(x) {
             if (x.rank === 1) return x.lead != null ? 'นำอันดับ 2 (' + x.leadOver + ') อยู่ ' + num(x.lead) + ' พ้อย' : '';
             return x.gap != null ? 'อีก ' + num(Math.round((x.gap + 0.01) * 100) / 100) + ' พ้อย แซง ' + x.gapTo + ' (อันดับ ' + (x.rank - 1) + ')' : '';
+        }
+        // ===== วงแหวนรูปโปรไฟล์ตามอันดับ PBD Award (ทอง/เงิน/ทองแดง · ได้มากกว่า 1 รางวัล = ไดมอนด์) =====
+        const AW_TIER = { 1: { cls: 'aw-gold', bg: '#F5C542', name: 'ทอง' }, 2: { cls: 'aw-silver', bg: '#D7DCE3', name: 'เงิน' }, 3: { cls: 'aw-bronze', bg: '#E0A06A', name: 'ทองแดง' }, d: { cls: 'aw-diamond', bg: 'linear-gradient(90deg,#a5f3fc,#c4b5fd)', name: 'ไดมอนด์' } };
+        function applyAwardRing() {
+            const mine = (AW && AW.mine) || [], t = mine.length > 1 ? AW_TIER.d : mine.length ? AW_TIER[mine[0].rank] : null;
+            ['profileImage', 'profileCardImage'].forEach(id => { const im = $id(id); if (!im) return; im.classList.remove('aw-gold', 'aw-silver', 'aw-bronze', 'aw-diamond'); if (t) im.classList.add(t.cls); });
+            let cr = $id('awardCrown');
+            if (!cr && $id('profileImage')) { cr = document.createElement('span'); cr.id = 'awardCrown'; cr.className = 'aw-crown hidden'; cr.innerHTML = '<i class="fa-solid fa-crown"></i>'; $id('profileImage').parentNode.appendChild(cr); }
+            if (cr) { cr.classList.toggle('hidden', !t); cr.className = 'aw-crown' + (t ? ' ' + t.cls + '-c' : ' hidden'); cr.onclick = e => { e.stopPropagation(); openAward(); }; }
+            let bd = $id('awardBadgeHdr');
+            if (!bd && $id('userBranchHeader')) { bd = document.createElement('span'); bd.id = 'awardBadgeHdr'; $id('userBranchHeader').parentNode.parentNode.appendChild(bd); }
+            if (bd) {
+                bd.className = t ? 'aw-hbadge ' + t.cls + '-b' : 'hidden';
+                bd.innerHTML = t ? '<i class="fa-solid fa-crown"></i> ' + (mine.length > 1 ? mine.length + ' รางวัล: ' : '') + mine.map(m => esc(m.title) + ' #' + m.rank).join(' · ') : '';
+                bd.onclick = () => openAward();
+            }
+        }
+        function openAward() {
+            $id('awardModal').classList.remove('hidden');
+            if (AW) renderAwards(); else loadAwards();
         }
         function awPick(i) { awCat = i; renderAwards(); }
         async function fetchUserData(fresh) {
