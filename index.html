@@ -109,6 +109,22 @@
             pointer-events: none;
             z-index: 20;
         }
+
+        /* ===== Chart รางวัล (แบบ Circle Chart) ===== */
+        .award-card { background: radial-gradient(120% 60% at 50% 0%, #2a0d10 0%, #0b0b0d 60%); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 12px 28px -8px rgba(0,0,0,.5); }
+        .aw-chips { scrollbar-width: none; } .aw-chips::-webkit-scrollbar { display: none; }
+        .aw-chip { white-space: nowrap; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.08); color: #d1d5db; flex: none; }
+        .aw-chip.on { background: #fff; color: #111; }
+        .aw-pod { display: grid; grid-template-columns: 1fr 1.25fr 1fr; align-items: end; gap: 4px; }
+        .aw-ring { --c: #F5C542; position: relative; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 0 4px #0b0b0d, 0 0 0 7px var(--c), 0 0 0 11px #0b0b0d, 0 0 0 13px var(--c), 0 10px 30px -6px var(--c);
+            background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 45%), linear-gradient(145deg, #dc2626, #7f1d1d); color: #fff; font-weight: 800; }
+        .aw-ring.r1 { width: 92px; height: 92px; font-size: 38px; } .aw-ring.r2, .aw-ring.r3 { width: 66px; height: 66px; font-size: 26px; }
+        .aw-ring.r2 { --c: #C9CED6; } .aw-ring.r3 { --c: #D08A4C; }
+        .aw-medal { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--c); color: #111; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #0b0b0d; }
+        @keyframes awIn { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
+        .aw-in { animation: awIn .45s ease both; }
+        .aw-pic { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
     </style>
 </head>
 <body class="pb-28 text-gray-800 relative min-h-screen max-w-md mx-auto shadow-2xl bg-gray-100 overflow-x-hidden">
@@ -151,6 +167,17 @@
     <main id="view-home" class="space-y-4">
         <!-- ===== กิจกรรม / ประชุม (แบนเนอร์ + ตอบรับ) ===== -->
         <section id="eventsBox" class="hidden relative z-10 mx-4 mt-1 space-y-3"></section>
+
+        <!-- ===== Chart รางวัลครึ่งปีหลัง (พ้อย) ===== -->
+        <section id="awardBox" class="hidden relative z-10 mx-4 rounded-3xl overflow-hidden award-card text-white">
+            <div class="px-4 pt-4 text-center">
+                <p class="text-[10px] tracking-[.3em] text-red-300 font-semibold">PBD AWARD CHART</p>
+                <h2 class="text-xl font-extrabold leading-tight mt-0.5">อันดับรางวัล<span id="awardYear"></span></h2>
+                <p id="awardSub" class="text-[11px] text-gray-400 mt-0.5"></p>
+            </div>
+            <div id="awardChips" class="aw-chips flex gap-1.5 overflow-x-auto px-4 pt-3 pb-1"></div>
+            <div id="awardBody" class="px-3 pb-4"></div>
+        </section>
 
         <!-- ===== หน้าแบบบริหาร (ผู้ดูแลระบบ / ผู้บริหาร / ตำแหน่งที่ไม่ใช่ฝ่ายขาย) ===== -->
         <section data-mode="mgmt" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
@@ -1225,10 +1252,55 @@
             if (!el) { el = document.createElement('div'); el.id = 'syncBadge'; el.className = 'fixed top-2 left-1/2 -translate-x-1/2 z-[60] bg-gray-900/80 text-white text-[11px] px-3 py-1 rounded-full shadow hidden'; el.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> กำลังอัปเดตข้อมูล…'; document.body.appendChild(el); }
             el.classList.toggle('hidden', !on);
         }
+
+        // ===== Chart รางวัลครึ่งปีหลัง (wl: 'awards') =====
+        let AW = null, awCat = 0, awLoading = false;
+        const AW_COLOR = { sales: '#ef4444', sup: '#f59e0b', branch: '#3b82f6', srep: '#ec4899', vrep: '#a855f7' };
+        async function loadAwards() {
+            if (awLoading || AW) return; awLoading = true;
+            try { const j = await api({ wl: 'awards' }); if (j && j.ok && j.cats && j.cats.some(c => c.items.length)) { AW = j; renderAwards(); } } catch (e) { }
+            awLoading = false;
+        }
+        function awInitial(n) { const t = String(n || '?').trim().replace(/^[เแโใไ]/, ''); return esc(t.charAt(0) || '?'); }
+        function renderAwards() {
+            const box = $id('awardBox'); if (!AW || !box) return;
+            const cats = AW.cats.filter(c => c.items.length); if (!cats.length) return;
+            if (awCat >= cats.length) awCat = 0;
+            box.classList.remove('hidden');
+            $id('awardYear').innerText = ' ครึ่งปีหลัง ' + AW.year;
+            $id('awardSub').innerText = AW.range + ' · จัดอันดับด้วยพ้อย · ข้อมูลถึง ' + AW.last + ' (' + AW.done + '/12 พีเรียด)';
+            $id('awardChips').innerHTML = cats.map((c, i) => '<button type="button" class="aw-chip' + (i === awCat ? ' on' : '') + '" onclick="awPick(' + i + ')">' + esc(c.title) + '</button>').join('');
+            const c = cats[awCat], col = AW_COLOR[c.key] || '#ef4444', it = c.items, unit = c.key === 'branch' ? 'พ้อยสาขา' : 'พ้อย';
+            const spot = (x, r) => !x ? '<div></div>' :
+                '<div class="text-center aw-in" style="animation-delay:' + (r === 1 ? 0 : r === 2 ? .12 : .24) + 's">'
+                + '<div class="aw-ring r' + r + '">' + awFace(x) + '<span class="aw-medal">' + r + '</span></div>'
+                + '<p class="mt-4 font-extrabold leading-tight ' + (r === 1 ? 'text-base' : 'text-sm') + ' truncate">' + esc(x.name) + '</p>'
+                + '<p class="text-[11px] text-gray-400 leading-tight">' + esc(x.branch || '') + (x.detail && c.key !== 'branch' ? ' · ' + esc(x.detail) : '') + '</p>'
+                + '<p class="font-extrabold leading-tight mt-0.5 ' + (r === 1 ? 'text-lg' : 'text-sm') + '" style="color:' + col + '">' + num(x.value) + ' <span class="text-[10px] font-semibold text-gray-400">' + unit + '</span></p>'
+                + (c.key === 'branch' && x.detail ? '<p class="text-[10px] text-gray-500 truncate">' + esc(x.detail) + '</p>' : '')
+                + '</div>';
+            const rest = it.slice(3);
+            $id('awardBody').innerHTML =
+                '<div class="text-center mt-2 mb-5"><p class="text-lg font-extrabold leading-tight" style="color:' + col + '">' + esc(c.title) + '</p><p class="text-[11px] text-gray-400">' + esc(c.desc) + '</p></div>'
+                + '<div class="aw-pod px-1">' + spot(it[1], 2) + spot(it[0], 1) + spot(it[2], 3) + '</div>'
+                + (rest.length ? '<div class="mt-5 rounded-2xl bg-white/5 border border-white/10 divide-y divide-white/10">' + rest.map((x, i) =>
+                    '<div class="flex items-center gap-3 px-3 py-2.5 aw-in" style="animation-delay:' + (.3 + i * .06) + 's"><span class="w-5 text-center text-sm font-extrabold text-gray-300">' + x.rank + '</span>'
+                    + '<span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-extrabold flex-none overflow-hidden" style="background:' + col + '33;color:' + col + ';box-shadow:0 0 0 2px ' + col + '66">' + awFace(x) + '</span>'
+                    + '<span class="flex-1 min-w-0"><span class="block text-sm font-bold truncate">' + esc(x.name) + '</span><span class="block text-[11px] text-gray-400 truncate">' + esc(x.branch || '') + (x.detail ? (x.branch ? ' · ' : '') + esc(x.detail) : '') + '</span></span>'
+                    + '<span class="text-sm font-extrabold" style="color:' + col + '">' + num(x.value) + '</span></div>').join('') + '</div>' : '')
+                + '<p class="text-[10px] text-gray-500 text-center mt-3">อันดับจากไฟล์สรุปอันดับ PBD ' + AW.year + ' · อัปเดต ' + esc(AW.updated || '') + '</p>';
+        }
+        // รูปโปรไฟล์ LINE (ถ้ามี) — โหลดไม่ได้ให้กลับไปแสดงตัวอักษรแรก
+        function awFace(x) {
+            const ini = '<span>' + awInitial(x.name) + '</span>';
+            if (!x.pic || !/^https:\/\/(s?profile|obs)\.line-scdn\.net\//.test(x.pic)) return ini;
+            return '<img src="' + esc(x.pic) + '" alt="" referrerpolicy="no-referrer" class="aw-pic" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:this.dataset.i}))" data-i="' + awInitial(x.name) + '">';
+        }
+        function awPick(i) { awCat = i; renderAwards(); }
         async function fetchUserData(fresh) {
             if (fresh) setSyncing(true);
             try {
-                const d = await api(fresh ? { wl: 'me', fresh: 1 } : { wl: 'me' });
+                const d = await api(Object.assign(fresh ? { wl: 'me', fresh: 1 } : { wl: 'me' }, appState.pictureUrl ? { pic: appState.pictureUrl } : {}));   // ส่งรูปโปรไฟล์ LINE ไปเก็บ (ใช้แสดงใน Chart รางวัล)
                 setSyncing(false);
                 if (d.ok) { try { localStorage.setItem(ME_KEY(), JSON.stringify(d)); } catch (e) { } }
                 if (d.notRegistered) { appState.loaded = true; showRegister(d.lineUserId); return; }
@@ -1238,6 +1310,7 @@
                 Object.assign(appState, d, { loaded: true });
                 if (appState.history === undefined) appState.history = [];
                 renderAll();
+                loadAwards();
             } catch (e) {
                 setSyncing(false);
                 if (appState.loaded) return;   // มีข้อมูลเดิมในเครื่องแสดงอยู่แล้ว
