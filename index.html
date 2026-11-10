@@ -1358,15 +1358,23 @@
             { id: 'requests', label: 'คำขอรอดำเนินการ', icon: 'fa-inbox', run: 'openRequests()', badge: R => R.nReq ? { t: R.nReq, c: 'bg-amber-500 text-white' } : null, show: R => R.exec },
             { id: 'pending', label: 'รายการรอหักทั้งหมด', icon: 'fa-file-invoice-dollar', run: 'openPendingAll()', show: R => R.exec },
             { id: 'coupon', label: 'ตรวจสอบคูปอง', icon: 'fa-ticket', run: "openSection('adminModal')", show: R => R.admin },
+            { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
             { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
         ];
+        // สแกนหน้านอกพื้นที่ (LIFF ของระบบสแกนหน้า) — เฉพาะผู้จัดการสาขา/หัวหน้าทีม
+        const FACESCAN_URL = 'https://liff.line.me/2012225566-KiRPtQxr';
+        function openFaceScan() {
+            try { if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) { liff.openWindow({ url: FACESCAN_URL, external: false }); return; } } catch (e) { }
+            location.href = FACESCAN_URL;
+        }
         function menuRights() {
             const o = appState.overview || {};
             return {
                 mgmt: appState.mode === 'mgmt',                         // หน้าแบบบริหาร
                 dash: !!appState.dashUrl,                               // มี PBD Dashboard ส่วนตัว
                 leader: !!(appState.leader && appState.leader.length),  // ดูแลทีม (หัวหน้าทีม/ผู้จัดการ)
+                fieldLead: !!(appState.leader && appState.leader.length) || /ผู้จัดการ|หัวหน้าทีม/.test(String(appState.position || '') + ' ' + String(appState.role || '')) || /Team_Leader/i.test(String(appState.role || '')),   // ผู้จัดการสาขา/หัวหน้าทีม
                 exec: o.pendingCount !== undefined,                     // ผู้ดูแลระบบ/ผู้บริหาร (เห็นคำขอ + รายการรอหัก)
                 admin: !!appState.isAdmin || (appState.mode === 'mgmt' && o.pendingCount !== undefined),   // แอดมินตรวจสอบคูปอง
                 nReq: (o.requests || []).length
