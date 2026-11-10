@@ -1012,6 +1012,7 @@
         // ---------- รายการเคลื่อนไหว ----------
         function actStyle(a) {
             if (a.kind === 'sale') return { icon: 'fa-camera', bg: 'bg-green-600', color: 'text-green-600', badge: '' };
+            if (a.kind === 'cash') return { icon: 'fa-money-bill-wave', bg: 'bg-emerald-500', color: 'text-emerald-600', badge: '' };   // คอมขายสด
             if (a.kind === 'coin') return a.type === 'earn' ? { icon: 'fa-coins', bg: 'bg-amber-500', color: 'text-green-600', badge: '' } : { icon: 'fa-gift', bg: 'bg-gray-700', color: 'text-red-600', badge: 'bg-gray-100 text-gray-700' };
             return { icon: 'fa-receipt', bg: a.badge === 'รอหัก' ? 'bg-amber-500' : 'bg-red-600', color: 'text-red-600', badge: a.badge === 'รอหัก' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800' };
         }
