@@ -135,6 +135,9 @@
         .aw-hbadge { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; color: #111; cursor: pointer; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .aw-gold-b { background: #F5C542; } .aw-silver-b { background: #D7DCE3; } .aw-bronze-b { background: #E8A86E; } .aw-diamond-b { background: linear-gradient(90deg,#a5f3fc,#c4b5fd); }
         .aw-pic { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+            /* เมนูใช้งานด่วนแบบไดนามิก: เส้นแบ่งช่อง (จำนวนช่องเปลี่ยนตามสิทธิ์) */
+        .qm-grid { background: rgba(229,231,235,.8); gap: 1px; }
+        .qm-grid > * { background: #fff; }
     </style>
 </head>
 <body class="pb-28 text-gray-800 relative min-h-screen max-w-md mx-auto shadow-2xl bg-gray-100 overflow-x-hidden">
@@ -207,27 +210,7 @@
                 <i class="fa-solid fa-briefcase text-base"></i><span>เมนูผู้บริหาร</span>
             </div>
             <div class="bg-white rounded-b-2xl rounded-tr-2xl shadow-md border border-gray-200/80 overflow-hidden">
-                <div class="grid grid-cols-3 divide-x divide-y divide-gray-200/80 text-center">
-                    <button onclick="openPersonalDashboard()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-chart-line"></i></div>
-                        <span class="text-xs font-bold text-red-700">PBD Dashboard</span></button>
-                    <button onclick="openLeaderReport()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-people-group"></i></div>
-                        <span class="text-xs font-semibold text-gray-800">ใบแจ้งยอดทีม</span></button>
-                    <button onclick="openRequests()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm relative"><i class="fa-solid fa-inbox"></i>
-                            <span id="mgReqBadge" class="hidden absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 rounded-full">0</span></div>
-                        <span class="text-xs font-semibold text-gray-800">คำขอรอดำเนินการ</span></button>
-                    <button onclick="openPendingAll()" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                        <span class="text-xs font-semibold text-gray-800">รายการรอหักทั้งหมด</span></button>
-                    <button onclick="openSection('adminModal')" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-ticket"></i></div>
-                        <span class="text-xs font-semibold text-gray-800">ตรวจสอบคูปอง</span></button>
-                    <button onclick="openSection('rewardsModal')" class="p-3.5 flex flex-col items-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm"><i class="fa-solid fa-gift"></i></div>
-                        <span class="text-xs font-semibold text-gray-800">แลกสิทธิประโยชน์</span></button>
-                </div>
+                <div id="mgmtMenu" class="grid grid-cols-3 text-center qm-grid"></div>
             </div>
         </section>
 
@@ -304,58 +287,7 @@
             </div>
 
             <div class="bg-white rounded-b-2xl rounded-tr-2xl shadow-md border border-gray-200/80 overflow-hidden">
-                <div class="grid grid-cols-3 divide-x divide-y divide-gray-200/80 text-center">
-                    <!-- Item 1: Sales Dashboard (ใหม่) -->
-                    <button onclick="openPersonalDashboard()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center text-2xl shadow-sm relative">
-                            <i class="fa-solid fa-chart-pie"></i>
-                            <span class="absolute -top-1 -right-1 bg-amber-400 text-black text-[8px] font-extrabold px-1.5 rounded-full shadow">NEW</span>
-                        </div>
-                        <span class="text-xs font-bold text-red-700">Sales Dashboard</span>
-                    </button>
-
-                    <!-- Item 2: ประวัติย้อนหลัง -->
-                    <button onclick="openSection('historyModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                        </div>
-                        <span class="text-xs font-semibold text-gray-800">ประวัติย้อนหลัง</span>
-                    </button>
-
-                    <!-- Item 3: ขอตรวจสอบยอด -->
-                    <button onclick="requestVerify()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm">
-                            <i class="fa-solid fa-magnifying-glass-dollar"></i>
-                        </div>
-                        <span class="text-xs font-semibold text-gray-800">ขอตรวจสอบยอด</span>
-                    </button>
-
-                    <!-- Item 4: PBD Award (Chart รางวัล · QR แนะนำเพื่อนทำงานยังอยู่ในหน้าโปรไฟล์) -->
-                    <button onclick="openAward()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-900 to-red-800 text-yellow-300 flex items-center justify-center text-2xl shadow-sm relative">
-                            <i class="fa-solid fa-trophy"></i>
-                            <span class="absolute -top-1 -right-1 bg-amber-400 text-black text-[8px] font-extrabold px-1.5 rounded-full shadow">NEW</span>
-                        </div>
-                        <span class="text-xs font-bold text-gray-800">PBD Award</span>
-                    </button>
-
-                    <!-- Item 5: แลกสิทธิประโยชน์ -->
-                    <button onclick="openSection('rewardsModal')" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-sm relative">
-                            <i class="fa-solid fa-gift"></i>
-                            <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 rounded-full">HOT</span>
-                        </div>
-                        <span class="text-xs font-semibold text-gray-800">แลกสิทธิประโยชน์</span>
-                    </button>
-
-                    <!-- Item 6: ส่วนขยายอื่นๆ (รวมใบแจ้งยอดหัวหน้า, คูปอง, แอดมิน) -->
-                    <button onclick="openMoreExtensions()" class="p-3.5 flex flex-col items-center justify-center gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">
-                        <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center text-2xl shadow-sm">
-                            <i class="fa-solid fa-grip"></i>
-                        </div>
-                        <span class="text-xs font-semibold text-gray-800">เมนูส่วนขยาย</span>
-                    </button>
-                </div>
+                <div id="quickMenu" class="grid grid-cols-3 text-center qm-grid"></div>
             </div>
         </section>
 
@@ -924,7 +856,7 @@
             if (o.pendingCount !== undefined) {
                 $id('mgPendTotal').innerText = num(o.pendingTotal); $id('mgPendCount').innerText = num(o.pendingCount);
                 const nReq = (o.requests || []).length;
-                $id('mgReqCount').innerText = num(nReq); $id('mgReqBadge').innerText = nReq; $id('mgReqBadge').classList.toggle('hidden', !nReq);
+                $id('mgReqCount').innerText = num(nReq);
                 $id('mgCoupons').innerText = num(o.couponsAvailable); $id('mgCoinsEarned').innerText = num(o.coinsEarned);
             }
         }
@@ -1366,7 +1298,7 @@
             }
         }
         function renderAll() {
-            renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems();
+            renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems(); renderMenus();
         }
         function showRegister(lineUserId) {
             $id('userName').innerText = lineDisplayName || 'ยังไม่ได้ลงทะเบียน';
@@ -1415,6 +1347,46 @@
         }
 
         // ---------- สแกน QR เบิกของ ----------
+        // ===== เมนูใช้งานด่วนแบบไดนามิก: แสดงเฉพาะเมนูที่บัญชีนี้มีสิทธิ์ =====
+        // show(R) คืน true = แสดง · R = สิทธิ์ที่ระบบส่งมาตอนเข้าสู่ระบบ (ไม่ได้เก็บสิทธิ์ไว้ในหน้าเว็บ ฝั่งระบบตรวจซ้ำทุกครั้ง)
+        const QUICK_MENU = [
+            { id: 'dash', label: R => R.mgmt ? 'PBD Dashboard' : 'Sales Dashboard', icon: R => R.mgmt ? 'fa-chart-line' : 'fa-chart-pie', run: 'openPersonalDashboard()', hero: 1, show: R => R.mgmt ? R.dash : true },
+            { id: 'history', label: 'ประวัติย้อนหลัง', icon: 'fa-clock-rotate-left', run: "openSection('historyModal')", show: R => !R.mgmt },
+            { id: 'verify', label: 'ขอตรวจสอบยอด', icon: 'fa-magnifying-glass-dollar', run: 'requestVerify()', show: R => !R.mgmt },
+            { id: 'team', label: 'ใบแจ้งยอดทีม', icon: 'fa-people-group', run: 'openLeaderReport()', show: R => R.leader },
+            { id: 'requests', label: 'คำขอรอดำเนินการ', icon: 'fa-inbox', run: 'openRequests()', badge: R => R.nReq ? { t: R.nReq, c: 'bg-amber-500 text-white' } : null, show: R => R.exec },
+            { id: 'pending', label: 'รายการรอหักทั้งหมด', icon: 'fa-file-invoice-dollar', run: 'openPendingAll()', show: R => R.exec },
+            { id: 'coupon', label: 'ตรวจสอบคูปอง', icon: 'fa-ticket', run: "openSection('adminModal')", show: R => R.admin },
+            { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
+            { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
+        ];
+        function menuRights() {
+            const o = appState.overview || {};
+            return {
+                mgmt: appState.mode === 'mgmt',                         // หน้าแบบบริหาร
+                dash: !!appState.dashUrl,                               // มี PBD Dashboard ส่วนตัว
+                leader: !!(appState.leader && appState.leader.length),  // ดูแลทีม (หัวหน้าทีม/ผู้จัดการ)
+                exec: o.pendingCount !== undefined,                     // ผู้ดูแลระบบ/ผู้บริหาร (เห็นคำขอ + รายการรอหัก)
+                admin: !!appState.isAdmin || (appState.mode === 'mgmt' && o.pendingCount !== undefined),   // แอดมินตรวจสอบคูปอง
+                nReq: (o.requests || []).length
+            };
+        }
+        function renderMenus() {
+            const R = menuRights(), box = $id(R.mgmt ? 'mgmtMenu' : 'quickMenu'); if (!box) return;
+            const v = x => typeof x === 'function' ? x(R) : x;
+            const items = QUICK_MENU.filter(m => { try { return m.show(R); } catch (e) { return false; } });
+            let html = items.map(m => {
+                const b = m.badge ? m.badge(R) : null;
+                const ic = m.hero ? 'bg-red-600 text-white' : m.dark ? 'bg-gradient-to-br from-gray-900 to-red-800 text-yellow-300' : 'bg-red-50 text-red-600';
+                return '<button type="button" onclick="' + m.run + '" class="p-3.5 flex flex-col items-center justify-start gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">'
+                    + '<div class="w-11 h-11 rounded-xl ' + ic + ' flex items-center justify-center text-2xl shadow-sm relative"><i class="fa-solid ' + v(m.icon) + '"></i>'
+                    + (b ? '<span class="absolute -top-1 -right-1 ' + b.c + ' text-[8px] font-extrabold px-1.5 rounded-full shadow">' + esc(b.t) + '</span>' : '') + '</div>'
+                    + '<span class="text-xs ' + (m.hero ? 'font-bold text-red-700' : 'font-semibold text-gray-800') + '">' + esc(v(m.label)) + '</span></button>';
+            }).join('');
+            for (let i = items.length; i % 3; i++) html += '<div></div>';   // เติมช่องว่างให้ครบแถว
+            box.innerHTML = html;
+        }
+        try { renderMenus(); } catch (e) { }   // แสดงเมนูพื้นฐานระหว่างรอข้อมูล
         function renderQuickItems() {
             const box = $id('quickItems'), items = appState.scanItems || [];
             $id('quickItemsTitle').classList.toggle('hidden', !items.length);
