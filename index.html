@@ -1278,6 +1278,7 @@
                 + '<p class="text-[11px] text-gray-400 leading-tight">' + esc(x.branch || '') + (x.detail && c.key !== 'branch' ? ' · ' + esc(x.detail) : '') + '</p>'
                 + '<p class="font-extrabold leading-tight mt-0.5 ' + (r === 1 ? 'text-lg' : 'text-sm') + '" style="color:' + col + '">' + num(x.value) + ' <span class="text-[10px] font-semibold text-gray-400">' + unit + '</span></p>'
                 + (c.key === 'branch' && x.detail ? '<p class="text-[10px] text-gray-500 truncate">' + esc(x.detail) + '</p>' : '')
+                + (awGap(x) ? '<p class="text-[10px] font-semibold leading-snug mt-1 px-1" style="color:#F5C542">' + esc(awGap(x)) + '</p>' : '')
                 + '</div>';
             const rest = it.slice(3);
             $id('awardBody').innerHTML =
@@ -1286,7 +1287,7 @@
                 + (rest.length ? '<div class="mt-5 rounded-2xl bg-white/5 border border-white/10 divide-y divide-white/10">' + rest.map((x, i) =>
                     '<div class="flex items-center gap-3 px-3 py-2.5 aw-in" style="animation-delay:' + (.3 + i * .06) + 's"><span class="w-5 text-center text-sm font-extrabold text-gray-300">' + x.rank + '</span>'
                     + '<span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-extrabold flex-none overflow-hidden" style="background:' + col + '33;color:' + col + ';box-shadow:0 0 0 2px ' + col + '66">' + awFace(x) + '</span>'
-                    + '<span class="flex-1 min-w-0"><span class="block text-sm font-bold truncate">' + esc(x.name) + '</span><span class="block text-[11px] text-gray-400 truncate">' + esc(x.branch || '') + (x.detail ? (x.branch ? ' · ' : '') + esc(x.detail) : '') + '</span></span>'
+                    + '<span class="flex-1 min-w-0"><span class="block text-sm font-bold truncate">' + esc(x.name) + '</span><span class="block text-[11px] text-gray-400 truncate">' + esc(x.branch || '') + (x.detail ? (x.branch ? ' · ' : '') + esc(x.detail) : '') + '</span>' + (awGap(x) ? '<span class="block text-[10px] font-semibold truncate" style="color:#F5C542">' + esc(awGap(x)) + '</span>' : '') + '</span>'
                     + '<span class="text-sm font-extrabold" style="color:' + col + '">' + num(x.value) + '</span></div>').join('') + '</div>' : '')
                 + '<p class="text-[10px] text-gray-500 text-center mt-3">อันดับจากไฟล์สรุปอันดับ PBD ' + AW.year + ' · อัปเดต ' + esc(AW.updated || '') + '</p>';
         }
@@ -1295,6 +1296,11 @@
             const ini = '<span>' + awInitial(x.name) + '</span>';
             if (!x.pic || !/^https:\/\/(s?profile|obs)\.line-scdn\.net\//.test(x.pic)) return ini;
             return '<img src="' + esc(x.pic) + '" alt="" referrerpolicy="no-referrer" class="aw-pic" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:this.dataset.i}))" data-i="' + awInitial(x.name) + '">';
+        }
+        // เทียบอันดับ: อันดับ 1 นำอยู่กี่พ้อย · อันดับอื่นต้องทำอีกกี่พ้อยจะแซงอันดับก่อนหน้า
+        function awGap(x) {
+            if (x.rank === 1) return x.lead != null ? 'นำอันดับ 2 (' + x.leadOver + ') อยู่ ' + num(x.lead) + ' พ้อย' : '';
+            return x.gap != null ? 'อีก ' + num(Math.round((x.gap + 0.01) * 100) / 100) + ' พ้อย แซง ' + x.gapTo + ' (อันดับ ' + (x.rank - 1) + ')' : '';
         }
         function awPick(i) { awCat = i; renderAwards(); }
         async function fetchUserData(fresh) {
