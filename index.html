@@ -138,6 +138,16 @@
             /* เมนูใช้งานด่วนแบบไดนามิก: เส้นแบ่งช่อง (จำนวนช่องเปลี่ยนตามสิทธิ์) */
         .qm-grid { background: rgba(229,231,235,.8); gap: 1px; }
         .qm-grid > * { background: #fff; }
+            /* หน้าสิทธิประโยชน์ (แบบการ์ดคูปอง) */
+        .rw-p { display:inline-flex; align-items:center; justify-content:center; border-radius:9999px; background:#F26A21; color:#fff; font-weight:900; box-shadow:0 0 0 4px #FDE3D3; flex:none; }
+        .rw-card { background:#fff; border:1px solid #E5E7EB; border-radius:18px; padding:12px; display:flex; gap:14px; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,.04); text-align:left; width:100%; transition:transform .1s; }
+        .rw-card:active { transform:scale(.99); }
+        .rw-img { width:38%; max-width:150px; aspect-ratio:1/1; border-radius:12px; overflow:hidden; flex:none; position:relative; }
+        .rw-img img { width:100%; height:100%; object-fit:cover; display:block; }
+        .rw-ph { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#FDE68A; background:radial-gradient(circle at 50% 45%, #9F1D1D 0 46%, #7F1414 47% 100%); border:3px solid #E7B54A; border-radius:12px; text-align:center; padding:8px; }
+        .rw-ph i { font-size:28px; }
+        .rw-ph span { font-weight:800; font-size:12px; line-height:1.2; color:#FFF3C4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .rw-clamp2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     </style>
 </head>
 <body class="pb-28 text-gray-800 relative min-h-screen max-w-md mx-auto shadow-2xl bg-gray-100 overflow-x-hidden">
@@ -673,41 +683,52 @@
     </div>
 
     <div id="rewardsModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl animate-slide-up">
-            <div class="p-4 bg-gradient-to-r from-gray-900 via-red-900 to-red-700 text-white flex justify-between items-center">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-gift text-xl text-yellow-300"></i>
-                    <div>
-                        <h3 class="font-bold text-base leading-none">สิทธิประโยชน์ & คูปองของฉัน</h3>
-                        <p class="text-[11px] text-gray-200 mt-0.5">เหรียญสะสม: <strong id="modalCoinBalance" class="text-yellow-300">–</strong> PBD Coin</p>
-                    </div>
-                </div>
-                <button onclick="closeSection('rewardsModal')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+        <div class="bg-[#F4F5F7] w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-slide-up">
+            <div class="bg-white px-4 pt-4 pb-3 flex justify-between items-center">
+                <h3 class="font-extrabold text-lg text-gray-900">สิทธิประโยชน์</h3>
+                <button onclick="closeSection('rewardsModal')" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200" aria-label="ปิด">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-
-            <div class="flex border-b border-gray-200 bg-gray-50 text-xs font-bold">
-                <button id="tabBtnCoupons" onclick="switchRewardTab('myCoupons')" class="flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white">
-                    🎟️ คูปองพร้อมใช้ (<span id="availableCouponCount">0</span>)
-                </button>
-                <button id="tabBtnCatalog" onclick="switchRewardTab('catalog')" class="flex-1 py-3 text-gray-500 hover:text-gray-800">
-                    🎁 แลกของรางวัล
-                </button>
-                <button id="tabBtnUsed" onclick="switchRewardTab('usedCoupons')" class="flex-1 py-3 text-gray-500 hover:text-gray-800">
-                    🕓 ประวัติการใช้
-                </button>
+            <!-- ยอดเหรียญ -->
+            <div class="bg-white px-4 pb-4">
+                <div class="rounded-2xl p-4 flex items-center justify-between bg-gradient-to-r from-orange-50 via-white to-red-50 border border-orange-100">
+                    <div>
+                        <p class="text-xs text-gray-500">เหรียญสะสมของฉัน</p>
+                        <p class="flex items-center gap-2 mt-1"><span class="rw-p w-7 h-7 text-sm">P</span><strong id="modalCoinBalance" class="text-2xl font-extrabold text-orange-600">–</strong><span class="text-sm font-bold text-orange-600">PBD Coin</span></p>
+                    </div>
+                    <i class="fa-solid fa-gift text-4xl text-orange-200"></i>
+                </div>
+            </div>
+            <div class="flex bg-white border-b border-gray-200 text-[13px] font-bold">
+                <button id="tabBtnCatalog" onclick="switchRewardTab('catalog')" class="flex-1 py-3">แลกคูปอง</button>
+                <button id="tabBtnCoupons" onclick="switchRewardTab('myCoupons')" class="flex-1 py-3">คูปองของฉัน (<span id="availableCouponCount">0</span>)</button>
+                <button id="tabBtnUsed" onclick="switchRewardTab('usedCoupons')" class="flex-1 py-3">ประวัติ</button>
             </div>
 
-            <div id="tabContentMyCoupons" class="p-4 overflow-y-auto space-y-3 flex-1">
-                <div id="myCouponsContainer" class="space-y-3"></div>
-            </div>
-
-            <div id="tabContentCatalog" class="hidden p-4 overflow-y-auto space-y-3 flex-1">
+            <div id="tabContentCatalog" class="hidden px-4 pt-4 pb-6 overflow-y-auto flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <h4 class="text-[17px] font-bold text-gray-800 shrink-0">คูปองพร้อมแลก</h4>
+                    <div class="h-px bg-gray-300 flex-1"></div>
+                    <button onclick="pickRewardSort()" class="w-10 h-10 rounded-xl bg-white border border-gray-200 text-gray-600 flex items-center justify-center shadow-sm" aria-label="เรียง/กรอง"><i class="fa-solid fa-sliders"></i></button>
+                </div>
+                <p id="rwSortLabel" class="hidden text-[11px] text-gray-500 -mt-1 mb-2"></p>
                 <div id="catalogContainer" class="space-y-3"></div>
             </div>
 
-            <div id="tabContentUsed" class="hidden p-4 overflow-y-auto space-y-3 flex-1">
+            <div id="tabContentMyCoupons" class="hidden px-4 pt-4 pb-6 overflow-y-auto flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <h4 class="text-[17px] font-bold text-gray-800 shrink-0">คูปองพร้อมใช้</h4>
+                    <div class="h-px bg-gray-300 flex-1"></div>
+                </div>
+                <div id="myCouponsContainer" class="space-y-3"></div>
+            </div>
+
+            <div id="tabContentUsed" class="hidden px-4 pt-4 pb-6 overflow-y-auto flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <h4 class="text-[17px] font-bold text-gray-800 shrink-0">ใช้แล้ว</h4>
+                    <div class="h-px bg-gray-300 flex-1"></div>
+                </div>
                 <div id="usedCouponsContainer" class="space-y-3"></div>
             </div>
         </div>
@@ -1502,31 +1523,66 @@
         }
 
         // ---------- คูปอง / ของรางวัล ----------
+        // หน้าสิทธิประโยชน์: การ์ดรูปใหญ่ + ชื่อ + รายละเอียด + วันหมดอายุ + ราคา (แบบบัตรสะสมคะแนน)
+        //   ช่องเพิ่มเติมจากชีต Rewards_Catalog (ถ้ามี): desc = รายละเอียด · expire = ใช้ได้ถึง (ไม่มี = ไม่แสดงบรรทัดนั้น)
+        let rwSort = 'default';
+        const RW_SORTS = { default: 'ตามลำดับในระบบ', can: 'แลกได้ตอนนี้ก่อน', low: 'ใช้เหรียญน้อย → มาก', high: 'ใช้เหรียญมาก → น้อย' };
+        function rwImg(src, name) {
+            const ph = `<div class="rw-ph"><i class="fa-solid fa-gift"></i><span>${esc(name)}</span></div>`;
+            if (!src || !/^https:\/\/.+\.(png|jpe?g|webp|gif)(\?.*)?$|^https:\/\/(lh\d|drive|i\.ibb|i\.imgur|profile\.line-scdn|obs\.line-scdn)/i.test(src)) return `<div class="rw-img">${ph}</div>`;
+            return `<div class="rw-img"><img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.innerHTML=this.parentNode.dataset.ph"></div>`.replace('<div class="rw-img">', `<div class="rw-img" data-ph="${esc(ph)}">`);
+        }
+        const rwDate = s => { if (!s) return ''; const d = new Date(String(s).slice(0, 10) + 'T00:00:00'); if (isNaN(d)) return esc(s); return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }); };
+        const rwCost = n => +n > 0 ? `${num(n)} PBD Coin` : 'ฟรี';
+        function pickRewardSort() {
+            Swal.fire({ title: 'เรียงคูปอง', input: 'radio', inputOptions: RW_SORTS, inputValue: rwSort, confirmButtonText: 'ใช้', confirmButtonColor: '#F26A21', showCancelButton: true, cancelButtonText: 'ยกเลิก' })
+                .then(r => { if (r.isConfirmed && r.value) { rwSort = r.value; renderCouponsAndCatalog(); } });
+        }
         function renderCouponsAndCatalog() {
             const avail = appState.coupons.filter(c => c.status === 'Available'), used = appState.coupons.filter(c => c.status === 'Used');
+            const coins = +appState.pbdCoins || 0, byName = n => appState.catalog.find(x => x.name === n) || {};
             $id('availableCouponCount').innerText = avail.length;
             $id('modalCoinBalance').innerText = num(appState.pbdCoins);
-            $id('myCouponsContainer').innerHTML = avail.length ? avail.map(c => `
-                <div class="border border-red-200 bg-red-50/30 rounded-2xl p-3.5 flex justify-between items-center gap-2 shadow-sm">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-11 h-11 bg-red-600 text-white rounded-xl flex items-center justify-center text-xl shadow shrink-0"><i class="fa-solid fa-ticket"></i></div>
-                        <div class="min-w-0"><p class="font-bold text-sm text-gray-900">${esc(c.rewardName)}</p><p class="text-[11px] text-gray-500">รหัส: <strong>${esc(c.couponId)}</strong> | แลกเมื่อ: ${esc(c.dateRedeemed)}</p></div>
+            // แลกคูปอง
+            let list = appState.catalog.slice();
+            if (rwSort === 'can') list.sort((a, b) => (coins >= b.cost) - (coins >= a.cost) || a.cost - b.cost);
+            else if (rwSort === 'low') list.sort((a, b) => a.cost - b.cost);
+            else if (rwSort === 'high') list.sort((a, b) => b.cost - a.cost);
+            const lbl = $id('rwSortLabel'); lbl.classList.toggle('hidden', rwSort === 'default'); lbl.innerText = 'เรียง: ' + RW_SORTS[rwSort];
+            $id('catalogContainer').innerHTML = list.length ? list.map(item => {
+                const ok = coins >= item.cost;
+                return `<button type="button" class="rw-card" onclick="redeemReward('${esc(item.rewardId)}')">
+                    ${rwImg(item.image, item.name)}
+                    <div class="min-w-0 flex-1 flex flex-col gap-1.5">
+                        <p class="font-bold text-[15px] text-gray-900 leading-snug rw-clamp2">${esc(item.name)}</p>
+                        <p class="text-[13px] text-gray-500 leading-snug rw-clamp2">${esc(item.desc || (+item.cost > 0 ? `ใช้ ${num(item.cost)} PBD Coin แลก${item.name}` : `รับฟรี ${item.name}`))}</p>
+                        ${item.expire ? `<p class="text-[13px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i>ใช้ได้จนถึง ${rwDate(item.expire)}</p>` : ''}
+                        <p class="flex items-center gap-2 mt-0.5"><span class="rw-p w-6 h-6 text-xs">P</span><span class="text-[19px] font-extrabold text-orange-600 leading-none">${rwCost(item.cost)}</span></p>
+                        ${ok ? '' : `<p class="text-[11px] text-gray-400">ขาดอีก ${num(item.cost - coins)} Coin</p>`}
                     </div>
-                    <button onclick="useCoupon('${esc(c.couponId)}')" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:brightness-110 active:scale-95 transition shrink-0"><i class="fa-solid fa-qrcode"></i> ใช้คูปอง</button>
-                </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ไม่มีคูปองที่พร้อมใช้งาน</div>`;
-            $id('catalogContainer').innerHTML = appState.catalog.length ? appState.catalog.map(item => `
-                <div class="border border-gray-200 rounded-2xl p-3.5 flex justify-between items-center gap-2 shadow-sm">
-                    <div class="flex items-center gap-3 min-w-0">
-                        ${item.image ? `<img src="${esc(item.image)}" alt="" class="w-11 h-11 rounded-xl object-cover shrink-0">` : `<div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-gift"></i></div>`}
-                        <div class="min-w-0"><p class="font-bold text-sm text-gray-900">${esc(item.name)}</p><p class="text-xs font-bold text-amber-600"><i class="fa-solid fa-coins mr-1"></i>${num(item.cost)} PBD Coin</p></div>
+                </button>`; }).join('') : `<div class="text-center py-10 text-gray-400 text-sm">ยังไม่มีคูปองให้แลก</div>`;
+            // คูปองของฉัน
+            $id('myCouponsContainer').innerHTML = avail.length ? avail.map(c => { const it = byName(c.rewardName); return `
+                <div class="rw-card">
+                    ${rwImg(it.image, c.rewardName)}
+                    <div class="min-w-0 flex-1 flex flex-col gap-1.5">
+                        <p class="font-bold text-[15px] text-gray-900 leading-snug rw-clamp2">${esc(c.rewardName)}</p>
+                        <p class="text-[12px] text-gray-500">รหัส <strong class="font-mono">${esc(c.couponId)}</strong></p>
+                        <p class="text-[12px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i>แลกเมื่อ ${esc(c.dateRedeemed)}</p>
+                        <button onclick="useCoupon('${esc(c.couponId)}')" class="self-start mt-1 bg-[#F26A21] text-white px-4 py-2 rounded-xl text-xs font-bold shadow active:scale-95"><i class="fa-solid fa-qrcode mr-1"></i>ใช้คูปอง</button>
                     </div>
-                    <button onclick="redeemReward('${esc(item.rewardId)}')" class="${appState.pbdCoins >= item.cost ? 'bg-gray-900 hover:bg-red-600' : 'bg-gray-300'} text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0">แลกเลย</button>
-                </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีของรางวัล</div>`;
-            $id('usedCouponsContainer').innerHTML = used.length ? used.map(c => `
-                <div class="border border-gray-200 bg-gray-50 rounded-2xl p-3.5 flex justify-between items-center gap-2 opacity-75">
-                    <div class="min-w-0"><p class="font-bold text-sm text-gray-700 line-through">${esc(c.rewardName)}</p><p class="text-[11px] text-gray-500">รหัส: ${esc(c.couponId)} | ใช้เมื่อ: ${esc(c.usedDate)}</p></div>
-                    <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold shrink-0">ใช้แล้ว</span>
-                </div>`).join('') : `<div class="text-center py-8 text-gray-400 text-xs">ยังไม่มีประวัติการใช้คูปอง</div>`;
+                </div>`; }).join('') : `<div class="text-center py-10 text-gray-400 text-sm">ยังไม่มีคูปองพร้อมใช้<br><button onclick="switchRewardTab('catalog')" class="mt-3 text-orange-600 font-bold">ไปแลกคูปอง</button></div>`;
+            // ประวัติ
+            $id('usedCouponsContainer').innerHTML = used.length ? used.map(c => { const it = byName(c.rewardName); return `
+                <div class="rw-card opacity-70">
+                    ${rwImg(it.image, c.rewardName)}
+                    <div class="min-w-0 flex-1 flex flex-col gap-1.5">
+                        <p class="font-bold text-[15px] text-gray-700 leading-snug rw-clamp2">${esc(c.rewardName)}</p>
+                        <p class="text-[12px] text-gray-500">รหัส ${esc(c.couponId)}</p>
+                        <p class="text-[12px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar-check"></i>ใช้เมื่อ ${esc(c.usedDate)}</p>
+                        <span class="self-start bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold">ใช้แล้ว</span>
+                    </div>
+                </div>`; }).join('') : `<div class="text-center py-10 text-gray-400 text-sm">ยังไม่มีประวัติการใช้คูปอง</div>`;
         }
         /** ใช้คูปอง = แสดง QR ให้พนักงานร้านสแกน (ร้านกดยืนยันแล้วสถานะเปลี่ยนเป็นใช้แล้วเอง) */
         let couponPoll = null;
@@ -1584,8 +1640,8 @@
         }
         function switchRewardTab(tab) {
             ['tabContentMyCoupons', 'tabContentCatalog', 'tabContentUsed'].forEach(i => $id(i).classList.add('hidden'));
-            ['tabBtnCoupons', 'tabBtnCatalog', 'tabBtnUsed'].forEach(i => $id(i).className = 'flex-1 py-3 text-gray-500 hover:text-gray-800');
-            const on = 'flex-1 py-3 text-red-600 border-b-2 border-red-600 bg-white';
+            ['tabBtnCoupons', 'tabBtnCatalog', 'tabBtnUsed'].forEach(i => $id(i).className = 'flex-1 py-3 text-gray-500 border-b-2 border-transparent');
+            const on = 'flex-1 py-3 text-orange-600 border-b-2 border-orange-500';
             if (tab === 'myCoupons') { $id('tabContentMyCoupons').classList.remove('hidden'); $id('tabBtnCoupons').className = on; }
             else if (tab === 'catalog') { $id('tabContentCatalog').classList.remove('hidden'); $id('tabBtnCatalog').className = on; }
             else { $id('tabContentUsed').classList.remove('hidden'); $id('tabBtnUsed').className = on; }
@@ -1618,7 +1674,7 @@
 
         // ---------- เมนู / หน้าต่าง ----------
         function openSection(id) {
-            if (id === 'rewardsModal') { renderCouponsAndCatalog(); $id('rewardsModal').classList.remove('hidden'); }
+            if (id === 'rewardsModal') { renderCouponsAndCatalog(); switchRewardTab('catalog'); $id('rewardsModal').classList.remove('hidden'); }   // เปิดที่หน้าแลกคูปองเสมอ
             else if (id === 'adminModal') { if (!appState.isAdmin) return Swal.fire('เฉพาะแอดมิน', 'เมนูนี้สำหรับแอดมินกิจกรรม/ผู้บริหาร', 'info'); renderAdminLogs(); $id('adminModal').classList.remove('hidden'); }
             else if (id === 'salesDashboardModal') { renderAccountView(); $id('salesDashboardModal').classList.remove('hidden'); }
             else if (id === 'historyModal') {
