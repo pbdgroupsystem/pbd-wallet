@@ -13,6 +13,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PBD Wallet">
+    <script src="firebase-config.js"></script>
     <!-- Google Fonts: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
@@ -596,6 +597,8 @@
                 <button id="btnPairCode" onclick="claimPairCode()" class="py-2.5 rounded-xl bg-gray-900 text-white"><i class="fa-solid fa-link mr-1"></i>ใส่รหัสเชื่อมเครื่อง</button>
                 <button onclick="showDevices()" class="py-2.5 rounded-xl bg-gray-100 text-gray-700"><i class="fa-solid fa-mobile-screen mr-1"></i>เครื่องที่เชื่อมไว้</button>
                 <button id="btnPasskey" onclick="togglePasskey()" class="hidden py-2.5 rounded-xl bg-gray-100 text-gray-700"><i class="fa-solid fa-fingerprint mr-1"></i><span id="pkLabel">สแกนนิ้ว/ใบหน้า</span></button>
+                <button id="btnPush" onclick="togglePush()" class="hidden py-2.5 rounded-xl bg-amber-500 text-white col-span-2"><i class="fa-solid fa-bell mr-1"></i><span id="pushLabel">เปิดแจ้งเตือนเงินเข้า</span></button>
+                <button onclick="showCash(590, null, true)" class="py-2.5 rounded-xl bg-gray-100 text-gray-700 col-span-2"><i class="fa-solid fa-volume-high mr-1"></i>ทดลองเสียงเงินเข้า</button>
                 <button id="btnUnpair" onclick="unpairThisDevice()" class="hidden py-2.5 rounded-xl bg-gray-100 text-red-600 col-span-2"><i class="fa-solid fa-link-slash mr-1"></i>ยกเลิกการเชื่อมเครื่องนี้</button>
             </div>
         </div>
@@ -1398,6 +1401,8 @@
             show('btnPairCode', IN_LINE || !DEVICE.mode);
             show('btnPasskey', DEVICE.mode && !!window.PublicKeyCredential);
             show('btnUnpair', DEVICE.mode);
+            show('btnPush', !IN_LINE && 'Notification' in window && 'serviceWorker' in navigator);
+            const ql = $id('pushLabel'); if (ql) ql.innerText = pushOn() ? 'ปิดแจ้งเตือนเงินเข้า' : 'เปิดแจ้งเตือนเงินเข้า';
             const pl = $id('pkLabel'); if (pl) pl.innerText = DEVICE.pk ? 'ปิดล็อกสแกนนิ้ว/หน้า' : 'เปิดล็อกสแกนนิ้ว/หน้า';
             const t = $id('devStatusText'); if (t) t.innerText = DEVICE.mode ? 'เชื่อมกับบัญชีแล้ว · ' + (DEVICE.name || '') + (DEVICE.pk ? ' · ล็อกด้วยสแกนนิ้ว/ใบหน้า' : '') : IS_STANDALONE ? 'ยังไม่ได้เชื่อมบัญชี' : 'ติดตั้งไว้ที่หน้าจอ เปิดได้โดยไม่ต้องเข้า LINE';
         }
@@ -1408,6 +1413,7 @@
             showConfigBtn(false);
             loadLocalMe();
             await fetchUserData();
+            cashFromUrl(); pushStartup();
         }
 
         // ---------- หน้าจับคู่เครื่อง (เปิดแอปจากไอคอนครั้งแรก) ----------
@@ -1594,7 +1600,84 @@
         });
 
         // service worker (เปิดเร็ว + ติดตั้งได้) — เฉพาะนอก LINE
-        if ('serviceWorker' in navigator && !IN_LINE && location.protocol === 'https:') { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); }); }
+        if ('serviceWorker' in navigator && !IN_LINE && (location.protocol === 'https:' || location.hostname === 'localhost')) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); }); }
+
+
+        // ===================== แจ้งเตือน "เงินเข้าแล้ว" =====================
+        // หน้าจอโทรศัพท์: Firebase Cloud Messaging (ระบบตรวจค่าคอมทุก 15 นาที ถ้าเพิ่ม → ส่ง) · เปิดแอปอยู่: เล่นเสียง + พูดจำนวนเงิน
+        // หมายเหตุ: แจ้งเตือนบนหน้าจอใช้เสียงแจ้งเตือนของโทรศัพท์ (เว็บแอปกำหนดเสียงเองไม่ได้) — เสียงที่สร้างเองเล่นเมื่อเปิดแอปอยู่ หรือกดแจ้งเตือนเข้ามา
+        const FB = self.PBD_FIREBASE, SND = self.PBD_SOUND || { url: 'sounds/cash.mp3', speak: true };
+        const pushOn = () => !!lsGet('PBD_FCM') && 'Notification' in window && Notification.permission === 'granted';
+        let fbMsg = null;
+        function loadScript(src) { return new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); }); }
+        async function fbMessaging() {
+            if (fbMsg) return fbMsg;
+            if (!FB || !FB.config) throw new Error('ยังไม่ได้ตั้งค่า Firebase (firebase-config.js)');
+            await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+            await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+            if (!firebase.apps.length) firebase.initializeApp(FB.config);
+            fbMsg = firebase.messaging();
+            fbMsg.onMessage(p => { const d = (p && p.data) || {}; if (d.kind === 'commission') { showCash(+d.amount, +d.total); fetchUserData(true); } });
+            return fbMsg;
+        }
+        async function pushRegister(silent) {
+            const m = await fbMessaging(), reg = await navigator.serviceWorker.ready;
+            const tok = await m.getToken({ vapidKey: FB.vapidKey, serviceWorkerRegistration: reg });
+            if (!tok) throw new Error('ขอรหัสแจ้งเตือนไม่ได้');
+            if (tok !== lsGet('PBD_FCM') || !silent) { const j = await api({ wl: 'pushsub', fcm: tok, dev: devName() }); if (!j.ok) throw new Error(j.error || 'บันทึกไม่สำเร็จ'); }
+            lsSet('PBD_FCM', tok); devUiRefresh();
+        }
+        async function togglePush() {
+            if (pushOn()) {
+                try { await api({ wl: 'pushoff', fcm: lsGet('PBD_FCM') }); } catch (e) { }
+                lsSet('PBD_FCM', ''); devUiRefresh(); Swal.fire('ปิดแจ้งเตือนแล้ว', '', 'success'); return;
+            }
+            if (!FB || !FB.config) { Swal.fire('ยังไม่พร้อม', 'ผู้ดูแลระบบยังไม่ได้ตั้งค่าระบบแจ้งเตือน', 'info'); return; }
+            if (IS_IOS && !IS_STANDALONE) { Swal.fire('ติดตั้งแอปก่อน', 'iPhone รับแจ้งเตือนได้เมื่อติดตั้ง PBD Wallet ไว้ที่หน้าจอโฮม แล้วเปิดจากไอคอน', 'info'); return; }
+            const perm = await Notification.requestPermission();
+            if (perm !== 'granted') { Swal.fire('ไม่ได้อนุญาตแจ้งเตือน', 'เปิดสิทธิ์แจ้งเตือนของแอปนี้ในการตั้งค่าโทรศัพท์ แล้วลองใหม่', 'warning'); return; }
+            Swal.fire({ title: 'กำลังเปิดแจ้งเตือน…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try { await pushRegister(false); unlockAudio(); Swal.fire('เปิดแจ้งเตือนแล้ว', 'ขายได้แล้วค่าคอมเพิ่ม ระบบจะแจ้ง "เงินเข้าแล้ว" (ตรวจทุก 15 นาที)', 'success'); }
+            catch (e) { Swal.fire('เปิดแจ้งเตือนไม่สำเร็จ', String(e && e.message || e), 'error'); }
+        }
+        // เสียง: เล่นไฟล์เสียง แล้วพูดจำนวนเงิน (ภาษาไทยจากเสียงของโทรศัพท์)
+        let cashAudio = null;
+        function unlockAudio() { try { cashAudio = cashAudio || new Audio(SND.url); cashAudio.muted = true; cashAudio.play().then(() => { cashAudio.pause(); cashAudio.currentTime = 0; cashAudio.muted = false; }).catch(() => { cashAudio.muted = false; }); } catch (e) { } }
+        document.addEventListener('pointerdown', unlockAudio, { once: true });
+        function speakTH(text) {
+            try {
+                if (!SND.speak || !window.speechSynthesis) return;
+                const u = new SpeechSynthesisUtterance(text); u.lang = 'th-TH'; u.rate = 1; u.pitch = 1.05;
+                const v = speechSynthesis.getVoices().find(x => /^th/i.test(x.lang)); if (v) u.voice = v;
+                speechSynthesis.cancel(); speechSynthesis.speak(u);
+            } catch (e) { }
+        }
+        async function playCash(amount) {
+            const words = (SND.SOUND_SAYS_MONEY_IN ? '' : 'เงินเข้าแล้ว ') + Number(amount || 0).toLocaleString('th-TH') + ' บาท';
+            try {
+                cashAudio = cashAudio || new Audio(SND.url); cashAudio.muted = false; cashAudio.currentTime = 0;
+                await cashAudio.play();
+                await new Promise(r => { cashAudio.onended = r; setTimeout(r, 4000); });
+                speakTH(words); return true;
+            } catch (e) { return false; }
+        }
+        async function showCash(amount, total, test) {
+            if (!(amount > 0)) return;
+            const ok = await playCash(amount);
+            Swal.fire({
+                html: `<div class="text-5xl mb-2">💰</div><p class="text-lg font-extrabold text-gray-900">เงินเข้าแล้ว</p><p class="text-4xl font-extrabold text-green-600 my-1">+${num(amount)} บาท</p>
+                       ${total ? `<p class="text-xs text-gray-500">ค่าคอมพีเรียดนี้ประมาณ ${num(total)} บาท (ยังไม่หักรายการ)</p>` : ''}${test ? '<p class="text-[11px] text-gray-400 mt-1">ทดลองเสียง</p>' : ''}`,
+                showConfirmButton: !ok, confirmButtonText: '<i class="fa-solid fa-volume-high"></i> ฟังเสียง', confirmButtonColor: '#16a34a',
+                showCloseButton: true, timer: ok ? 5000 : undefined
+            }).then(r => { if (r.isConfirmed) playCash(amount); });
+        }
+        // กดแจ้งเตือนเข้ามา (?cash=590) หรือ service worker ส่งข้อความมา (แอปเปิดอยู่)
+        function cashFromUrl() {
+            const c = +new URLSearchParams(location.search).get('cash');
+            if (c > 0) { try { history.replaceState(null, '', location.pathname); } catch (e) { } setTimeout(() => showCash(c), 600); }
+        }
+        if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { const d = e.data || {}; if (d.type === 'cash') { showCash(+d.amount, +d.total); fetchUserData(true); } });
+        async function pushStartup() { if (pushOn() && FB && FB.config) { try { await pushRegister(true); } catch (e) { } } }
 
         async function initializeLiff() {
             renderAll();
@@ -1616,6 +1699,7 @@
                 showConfigBtn(false);
                 loadLocalMe();
                 await fetchUserData();
+                cashFromUrl(); if (!IN_LINE) pushStartup();
                 handlePairParam();   // เปิดจากลิงก์ "ยืนยันใน LINE" ของแอปบนเครื่อง (?pair=รหัส)
             } catch (err) {
                 console.error('LIFF Init Error:', err);
