@@ -3,7 +3,17 @@
  * ได้จาก Firebase console › Project settings › General › Your apps (Web) › SDK setup and configuration › Config
  * vapidKey: Project settings › Cloud Messaging › Web Push certificates › Key pair
  * ยังไม่กรอก (null) = ปิดแจ้งเตือนบนหน้าจอ แต่เสียงในแอปยังทำงาน */
-self.PBD_FIREBASE = null;
+self.PBD_FIREBASE = {
+  config: {
+    apiKey: 'AIzaSyC8A6wgc6Rf8REhuH4XTYqUUPiae2Sny9U',
+    authDomain: 'pbd-wallet.firebaseapp.com',
+    projectId: 'pbd-wallet',
+    storageBucket: 'pbd-wallet.firebasestorage.app',
+    messagingSenderId: '242090903335',
+    appId: '1:242090903335:web:91083817d3ae267cdc8b02'
+  },
+  vapidKey: 'BDxryvNTW3vDswNBV3UjmCMUu2pq9UEuHw0JrbcMaghvFF_RQqQtb3eRSKy5epVH48JSTA1gMahXEe-T8sJzhuA'
+};
 /* ตัวอย่างเมื่อกรอกแล้ว:
 self.PBD_FIREBASE = {
   config: { apiKey: '...', authDomain: '....firebaseapp.com', projectId: '...', storageBucket: '....appspot.com', messagingSenderId: '...', appId: '...' },

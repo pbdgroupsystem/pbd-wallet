@@ -4,7 +4,7 @@
  * ไม่แตะคำขอไปที่อื่น (ระบบหลังบ้าน GAS, LINE, CDN) → ข้อมูลยอดเงิน/คูปองไม่ถูกเก็บโดย service worker
  * แจ้งเตือน "เงินเข้าแล้ว": รับจาก Firebase Cloud Messaging (ข้อความแบบ data) แล้วแสดงเอง · กดแล้วเปิดแอป + เล่นเสียง
  * แก้ไฟล์นี้หรือเปลี่ยนไฟล์เสียงเมื่อไร ให้เปลี่ยน VERSION เพื่อล้างของเก่า */
-const VERSION = 'pbd-wallet-v3';
+const VERSION = 'pbd-wallet-v4';
 const SHELL = ['./', './index.html', './manifest.json', './firebase-config.js', './sounds/cash.mp3', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 try { importScripts('./firebase-config.js'); } catch (e) { }
