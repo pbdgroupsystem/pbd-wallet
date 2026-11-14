@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PBD Smart</title>
+    <!-- แอปบนเครื่อง (PWA) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#991B1B">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PBD Wallet">
     <!-- Google Fonts: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
@@ -573,6 +582,23 @@
                 </button>
             </div>
         </div>
+        <!-- แอปบนเครื่อง (PWA) -->
+        <div class="bg-white rounded-3xl shadow-md border border-gray-200/80 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <img src="icons/icon-192.png" alt="" class="w-11 h-11 rounded-xl shadow">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">แอป PBD Wallet บนเครื่อง</h3>
+                    <p id="devStatusText" class="text-xs text-gray-500">ติดตั้งไว้ที่หน้าจอ เปิดได้โดยไม่ต้องเข้า LINE</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                <button id="btnInstallApp" onclick="installApp()" class="py-2.5 rounded-xl bg-red-600 text-white"><i class="fa-solid fa-download mr-1"></i>ติดตั้งแอป</button>
+                <button id="btnPairCode" onclick="claimPairCode()" class="py-2.5 rounded-xl bg-gray-900 text-white"><i class="fa-solid fa-link mr-1"></i>ใส่รหัสเชื่อมเครื่อง</button>
+                <button onclick="showDevices()" class="py-2.5 rounded-xl bg-gray-100 text-gray-700"><i class="fa-solid fa-mobile-screen mr-1"></i>เครื่องที่เชื่อมไว้</button>
+                <button id="btnPasskey" onclick="togglePasskey()" class="hidden py-2.5 rounded-xl bg-gray-100 text-gray-700"><i class="fa-solid fa-fingerprint mr-1"></i><span id="pkLabel">สแกนนิ้ว/ใบหน้า</span></button>
+                <button id="btnUnpair" onclick="unpairThisDevice()" class="hidden py-2.5 rounded-xl bg-gray-100 text-red-600 col-span-2"><i class="fa-solid fa-link-slash mr-1"></i>ยกเลิกการเชื่อมเครื่องนี้</button>
+            </div>
+        </div>
     </main>
 
     <!-- ========================================================================= -->
@@ -837,7 +863,7 @@
         const num = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
 
         async function api(body) {
-            const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ idToken: idToken, accessToken: accessToken }, body)) });
+            const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign(DEVICE.mode ? { dt: DEVICE.token } : { idToken: idToken, accessToken: accessToken }, body)) });
             const j = await r.json();
             return j;
         }
@@ -1011,6 +1037,7 @@
         }
         /** token LINE หมดอายุ/ไม่ผ่าน → ล็อกอินใหม่อัตโนมัติ 1 ครั้ง (กันวนซ้ำ) */
         function relogin() {
+            if (DEVICE.mode) { devForget(); showPairScreen('เครื่องนี้ถูกยกเลิกการเชื่อม หรือหมดอายุ — เชื่อมใหม่อีกครั้ง'); return true; }
             let n = 0; try { n = +sessionStorage.getItem('PBD_RELOGIN') || 0; sessionStorage.setItem('PBD_RELOGIN', n + 1); } catch (e) { n = 9; }
             if (n >= 1 || typeof liff === 'undefined') return false;
             if (liff.isInClient && liff.isInClient()) { window.location.reload(); return true; }
@@ -1344,8 +1371,237 @@
             });
         }
 
+
+        // ===================== แอปบนเครื่อง (PWA) =====================
+        // ยืนยันตัวตน: ครั้งแรกจับคู่เครื่องผ่าน LINE (รหัส 6 หลัก) → ได้รหัสประจำเครื่อง เก็บในเครื่องนี้ ใช้แทน LINE ทุกครั้ง
+        // ล็อกด้วยสแกนนิ้ว/ใบหน้า (Passkey): ตรวจที่เครื่องก่อนแสดงข้อมูล — กันคนอื่นหยิบเครื่องไปเปิด (เป็นล็อกในเครื่อง ระบบหลังบ้านไม่ได้ตรวจซ้ำ)
+        const IN_LINE = /\bLine\//i.test(navigator.userAgent);
+        const IS_STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+        const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const DEVICE = { mode: false, token: '', id: '', name: '', pk: '' };
+        const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+        const lsSet = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) { } };
+        DEVICE.token = lsGet('PBD_DT'); DEVICE.id = lsGet('PBD_DT_ID'); DEVICE.name = lsGet('PBD_DT_NAME'); DEVICE.pk = lsGet('PBD_PK');
+        const webLoginWanted = () => { try { return sessionStorage.getItem('PBD_WEBLOGIN') === '1'; } catch (e) { return false; } };
+        function devForget() {
+            ['PBD_DT', 'PBD_DT_ID', 'PBD_DT_NAME', 'PBD_PK'].forEach(k => lsSet(k, ''));
+            try { localStorage.removeItem(ME_KEY()); } catch (e) { }
+            Object.assign(DEVICE, { mode: false, token: '', id: '', name: '', pk: '' });
+        }
+        function devName() {
+            const ua = navigator.userAgent, m = ua.match(/Android [\d.]+; ([^;)]+?)(?: Build|\))/);
+            return (IS_IOS ? (/iPad/.test(ua) ? 'iPad' : 'iPhone') : m ? m[1].trim() : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'อุปกรณ์') + ' · แอป';
+        }
+        function devUiRefresh() {
+            const show = (id, on) => { const e = $id(id); if (e) e.classList.toggle('hidden', !on); };
+            show('btnInstallApp', !IS_STANDALONE);
+            show('btnPairCode', IN_LINE || !DEVICE.mode);
+            show('btnPasskey', DEVICE.mode && !!window.PublicKeyCredential);
+            show('btnUnpair', DEVICE.mode);
+            const pl = $id('pkLabel'); if (pl) pl.innerText = DEVICE.pk ? 'ปิดล็อกสแกนนิ้ว/หน้า' : 'เปิดล็อกสแกนนิ้ว/หน้า';
+            const t = $id('devStatusText'); if (t) t.innerText = DEVICE.mode ? 'เชื่อมกับบัญชีแล้ว · ' + (DEVICE.name || '') + (DEVICE.pk ? ' · ล็อกด้วยสแกนนิ้ว/ใบหน้า' : '') : IS_STANDALONE ? 'ยังไม่ได้เชื่อมบัญชี' : 'ติดตั้งไว้ที่หน้าจอ เปิดได้โดยไม่ต้องเข้า LINE';
+        }
+        async function startDeviceMode() {
+            DEVICE.mode = true; appState.lineUserId = 'dev:' + (DEVICE.id || 'x');
+            devUiRefresh();
+            if (DEVICE.pk && !(await passkeyUnlock())) return;   // ล็อกอยู่ → รอสแกน
+            showConfigBtn(false);
+            loadLocalMe();
+            await fetchUserData();
+        }
+
+        // ---------- หน้าจับคู่เครื่อง (เปิดแอปจากไอคอนครั้งแรก) ----------
+        let pairTimer = null, pairTick = null;
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && pairTimer && pairTick) pairTick(); });   // กลับจาก LINE → ถามผลทันที
+        function liffLink(extra) { const id = resolveLiffId(); return id ? 'https://liff.line.me/' + id + (extra || '') : ''; }
+        async function showPairScreen(msg) {
+            let el = $id('pairScreen');
+            if (!el) { el = document.createElement('div'); el.id = 'pairScreen'; el.className = 'fixed inset-0 z-[80] bg-gradient-to-b from-gray-900 via-red-900 to-red-700 text-white overflow-y-auto'; document.body.appendChild(el); }
+            el.classList.remove('hidden');
+            el.innerHTML = `<div class="max-w-sm mx-auto px-6 py-10 text-center">
+                <img src="icons/icon-192.png" class="w-20 h-20 rounded-2xl mx-auto shadow-xl" alt="">
+                <h1 class="text-2xl font-extrabold mt-4">PBD Wallet</h1>
+                <p class="text-sm text-red-100 mt-1">เชื่อมแอปบนเครื่องนี้กับบัญชี LINE ของคุณ (ทำครั้งเดียว)</p>
+                ${msg ? `<p class="mt-3 text-xs bg-white/15 rounded-xl px-3 py-2">${esc(msg)}</p>` : ''}
+                <div id="pairBox" class="mt-6 bg-white text-gray-900 rounded-3xl p-5 shadow-2xl"><p class="text-sm text-gray-500"><i class="fa-solid fa-spinner fa-spin"></i> กำลังขอรหัส…</p></div>
+                <button onclick="webLoginInstead()" class="mt-6 text-xs text-red-100 underline">ล็อกอิน LINE ผ่านเว็บแทน</button>
+            </div>`;
+            if (pairTimer) { clearInterval(pairTimer); pairTimer = null; } pairTick = null;
+            let j;
+            try { j = await api({ wl: 'pstart', dev: devName() }); } catch (e) { j = null; }
+            const box = $id('pairBox');
+            if (!j || !j.ok) { box.innerHTML = `<p class="text-sm text-red-600">${esc((j && j.error) || 'เชื่อมต่อระบบไม่ได้ ตรวจอินเทอร์เน็ต')}</p><button onclick="showPairScreen()" class="mt-3 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold">ลองใหม่</button>`; return; }
+            const link = liffLink('?pair=' + j.code), until = Date.now() + j.expiresIn * 1000;
+            box.innerHTML = `<p class="text-xs text-gray-500">รหัสเชื่อมเครื่อง</p>
+                <p class="text-4xl font-extrabold tracking-[.25em] text-red-700 my-1">${j.code.slice(0, 3)} ${j.code.slice(3)}</p>
+                <p id="pairLeft" class="text-[11px] text-gray-400">หมดอายุใน 10 นาที</p>
+                ${link ? `<a href="${esc(link)}" class="mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-[#06C755] text-white font-bold text-sm shadow"><i class="fa-brands fa-line text-lg"></i> ยืนยันใน LINE</a>` : ''}
+                <ol class="text-left text-xs text-gray-600 mt-4 space-y-1 list-decimal pl-5">
+                    <li>กด <b>ยืนยันใน LINE</b> (หรือเปิด PBD Wallet ใน LINE → โปรไฟล์ → <b>ใส่รหัสเชื่อมเครื่อง</b>)</li>
+                    <li>กดยืนยันรหัสนี้</li>
+                    <li>กลับมาที่แอปนี้ ระบบเข้าให้อัตโนมัติ</li>
+                </ol>
+                ${link ? `<div class="mt-4 pt-4 border-t border-gray-100"><p class="text-[11px] text-gray-400 mb-2">หรือสแกนด้วยโทรศัพท์ที่มี LINE ของคุณ</p><div class="w-36 h-36 mx-auto [&_svg]:w-full [&_svg]:h-full">${qrSvg(link)}</div></div>` : ''}`;
+            const tick = async () => {
+                const left = Math.max(0, Math.round((until - Date.now()) / 1000)), lt = $id('pairLeft');
+                if (lt) lt.innerText = left ? 'หมดอายุใน ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') + ' นาที' : 'รหัสหมดอายุ';
+                if (!left) { clearInterval(pairTimer); pairTimer = null; showPairScreen('รหัสเดิมหมดอายุ ใช้รหัสใหม่นี้แทน'); return; }
+                if (document.hidden) return;
+                try {
+                    const r = await api({ wl: 'ppoll', code: j.code, secret: j.secret });
+                    if (r.ok && r.token) {
+                        clearInterval(pairTimer); pairTimer = null;
+                        lsSet('PBD_DT', r.token); lsSet('PBD_DT_ID', r.deviceId); lsSet('PBD_DT_NAME', devName());
+                        Object.assign(DEVICE, { token: r.token, id: r.deviceId, name: devName() });
+                        el.classList.add('hidden');
+                        await startDeviceMode();
+                        offerPasskey(r.name);
+                    } else if (r.expired) { clearInterval(pairTimer); pairTimer = null; showPairScreen(r.error); }
+                } catch (e) { }
+            };
+            pairTick = tick;
+            pairTimer = setInterval(tick, 3000);
+        }
+        function webLoginInstead() { try { sessionStorage.setItem('PBD_WEBLOGIN', '1'); } catch (e) { } location.reload(); }
+
+        // ---------- ใน LINE: ยืนยันรหัสเชื่อมเครื่อง ----------
+        function handlePairParam() {
+            let code = new URLSearchParams(location.search).get('pair') || '';
+            if (!code) { const st = new URLSearchParams(location.search).get('liff.state') || ''; const m = st.match(/pair=(\d{6})/); if (m) code = m[1]; }
+            if (/^\d{6}$/.test(code)) { try { history.replaceState(null, '', location.pathname); } catch (e) { } claimPairCode(code); }
+        }
+        function claimPairCode(code) {
+            if (!IN_LINE && DEVICE.mode) { Swal.fire('ยืนยันรหัสใน LINE', 'ใส่รหัสเชื่อมเครื่องได้จาก PBD Wallet ที่เปิดใน LINE เท่านั้น', 'info'); return; }
+            if (!IN_LINE && !idToken) { Swal.fire('เปิดใน LINE', 'ใส่รหัสเชื่อมเครื่องได้จาก PBD Wallet ที่เปิดใน LINE', 'info'); return; }
+            Swal.fire({
+                title: 'เชื่อมแอปบนเครื่องกับบัญชีนี้',
+                html: `<p class="text-xs text-gray-500 mb-2">ใส่รหัส 6 หลักที่แสดงบนหน้าแอป PBD Wallet ในเครื่องที่จะใช้<br><b class="text-red-600">ยืนยันเฉพาะเครื่องของคุณเอง</b> — เครื่องนั้นจะเห็นยอดเงินและคูปองของคุณ</p>`,
+                input: 'text', inputValue: code || '', inputAttributes: { inputmode: 'numeric', maxlength: 7, autocomplete: 'one-time-code' }, inputPlaceholder: 'รหัส 6 หลัก',
+                showCancelButton: true, confirmButtonText: 'ยืนยันเชื่อมเครื่อง', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626',
+                preConfirm: v => { const c = String(v || '').replace(/\D/g, ''); if (c.length !== 6) { Swal.showValidationMessage('กรอกรหัส 6 หลัก'); return false; } return c; }
+            }).then(async r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title: 'กำลังเชื่อม…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const j = await api({ wl: 'pclaim', code: r.value });
+                    if (!j.ok) return apiError(j, 'เชื่อมไม่สำเร็จ');
+                    Swal.fire('เชื่อมแล้ว', `กลับไปที่แอป PBD Wallet บนเครื่อง${j.device ? ' (' + esc(j.device) + ')' : ''} ระบบจะเข้าให้อัตโนมัติ`, 'success');
+                } catch (e) { apiError(null); }
+            });
+        }
+        async function showDevices() {
+            Swal.fire({ title: 'กำลังโหลด…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                const j = await api({ wl: 'devlist' });
+                if (!j.ok) return apiError(j);
+                const act = j.devices.filter(d => d.active);
+                Swal.fire({
+                    title: 'เครื่องที่เชื่อมไว้',
+                    html: act.length ? `<div class="space-y-2 text-left">${act.map(d => `<div class="border border-gray-200 rounded-xl p-3 flex items-center justify-between gap-2">
+                        <div class="min-w-0"><p class="text-sm font-bold text-gray-900">${esc(d.dev || 'อุปกรณ์')}${d.current ? ' <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">เครื่องนี้</span>' : ''}</p>
+                        <p class="text-[11px] text-gray-500">เชื่อมเมื่อ ${esc(d.created)} · ใช้ล่าสุด ${esc(d.last)}</p></div>
+                        <button onclick="revokeDevice('${esc(d.id)}',${d.current ? 1 : 0})" class="shrink-0 text-xs font-bold text-red-600 px-3 py-1.5 rounded-lg bg-red-50">ยกเลิก</button></div>`).join('')}</div>`
+                        : '<p class="text-sm text-gray-500">ยังไม่มีเครื่องที่เชื่อมไว้</p>',
+                    confirmButtonText: 'ปิด', confirmButtonColor: '#6b7280'
+                });
+            } catch (e) { apiError(null); }
+        }
+        function revokeDevice(id, isCurrent) {
+            Swal.fire({ title: 'ยกเลิกการเชื่อมเครื่องนี้?', text: 'เครื่องนั้นจะเปิดดูข้อมูลไม่ได้ จนกว่าจะเชื่อมใหม่ผ่าน LINE', icon: 'warning', showCancelButton: true, confirmButtonText: 'ยกเลิกการเชื่อม', cancelButtonText: 'ไม่ใช่', confirmButtonColor: '#dc2626' })
+                .then(async r => {
+                    if (!r.isConfirmed) return;
+                    try { const j = await api({ wl: 'devrevoke', id: id }); if (!j.ok) return apiError(j); } catch (e) { return apiError(null); }
+                    if (isCurrent && DEVICE.mode) { devForget(); showPairScreen('ยกเลิกการเชื่อมเครื่องนี้แล้ว'); return; }
+                    Swal.fire('ยกเลิกแล้ว', '', 'success');
+                });
+        }
+        function unpairThisDevice() { revokeDevice(DEVICE.id, 1); }
+
+        // ---------- ติดตั้งแอป ----------
+        let installEvt = null;
+        window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
+        window.addEventListener('appinstalled', () => { installEvt = null; Swal.fire('ติดตั้งแล้ว', 'เปิด PBD Wallet จากไอคอนบนหน้าจอ แล้วเชื่อมกับบัญชีครั้งแรก', 'success'); });
+        async function installApp() {
+            if (installEvt) { installEvt.prompt(); try { await installEvt.userChoice; } catch (e) { } installEvt = null; return; }
+            const url = location.origin + location.pathname;
+            if (IN_LINE) {
+                Swal.fire({ title: 'เปิดในเบราว์เซอร์ก่อน', html: `<p class="text-sm text-gray-600">ติดตั้งแอปจากใน LINE ไม่ได้ ให้เปิดลิงก์นี้ใน${IS_IOS ? ' <b>Safari</b>' : ' <b>Chrome</b>'} แล้วกดติดตั้งอีกครั้ง</p><p class="mt-2 text-xs font-mono break-all bg-gray-100 rounded-lg p-2">${esc(url)}</p>`,
+                    showCancelButton: true, confirmButtonText: 'เปิดในเบราว์เซอร์', cancelButtonText: 'ปิด', confirmButtonColor: '#dc2626' })
+                    .then(r => { if (r.isConfirmed) { try { liff.openWindow({ url: url, external: true }); } catch (e) { location.href = url; } } });
+                return;
+            }
+            Swal.fire({ title: 'ติดตั้ง PBD Wallet', confirmButtonText: 'เข้าใจแล้ว', confirmButtonColor: '#dc2626',
+                html: IS_IOS ? `<ol class="text-left text-sm text-gray-700 space-y-2 list-decimal pl-5"><li>เปิดหน้านี้ใน <b>Safari</b></li><li>กดปุ่ม <b>แชร์</b> <i class="fa-solid fa-arrow-up-from-bracket"></i> ด้านล่าง</li><li>เลือก <b>เพิ่มไปยังหน้าจอโฮม</b> แล้วกด <b>เพิ่ม</b></li></ol>`
+                    : `<ol class="text-left text-sm text-gray-700 space-y-2 list-decimal pl-5"><li>เปิดหน้านี้ใน <b>Chrome</b></li><li>กดเมนู <b>⋮</b> มุมขวาบน</li><li>เลือก <b>ติดตั้งแอป</b> หรือ <b>เพิ่มลงในหน้าจอหลัก</b></li></ol>` });
+        }
+
+        // ---------- ล็อกด้วยสแกนนิ้ว/ใบหน้า (Passkey) ----------
+        const b64u = buf => btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+        const rand = n => crypto.getRandomValues(new Uint8Array(n));
+        async function passkeySupported() { try { return !!window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) { return false; } }
+        async function offerPasskey(name) {
+            if (DEVICE.pk || !(await passkeySupported())) return;
+            const r = await Swal.fire({ title: 'เชื่อมเครื่องสำเร็จ', html: `<p class="text-sm text-gray-600">${name ? 'บัญชี <b>' + esc(name) + '</b><br>' : ''}เปิดล็อกด้วยสแกนนิ้ว/ใบหน้า เพื่อไม่ให้คนอื่นเปิดดูยอดเงินจากเครื่องนี้ได้</p>`,
+                icon: 'success', showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-fingerprint"></i> เปิดใช้', cancelButtonText: 'ไว้ทีหลัง', confirmButtonColor: '#dc2626' });
+            if (r.isConfirmed) await passkeyRegister();
+        }
+        async function passkeyRegister() {
+            try {
+                const cred = await navigator.credentials.create({ publicKey: {
+                    challenge: rand(32), rp: { name: 'PBD Wallet' },
+                    user: { id: rand(16), name: (appState.empId || 'pbd') + '@pbd-wallet', displayName: appState.name || 'PBD Wallet' },
+                    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+                    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+                    timeout: 60000, attestation: 'none' } });
+                DEVICE.pk = b64u(cred.rawId); lsSet('PBD_PK', DEVICE.pk); devUiRefresh();
+                Swal.fire('เปิดล็อกแล้ว', 'ทุกครั้งที่เปิดแอป ต้องสแกนนิ้ว/ใบหน้าก่อน', 'success');
+                return true;
+            } catch (e) { Swal.fire('เปิดล็อกไม่สำเร็จ', e && e.name === 'NotAllowedError' ? 'ยกเลิกการสแกน หรือเครื่องยังไม่ได้ตั้งสแกนนิ้ว/ใบหน้า' : String(e && e.message || e), 'warning'); return false; }
+        }
+        async function togglePasskey() {
+            if (!DEVICE.pk) { if (await passkeySupported()) passkeyRegister(); else Swal.fire('เครื่องนี้ไม่รองรับ', 'ตั้งค่าสแกนนิ้วหรือใบหน้าในการตั้งค่าโทรศัพท์ก่อน', 'info'); return; }
+            if (!(await passkeyCheck())) return;
+            DEVICE.pk = ''; lsSet('PBD_PK', ''); devUiRefresh(); Swal.fire('ปิดล็อกแล้ว', '', 'success');
+        }
+        async function passkeyCheck() {
+            try {
+                await navigator.credentials.get({ publicKey: { challenge: rand(32), allowCredentials: [{ type: 'public-key', id: unb64u(DEVICE.pk), transports: ['internal'] }], userVerification: 'required', timeout: 60000 } });
+                return true;
+            } catch (e) { return false; }
+        }
+        let lockedAt = 0;
+        async function passkeyUnlock() {
+            let el = $id('lockScreen');
+            if (!el) { el = document.createElement('div'); el.id = 'lockScreen'; el.className = 'fixed inset-0 z-[90] bg-gray-900 text-white flex flex-col items-center justify-center gap-4 px-8 text-center'; document.body.appendChild(el); }
+            el.innerHTML = `<img src="icons/icon-192.png" class="w-20 h-20 rounded-2xl" alt=""><h2 class="text-xl font-bold">PBD Wallet ล็อกอยู่</h2>
+                <button id="btnUnlock" class="mt-2 px-6 py-3 rounded-2xl bg-red-600 font-bold text-sm"><i class="fa-solid fa-fingerprint mr-1"></i>สแกนนิ้ว/ใบหน้าเพื่อเปิด</button>
+                <button id="btnUnlockReset" class="text-xs text-gray-400 underline mt-6">สแกนไม่ได้? ยกเลิกการเชื่อมแล้วเชื่อมใหม่ผ่าน LINE</button>`;
+            el.classList.remove('hidden');
+            return new Promise(res => {
+                const go = async () => { if (await passkeyCheck()) { el.classList.add('hidden'); lockedAt = 0; res(true); } };
+                $id('btnUnlock').onclick = go;
+                $id('btnUnlockReset').onclick = () => Swal.fire({ title: 'เชื่อมเครื่องใหม่?', text: 'ล้างการเชื่อมในเครื่องนี้ แล้วยืนยันผ่าน LINE อีกครั้ง', icon: 'question', showCancelButton: true, confirmButtonText: 'เชื่อมใหม่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626' })
+                    .then(r => { if (r.isConfirmed) { devForget(); el.classList.add('hidden'); showPairScreen(); res(false); } });
+                go();
+            });
+        }
+        // ออกจากแอปเกิน 3 นาที → ล็อกใหม่เมื่อกลับมา
+        document.addEventListener('visibilitychange', async () => {
+            if (!DEVICE.mode || !DEVICE.pk) return;
+            if (document.hidden) { lockedAt = Date.now(); return; }
+            if (lockedAt && Date.now() - lockedAt > 3 * 60e3) { lockedAt = 0; await passkeyUnlock(); }
+        });
+
+        // service worker (เปิดเร็ว + ติดตั้งได้) — เฉพาะนอก LINE
+        if ('serviceWorker' in navigator && !IN_LINE && location.protocol === 'https:') { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); }); }
+
         async function initializeLiff() {
             renderAll();
+            devUiRefresh();
+            // แอปบนเครื่อง: มีรหัสเครื่องแล้ว → ใช้รหัสเครื่อง (ไม่ผ่าน LINE) · เปิดจากไอคอนครั้งแรก → หน้าจับคู่เครื่อง
+            if (!IN_LINE && DEVICE.token) { await startDeviceMode(); return; }
+            if (!IN_LINE && IS_STANDALONE && !webLoginWanted()) { showPairScreen(); return; }
             const activeLiffId = resolveLiffId();
             if (!activeLiffId) { showConfigBtn(true); return; }
             try {
@@ -1360,6 +1616,7 @@
                 showConfigBtn(false);
                 loadLocalMe();
                 await fetchUserData();
+                handlePairParam();   // เปิดจากลิงก์ "ยืนยันใน LINE" ของแอปบนเครื่อง (?pair=รหัส)
             } catch (err) {
                 console.error('LIFF Init Error:', err);
                 showConfigBtn(true);
