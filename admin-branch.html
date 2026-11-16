@@ -32,7 +32,7 @@
 </head>
 <body class="min-h-screen pb-12 text-gray-900">
     <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
-        <div class="flex items-center justify-between max-w-md mx-auto gap-3">
+        <div class="flex items-center justify-between max-w-md lg:max-w-6xl mx-auto gap-3">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                 <div class="min-w-0">
@@ -45,7 +45,8 @@
         </div>
     </header>
 
-    <main class="max-w-md mx-auto px-4 -mt-12 space-y-4">
+    <main class="max-w-md lg:max-w-6xl mx-auto px-4 -mt-12 lg:grid lg:grid-cols-[440px_minmax(0,1fr)] lg:gap-5 lg:items-start">
+        <div class="space-y-4">
         <section class="grid grid-cols-2 gap-3">
             <div class="bg-white rounded-2xl shadow-md p-4">
                 <p class="text-xs text-gray-500">รอหักในสาขา</p>
@@ -116,13 +117,15 @@
             <div id="qrList" class="space-y-2"></div>
         </section>
 
+        </div>
+        <div class="space-y-4 mt-4 lg:mt-0">
         <!-- ประวัติ -->
         <section class="bg-white rounded-2xl shadow-md p-4">
             <div class="flex items-center justify-between gap-2 mb-3">
                 <h2 class="font-bold text-base"><i class="fa-solid fa-clock-rotate-left text-red-600"></i> ประวัติรายการ</h2>
                 <button onclick="exportCsv()" class="text-xs px-3 py-1.5 rounded-full bg-gray-900 text-white font-semibold shrink-0"><i class="fa-solid fa-download"></i> CSV</button>
             </div>
-            <div class="flex flex-wrap gap-1 text-xs mb-2" id="filters">
+            <div class="flex flex-wrap gap-1 text-xs mb-2 lg:text-sm" id="filters">
                 <button data-f="today" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold" aria-pressed="true">วันนี้</button>
                 <button data-f="pending" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold">รอหักทั้งหมด</button>
                 <button data-f="period" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold">พีเรียดนี้</button>
@@ -135,10 +138,11 @@
             </div>
             <input id="search" oninput="renderList()" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2" placeholder="ค้นหา ชื่อ / รหัส / รายการ">
             <div id="sumBar" class="flex justify-between text-xs text-gray-600 bg-gray-50 rounded-xl px-3 py-2 mb-2"></div>
-            <div id="list" class="space-y-2"><p class="text-center text-sm text-gray-400 py-6">กำลังโหลด…</p></div>
+            <div id="list" class="space-y-2 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-2"><p class="text-center text-sm text-gray-400 py-6">กำลังโหลด…</p></div>
             <button id="moreBtn" onclick="shown += 50; renderList()" class="hidden mt-3 w-full py-2 rounded-xl bg-gray-100 text-sm font-semibold">แสดงเพิ่ม</button>
         </section>
         <p class="text-center text-[10px] text-gray-400 leading-relaxed">รายการขึ้นใน Wallet ของพนักงานเป็น "รอหัก" · ฝ่ายบัญชีเปลี่ยนเป็น "หักแล้ว" ตอนหักเงินเดือนจริง<br>QR ใช้ได้ครั้งเดียว หมดอายุ 23:59 ของวันที่สร้าง</p>
+        </div>
     </main>
     <div id="fileReader" class="hidden"></div>
 
