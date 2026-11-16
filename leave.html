@@ -94,7 +94,7 @@
             </div>
             <div id="historyList" class="space-y-2"></div>
         </section>
-        <p class="text-center text-[10px] text-gray-400 leading-relaxed">แจ้งเตือนผ่านแอป PBD Wallet บนมือถือ (เปิดรับแจ้งเตือนไว้)<br>แอดมินสาขาเป็นผู้ลงใบลาในระบบสแกนหน้า (yunatt)</p>
+        <p class="text-center text-[10px] text-gray-400 leading-relaxed">แจ้งเตือนผ่านแอป PBD Wallet บนมือถือ (เปิดรับแจ้งเตือนไว้)<br>อนุมัติแล้ว ระบบลงใบลาในระบบสแกนหน้า (yunatt) ให้อัตโนมัติ</p>
     </main>
 
 <script>
@@ -221,6 +221,7 @@
                     <p class="text-sm text-gray-600 mt-0.5 break-words">${esc(v.reason)}</p>
                     <p class="text-[11px] text-gray-400 mt-1">ส่ง ${esc(thd(String(v.sent).slice(0, 10)))} ${esc(String(v.sent).slice(11, 16))}${opt.who ? '' : ' · ผู้อนุมัติ ' + esc(v.approver)}${v.decided ? ' · ' + (v.status === 'ยกเลิก' ? 'ยกเลิก ' : 'ตัดสิน ') + esc(thd(String(v.decided).slice(0, 10))) : ''}</p>
                     ${v.note ? `<p class="text-xs mt-1 ${v.status === 'ไม่อนุมัติ' ? 'text-red-700' : 'text-gray-600'}"><i class="fa-regular fa-comment"></i> ${esc(v.note)}</p>` : ''}
+                    ${v.status === 'อนุมัติ' && v.yunatt ? `<p class="text-[11px] mt-1 ${/^ลงแล้ว|^มีอยู่แล้ว/.test(v.yunatt) ? 'text-green-700' : 'text-amber-700'}"><i class="fa-solid ${/^ลงแล้ว|^มีอยู่แล้ว/.test(v.yunatt) ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ระบบสแกนหน้า: ${/^ลงแล้ว|^มีอยู่แล้ว/.test(v.yunatt) ? 'ลงใบลาแล้ว' : 'ลงไม่สำเร็จ — แอดมินสาขาลงเอง'}</p>` : ''}
                 </div>
                 <span class="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ST[v.status] || 'bg-gray-100'}">${esc(v.status)}</span>
             </div>
