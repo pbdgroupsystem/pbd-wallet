@@ -116,11 +116,11 @@
 
 
         /* ===== ธีมเทศกาล (festivals.json) — พื้นหลังด้านบน + ของตกแต่งเคลื่อนไหว · ช่วงเทศกาลแทนพื้นหลังสภาพอากาศ ===== */
-        #fxBg { position: absolute; top: 0; left: 0; right: 0; height: 150px; z-index: 0; pointer-events: none; overflow: hidden; display: none;
+        #fxBg { position: absolute; top: 0; left: 0; right: 0; height: 175px; z-index: 0; pointer-events: none; overflow: hidden; display: none;
             -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
         body.fx-on #fxBg { display: block; } body.fx-on #wxBg { display: none; }
         #fxBg > i { position: absolute; display: block; font-style: normal; line-height: 1; will-change: transform; }
-        .fx-loy { background: radial-gradient(circle at 78% 22%, rgba(255,240,200,.55) 0 18px, rgba(255,240,200,0) 40px), linear-gradient(180deg, #0b1c3d 0%, #1e3a6e 62%, #c8c9da 100%); }
+        .fx-loy { background: linear-gradient(180deg, #0b1c3d 0%, #1e3a6e 62%, #c8c9da 100%); }
         .fx-xmas { background: linear-gradient(180deg, #0f3d2e 0%, #1b5e3f 62%, #d7e6dc 100%); }
         .fx-newyear { background: linear-gradient(180deg, #120b2e 0%, #3b1f6b 62%, #d6cfe6 100%); }
         .fx-cny { background: linear-gradient(180deg, #8b1414 0%, #c81e1e 60%, #fde9c0 100%); }
@@ -133,15 +133,29 @@
         .fxa-float { animation: fxFloat ease-in-out infinite alternate; }
         .fxa-drift { animation: fxDrift linear infinite; }
         .fxa-swing { top: -4px; transform-origin: 50% 0; animation: fxSwing 3s ease-in-out infinite alternate; }
-        .fxa-burst { width: 4px; height: 4px; border-radius: 50%; animation: fxBurst 2.6s ease-out infinite; }
+        .fxa-burst { width: 5px; height: 5px; border-radius: 50%; animation: fxBurst 2.6s ease-out infinite; }
         @keyframes fxFall { to { transform: translate(18px, 190px) rotate(200deg); } }
         @keyframes fxRise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .95; } 100% { transform: translate(-14px, -170px); opacity: 0; } }
         @keyframes fxFloat { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
         @keyframes fxDrift { from { transform: translateX(-60px); } to { transform: translateX(460px); } }
         @keyframes fxSwing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
         @keyframes fxBurst { 0% { box-shadow: 0 0 0 0 currentColor; opacity: 1; transform: scale(.4); } 70% { opacity: .9; }
-            100% { opacity: 0; transform: scale(1); box-shadow: 0 -26px 0 -1px currentColor, 18px -18px 0 -1px currentColor, 26px 0 0 -1px currentColor, 18px 18px 0 -1px currentColor, 0 26px 0 -1px currentColor, -18px 18px 0 -1px currentColor, -26px 0 0 -1px currentColor, -18px -18px 0 -1px currentColor; } }
-        @media (prefers-reduced-motion: reduce) { #fxBg > i { animation: none !important; } }
+            100% { opacity: 0; transform: scale(1); box-shadow: 0 -34px 0 -1px currentColor, 24px -24px 0 -1px currentColor, 34px 0 0 -1px currentColor, 24px 24px 0 -1px currentColor, 0 34px 0 -1px currentColor, -24px 24px 0 -1px currentColor, -34px 0 0 -1px currentColor, -24px -24px 0 -1px currentColor; } }
+        /* ลูกเล่นเพิ่ม: แสงวาบพาดผ่าน · รัศมีหมุน (วันพระ) · พระจันทร์เรืองแสง (ลอยกระทง) · ไฟกะพริบ (คริสต์มาส) · กระดาษสีตก (ปีใหม่) */
+        #fxBg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.22) 50%, transparent 65%); background-size: 250% 100%; animation: fxSheen 6s ease-in-out infinite; }
+        .fxa-rays { width: 220px; height: 220px; left: calc(68% - 110px); top: -25px; border-radius: 50%; opacity: .55;
+            background: repeating-conic-gradient(rgba(255,200,90,.55) 0 8deg, rgba(255,200,90,0) 8deg 20deg); -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 70%); mask-image: radial-gradient(circle, #000 20%, transparent 70%); animation: fxSpin 30s linear infinite; }
+        .fxa-moon { width: 40px; height: 40px; right: 22px; top: 96px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fffbe8, #fde68a 70%); box-shadow: 0 0 30px 10px rgba(253,230,138,.55); animation: fxGlow 3.5s ease-in-out infinite alternate; }
+        .fxa-lights { left: 0; right: 0; top: 0; height: 14px; background: radial-gradient(circle, #f87171 0 3px, transparent 4px) 0 4px/28px 14px repeat-x, radial-gradient(circle, #facc15 0 3px, transparent 4px) 14px 8px/28px 14px repeat-x; animation: fxBlink 1.2s steps(2) infinite; }
+        .fxa-confetti { top: -12px; width: 6px; height: 10px; border-radius: 1px; animation: fxFall linear infinite; }
+        @keyframes fxSheen { 0%, 40% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
+        @keyframes fxSpin { to { transform: rotate(360deg); } }
+        @keyframes fxGlow { from { box-shadow: 0 0 22px 6px rgba(253,230,138,.45); } to { box-shadow: 0 0 42px 16px rgba(253,230,138,.7); } }
+        @keyframes fxBlink { 50% { filter: hue-rotate(140deg) brightness(1.3); } }
+        @keyframes fxBob { 0%, 100% { margin-bottom: 0; } 50% { margin-bottom: 5px; } }
+        #festChip { background-size: 200% 100%; animation: fxChip 3s ease-in-out infinite; }
+        @keyframes fxChip { 50% { filter: brightness(1.15); transform: scale(1.04); } }
+        @media (prefers-reduced-motion: reduce) { #fxBg > i, #fxBg::after, #festChip { animation: none !important; } }
         #festChip { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         body.fx-on .wallet-card { box-shadow: 0 10px 30px -10px var(--fx-glow, rgba(0,0,0,.4)); }
 
@@ -2465,21 +2479,21 @@
     // ===== ธีมเทศกาล — อ่านวันที่จาก festivals.json (แก้ไฟล์นี้ใน GitHub ได้เลย) · ?fest=xmas = ดูตัวอย่างธีม =====
     const FX_THEMES = {
         loy:      { dark: 1, emoji: '🪷', chip: 'bg-amber-300 text-indigo-950', glow: 'rgba(253,224,71,.45)',
-                    parts: [['🏮', 'rise', 9, 13, 18], ['🪷', 'drift', 3, 18, 22, 'bottom:6px'], ['✨', 'float', 6, 10, 12]] },
+                    parts: [['', 'moon', 1], ['🏮', 'rise', 16, 14, 24], ['🪷', 'drift', 4, 22, 28, 'bottom:8px'], ['✨', 'float', 8, 10, 14]] },
         xmas:     { dark: 1, emoji: '🎄', chip: 'bg-green-600 text-white', glow: 'rgba(34,197,94,.45)',
-                    parts: [['❄', 'fall', 22, 8, 14, 'color:#fff'], ['🎄', 'float', 1, 30, 34, 'bottom:20px;right:96px'], ['⭐', 'float', 1, 14, 16, 'top:10px;right:150px']] },
+                    parts: [['', 'lights', 1], ['❄', 'fall', 34, 9, 18, 'color:#fff'], ['🎄', 'float', 1, 38, 42, 'bottom:22px;right:96px'], ['⭐', 'float', 2, 14, 18], ['🎁', 'float', 1, 22, 24, 'bottom:22px;right:146px']] },
         newyear:  { dark: 1, emoji: '🎆', chip: 'bg-fuchsia-500 text-white', glow: 'rgba(217,70,239,.45)',
-                    parts: [['', 'burst', 8, 0, 0], ['✨', 'float', 8, 10, 14]] },
+                    parts: [['', 'burst', 12, 0, 0], ['', 'confetti', 26, 0, 0], ['✨', 'float', 10, 12, 18]] },
         cny:      { dark: 1, emoji: '🧧', chip: 'bg-yellow-300 text-red-800', glow: 'rgba(250,204,21,.5)',
-                    parts: [['🏮', 'swing', 4, 22, 28], ['🪙', 'fall', 8, 12, 16]] },
+                    parts: [['🏮', 'swing', 4, 28, 34], ['🪙', 'fall', 14, 12, 20], ['🧧', 'fall', 5, 16, 20], ['✨', 'float', 6, 10, 14]] },
         buddha:   { dark: 0, emoji: '🪷', chip: 'bg-amber-500 text-white', glow: 'rgba(245,158,11,.4)',
-                    parts: [['☸️', 'float', 1, 30, 34, 'top:22px;left:calc(50% - 16px)'], ['🪷', 'float', 5, 14, 20], ['✦', 'rise', 8, 8, 10, 'color:#f59e0b']] },
+                    parts: [['', 'rays', 1], ['☸️', 'float', 1, 30, 32, 'top:70px;left:calc(68% - 16px)'], ['🪷', 'float', 6, 16, 22], ['✦', 'rise', 14, 8, 12, 'color:#f59e0b']] },
         songkran: { dark: 0, emoji: '💦', chip: 'bg-sky-500 text-white', glow: 'rgba(14,165,233,.45)',
-                    parts: [['💧', 'fall', 16, 10, 14], ['🌸', 'fall', 5, 12, 16]] },
+                    parts: [['💧', 'fall', 28, 10, 18], ['🌸', 'fall', 8, 12, 18], ['🌊', 'float', 2, 22, 26]] },
         mother:   { dark: 0, emoji: '💮', chip: 'bg-blue-500 text-white', glow: 'rgba(59,130,246,.4)',
-                    parts: [['💮', 'fall', 10, 12, 16], ['🤍', 'float', 4, 12, 14]] },
+                    parts: [['💮', 'fall', 16, 12, 20], ['🤍', 'float', 6, 12, 16]] },
         father:   { dark: 0, emoji: '🌼', chip: 'bg-yellow-400 text-yellow-900', glow: 'rgba(234,179,8,.45)',
-                    parts: [['🌼', 'fall', 10, 12, 16], ['💛', 'float', 4, 12, 14]] },
+                    parts: [['🌼', 'fall', 16, 12, 20], ['💛', 'float', 6, 12, 16]] },
     };
     const FX_DEFAULT = { loy: 'สุขสันต์วันลอยกระทง', xmas: 'Merry Christmas', newyear: 'สวัสดีปีใหม่', cny: 'ซินเจียยู่อี่ ซินนี้ฮวดไช้', buddha: 'วันสำคัญทางพุทธศาสนา', songkran: 'สุขสันต์วันสงกรานต์', mother: 'วันแม่แห่งชาติ', father: 'วันพ่อแห่งชาติ' };
     function fxToday() { return new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10); }   // วันที่ตามเวลาไทย
@@ -2491,12 +2505,14 @@
         T.parts.forEach(([ch, kind, n, s1, s2, extra]) => {
             for (let i = 0; i < n; i++) {
                 let st = '';
-                if (kind === 'burst') st = `left:${rnd(8, 92)}%;top:${rnd(14, 80)}px;color:${['#fde047', '#f472b6', '#60a5fa', '#34d399', '#fb923c'][i % 5]};animation-delay:${rnd(0, 2.6).toFixed(2)}s`;
+                if (kind === 'burst') st = `left:${rnd(8, 92)}%;top:${rnd(14, 90)}px;color:${['#fde047', '#f472b6', '#60a5fa', '#34d399', '#fb923c'][i % 5]};animation-delay:${rnd(0, 2.6).toFixed(2)}s`;
+                else if (kind === 'confetti') st = `left:${rnd(0, 98)}%;background:${['#fde047', '#f472b6', '#60a5fa', '#34d399', '#fb923c', '#fff'][i % 6]};animation-duration:${rnd(3.5, 7).toFixed(1)}s;animation-delay:-${rnd(0, 7).toFixed(1)}s`;
+                else if (kind === 'moon' || kind === 'rays' || kind === 'lights') st = '';
                 else {
                     st = `font-size:${rnd(s1, s2).toFixed(0)}px;`;
                     if (kind === 'fall') st += `left:${rnd(0, 98)}%;animation-duration:${rnd(5, 10).toFixed(1)}s;animation-delay:-${rnd(0, 10).toFixed(1)}s;opacity:${rnd(.6, 1).toFixed(2)};`;
                     if (kind === 'rise') st += `left:${rnd(2, 96)}%;animation-duration:${rnd(6, 11).toFixed(1)}s;animation-delay:-${rnd(0, 11).toFixed(1)}s;`;
-                    if (kind === 'drift') st += `left:0;animation-duration:${rnd(16, 26).toFixed(1)}s;animation-delay:-${rnd(0, 26).toFixed(1)}s;`;
+                    if (kind === 'drift') { const d = rnd(16, 26); st += `left:0;animation:fxDrift ${d.toFixed(1)}s linear -${rnd(0, d).toFixed(1)}s infinite, fxBob 2.4s ease-in-out -${rnd(0, 2.4).toFixed(1)}s infinite;`; }
                     if (kind === 'float') st += (extra ? '' : `left:${rnd(4, 92)}%;top:${rnd(8, 100)}px;`) + `animation-duration:${rnd(2.2, 4).toFixed(1)}s;animation-delay:-${rnd(0, 4).toFixed(1)}s;`;
                     if (kind === 'swing') st += `left:${[6, 30, 62, 86][i % 4]}%;animation-delay:-${rnd(0, 3).toFixed(1)}s;`;
                     st += extra || '';
