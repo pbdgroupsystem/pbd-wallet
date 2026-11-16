@@ -296,7 +296,7 @@
                 <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkNo" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ไม่สแกน/ขาด</div></div>
                 <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLeave" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ลา</div></div>
             </div>
-            <div onclick="showWorkDays()" class="relative z-10 mt-3 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer active:scale-95 transition">
+            <div id="wkPill" onclick="showWorkDays()" class="relative z-10 mt-3 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer active:scale-95 transition">
                 <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow"><i class="fa-solid fa-clock"></i></span>
                 <span>ค่าปรับเดือนนี้: <strong class="font-bold text-yellow-200">฿<span id="wkFine">0</span></strong> · รอหัก: <strong class="font-bold text-yellow-200">฿<span id="wkPend">0</span></strong></span>
                 <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
@@ -341,8 +341,8 @@
             </div>
         </section>
 
-        <!-- Wallet Header Card -->
-        <section data-mode="sales" class="relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
+        <!-- Wallet Header Card (ช่างที่มีค่าคอม: แสดงในหน้าแบบพนักงานด้วย — ย้ายไว้เหนือการ์ดเวลาทำงาน) -->
+        <section id="walletCard" data-mode="sales" class="relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
             <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
             <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
 
@@ -982,7 +982,10 @@
             document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('hidden', el.getAttribute('data-mode').split(' ').indexOf(md) < 0));
             if (md !== 'sales') renderWork();
             renderService(md);
-            document.querySelectorAll('.wk-coin').forEach(e => e.classList.toggle('hidden', mg));   // Admin มี Coin ในการ์ดด้านบนแล้ว
+            const wc = $id('walletCard'), wk = $id('workCard'), showWc = md === 'staff' && !!appState.service;   // ช่าง: การ์ดยอดเงินสุทธิอยู่เหนือการ์ดเวลาทำงาน
+            if (showWc) { wc.classList.remove('hidden'); if (wk && wc.nextElementSibling !== wk) wk.parentNode.insertBefore(wc, wk); }
+            document.querySelectorAll('.wk-coin').forEach(e => e.classList.toggle('hidden', mg || showWc));   // Admin / ช่าง มี Coin ในการ์ดด้านบนแล้ว
+            const pill = $id('wkPill'); if (pill) pill.classList.toggle('hidden', showWc);   // ช่าง: รอหัก/ค่าปรับ อยู่ในการ์ดยอดเงินสุทธิแล้ว
             if (mg) $id('workCard').classList.toggle('hidden', !(appState.work && (appState.work.days || []).length));   // Admin: แสดงเมื่อมีเวลาสแกนหน้าของตัวเอง
             if (!mg) return;
             const o = appState.overview || {};
@@ -1282,8 +1285,9 @@
         function updateDashboardUI() {
             $id('userName').innerText = appState.name;
             $id('userRole').innerText = appState.role || '';
-            $id('netBalance').innerText = baht(appState.netBalance);
-            $id('fineTotalPill').innerText = num(appState.fineTotal || 0);
+            const svcNet = appState.mode === 'staff' && appState.service;   // ช่าง: ค่าคอมงานช่าง − รอหัก − หักแล้ว − ค่าปรับสแกนหน้าเดือนนี้
+            $id('netBalance').innerText = baht(svcNet ? Math.round(((appState.netBalance || 0) + (appState.service.comm || 0) - ((appState.work && appState.work.fine) || 0)) * 100) / 100 : appState.netBalance);
+            $id('fineTotalPill').innerText = num(svcNet ? ((appState.work && appState.work.fine) || 0) : (appState.fineTotal || 0));
             $id('pendingDeduct').innerText = num(appState.pendingDeduct);
             $id('pbdCoins').innerText = num(appState.pbdCoins);
             $id('modalCoinBalance').innerText = num(appState.pbdCoins);
