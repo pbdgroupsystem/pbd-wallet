@@ -350,8 +350,36 @@
             </div>
         </section>
 
+        <!-- การ์ดเวลาทำงาน (พนักงานที่ไม่ใช่ฝ่ายขาย: HR / IT / ช่าง ฯลฯ) -->
+        <section data-mode="staff" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
+            <div class="flex justify-between items-center relative z-10">
+                <div class="pr-2 cursor-pointer active:scale-95 transition" onclick="showWorkDays()">
+                    <p class="text-xs sm:text-sm font-medium text-gray-200">เวลาทำงาน <span id="wkMonth" class="text-xs opacity-80"></span></p>
+                    <div class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-0.5 drop-shadow">ทำงาน <span id="wkWork">–</span> <span class="text-lg font-bold">วัน</span></div>
+                </div>
+                <div class="h-14 w-[1px] bg-white/25 mx-1"></div>
+                <div onclick="openSection('rewardsModal')" class="flex items-center gap-2.5 pl-2 cursor-pointer active:scale-95 transition">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 flex items-center justify-center shadow-inner"><span class="text-amber-900 font-black text-lg">$</span></div>
+                    <div><div id="wkCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">–</div><div class="text-xs font-medium text-yellow-200 mt-0.5">PBD Coin</div></div>
+                </div>
+            </div>
+            <div onclick="showWorkDays()" class="relative z-10 mt-4 grid grid-cols-4 gap-2 text-center cursor-pointer">
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkScan" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">สแกนหน้า</div></div>
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLate" class="text-xl font-extrabold leading-none text-yellow-200">–</div><div class="text-[10px] text-gray-200 mt-1">สาย</div></div>
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkNo" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ไม่สแกน/ขาด</div></div>
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLeave" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ลา</div></div>
+            </div>
+            <div onclick="showWorkDays()" class="relative z-10 mt-3 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer active:scale-95 transition">
+                <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow"><i class="fa-solid fa-clock"></i></span>
+                <span>ค่าปรับเดือนนี้: <strong class="font-bold text-yellow-200">฿<span id="wkFine">0</span></strong> · รอหัก: <strong class="font-bold text-yellow-200">฿<span id="wkPend">0</span></strong></span>
+                <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
+            </div>
+        </section>
+
         <!-- Quick Access Grid Menu (เพิ่ม Sales Dashboard) -->
-        <section data-mode="sales" class="relative z-10 mx-4">
+        <section data-mode="sales staff" class="relative z-10 mx-4">
             <div class="ribbon-tab w-48 py-1.5 px-4 text-white font-bold text-sm flex items-center gap-2 rounded-tl-xl shadow">
                 <i class="fa-solid fa-border-all text-base"></i>
                 <span>เมนูใช้งานด่วน</span>
@@ -924,8 +952,9 @@
 
         // ---------- หน้าแบบบริหาร ----------
         function renderMode() {
-            const mg = appState.mode === 'mgmt';
-            document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('hidden', el.getAttribute('data-mode') !== (mg ? 'mgmt' : 'sales')));
+            const mg = appState.mode === 'mgmt', md = mg ? 'mgmt' : appState.mode === 'staff' ? 'staff' : 'sales';
+            document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('hidden', el.getAttribute('data-mode').split(' ').indexOf(md) < 0));
+            if (md === 'staff') renderWork();
             if (!mg) return;
             const o = appState.overview || {};
             $id('mgCoins').innerText = num(appState.pbdCoins);
@@ -1410,6 +1439,42 @@
                 const want = url || PIC_DEFAULT; if (im.getAttribute('src') !== want) im.src = want;
             });
         }
+        // ===== เวลาทำงานเดือนนี้ (พนักงานที่ไม่ใช่ฝ่ายขาย) — จากแท็บสแกนเข้างาน =====
+        const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        function wkMonthTh(m) { const [y, mo] = String(m || '').split('-'); return y ? TH_MON[+mo - 1] + ' ' + (+y + 543) : ''; }
+        function renderWork() {
+            const w = appState.work;
+            $id('wkCoins').innerText = num(appState.pbdCoins);
+            $id('wkPend').innerText = num(appState.pendingDeduct || 0);
+            $id('wkMonth').innerText = w ? '(' + wkMonthTh(w.month) + ')' : '';
+            $id('wkWork').innerText = w ? num(w.work) : '–';
+            $id('wkScan').innerText = w ? num(w.scan) : '–';
+            $id('wkLate').innerText = w ? num(w.late) : '–';
+            $id('wkNo').innerText = w ? num(w.noScan + w.absent) : '–';
+            $id('wkLeave').innerText = w ? num(w.leave) : '–';
+            $id('wkFine').innerText = w ? num(w.fine) : '0';
+        }
+        function showWorkDays() {
+            const w = appState.work;
+            if (!w) { Swal.fire('ยังไม่มีข้อมูล', appState.workErr || 'ยังไม่พบเวลาสแกนหน้าของรหัส ' + (appState.empId || '') + ' ในเดือนนี้', 'info'); return; }
+            const col = st => /สาย/.test(st) ? 'text-amber-600' : /ไม่สแกน|ขาด/.test(st) ? 'text-red-600' : /ลา/.test(st) ? 'text-sky-600' : /วันหยุด/.test(st) ? 'text-gray-400' : 'text-green-600';
+            const rows = (w.days || []).slice().reverse().map(x => `<div class="flex items-center gap-2 py-2 border-b border-gray-100 text-left text-xs">
+                <div class="w-9 text-center"><div class="text-base font-extrabold text-gray-800 leading-none">${+x[0]}</div><div class="text-[9px] text-gray-400">${TH_MON[+w.month.slice(5) - 1]}</div></div>
+                <div class="flex-1 min-w-0"><div><b class="${col(x[3])}">${esc(x[3] || '-')}</b>${x[4] ? ' <span class="text-amber-600">' + num(x[4]) + ' นาที</span>' : ''}</div>
+                    <div class="text-gray-500">เข้า ${esc(x[1] || '–')} · ออก ${esc(x[2] || '–')}</div>${x[6] ? `<div class="text-[10px] text-gray-400 truncate">${esc(x[6])}</div>` : ''}</div>
+                ${x[5] ? `<div class="text-red-600 font-bold">฿${num(x[5])}</div>` : ''}</div>`).join('');
+            Swal.fire({ title: 'เวลาทำงาน ' + wkMonthTh(w.month), confirmButtonText: 'ปิด', confirmButtonColor: '#dc2626',
+                html: `<div class="grid grid-cols-3 gap-2 text-center text-xs mb-3">
+                    <div class="rounded-xl bg-green-50 p-2"><b class="text-lg text-green-700">${num(w.work)}</b><br>วันทำงาน</div>
+                    <div class="rounded-xl bg-gray-50 p-2"><b class="text-lg">${num(w.scan)}</b><br>สแกนหน้า</div>
+                    <div class="rounded-xl bg-amber-50 p-2"><b class="text-lg text-amber-700">${num(w.late)}</b><br>สาย ${num(w.lateMin)} นาที</div>
+                    <div class="rounded-xl bg-red-50 p-2"><b class="text-lg text-red-700">${num(w.noScan)}</b><br>ไม่สแกน</div>
+                    <div class="rounded-xl bg-red-50 p-2"><b class="text-lg text-red-700">${num(w.absent)}</b><br>ขาดงาน</div>
+                    <div class="rounded-xl bg-sky-50 p-2"><b class="text-lg text-sky-700">${num(w.leave)}</b><br>ลา</div></div>
+                    <p class="text-sm mb-2">ค่าปรับเดือนนี้ <b class="text-red-600">฿${num(w.fine)}</b>${w.off ? ' · วันหยุด ' + num(w.off) + ' วัน' : ''}</p>
+                    <div class="max-h-[50vh] overflow-y-auto">${rows || '<p class="text-gray-400 text-sm">ยังไม่มีรายการ</p>'}</div>
+                    <p class="text-[10px] text-gray-400 mt-2">ข้อมูลจากระบบสแกนหน้า · อัปเดตทุก 10 นาที</p>` });
+        }
         function renderAll() {
             setProfilePic(); renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems(); renderMenus();
         }
@@ -1797,9 +1862,9 @@
         // ===== เมนูใช้งานด่วนแบบไดนามิก: แสดงเฉพาะเมนูที่บัญชีนี้มีสิทธิ์ =====
         // show(R) คืน true = แสดง · R = สิทธิ์ที่ระบบส่งมาตอนเข้าสู่ระบบ (ไม่ได้เก็บสิทธิ์ไว้ในหน้าเว็บ ฝั่งระบบตรวจซ้ำทุกครั้ง)
         const QUICK_MENU = [
-            { id: 'dash', label: R => R.mgmt ? 'PBD Dashboard' : 'Sales Dashboard', icon: R => R.mgmt ? 'fa-chart-line' : 'fa-chart-pie', run: 'openPersonalDashboard()', hero: 1, show: R => R.mgmt ? R.dash : true },
-            { id: 'history', label: 'ประวัติย้อนหลัง', icon: 'fa-clock-rotate-left', run: "openSection('historyModal')", show: R => !R.mgmt },
-            { id: 'verify', label: 'ขอตรวจสอบยอด', icon: 'fa-magnifying-glass-dollar', run: 'requestVerify()', show: R => !R.mgmt },
+            { id: 'dash', label: R => R.mgmt ? 'PBD Dashboard' : 'Sales Dashboard', icon: R => R.mgmt ? 'fa-chart-line' : 'fa-chart-pie', run: 'openPersonalDashboard()', hero: 1, show: R => R.mgmt ? R.dash : !R.staff },
+            { id: 'history', label: 'ประวัติย้อนหลัง', icon: 'fa-clock-rotate-left', run: "openSection('historyModal')", show: R => !R.mgmt && !R.staff },
+            { id: 'verify', label: 'ขอตรวจสอบยอด', icon: 'fa-magnifying-glass-dollar', run: 'requestVerify()', show: R => !R.mgmt && !R.staff },
             { id: 'team', label: 'ใบแจ้งยอดทีม', icon: 'fa-people-group', run: 'openLeaderReport()', show: R => R.leader },
             { id: 'staff', label: 'พนักงาน', icon: 'fa-users', run: "openAdminPage('staff.html')", show: R => R.fieldLead || R.exec || R.lvApprover },   // ผู้จัดการ/หัวหน้าทีม: สแกนหน้าของพนักงานในสาขาวันนี้
             { id: 'requests', label: 'คำขอรอดำเนินการ', icon: 'fa-inbox', run: 'openRequests()', badge: R => R.nReq ? { t: R.nReq, c: 'bg-amber-500 text-white' } : null, show: R => R.exec },
@@ -1824,6 +1889,7 @@
             const o = appState.overview || {};
             return {
                 mgmt: appState.mode === 'mgmt',                         // หน้าแบบบริหาร
+                staff: appState.mode === 'staff',                       // พนักงานทั่วไป (ไม่ใช่ฝ่ายขาย): ไม่มีเมนูยอดขาย/ค่าคอม
                 dash: !!appState.dashUrl,                               // มี PBD Dashboard ส่วนตัว
                 leader: !!(appState.leader && appState.leader.length),  // ดูแลทีม (หัวหน้าทีม/ผู้จัดการ)
                 fieldLead: !!(appState.leader && appState.leader.length) || /ผู้จัดการ|หัวหน้าทีม/.test(String(appState.position || '') + ' ' + String(appState.role || '')) || /Team_Leader/i.test(String(appState.role || '')),   // ผู้จัดการสาขา/หัวหน้าทีม
