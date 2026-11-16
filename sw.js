@@ -4,7 +4,7 @@
  * ไม่แตะคำขอไปที่อื่น (ระบบหลังบ้าน GAS, LINE, CDN) → ข้อมูลยอดเงิน/คูปองไม่ถูกเก็บโดย service worker
  * แจ้งเตือน "เงินเข้าแล้ว": รับจาก Firebase Cloud Messaging (ข้อความแบบ data) แล้วแสดงเอง · กดแล้วเปิดแอป + เล่นเสียง
  * แก้ไฟล์นี้หรือเปลี่ยนไฟล์เสียงเมื่อไร ให้เปลี่ยน VERSION เพื่อล้างของเก่า */
-const VERSION = 'pbd-wallet-v4';
+const VERSION = 'pbd-wallet-v6';
 const SHELL = ['./', './index.html', './manifest.json', './firebase-config.js', './sounds/cash.mp3', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 try { importScripts('./firebase-config.js'); } catch (e) { }
@@ -14,6 +14,10 @@ if (self.PBD_FIREBASE && self.PBD_FIREBASE.config) {
     firebase.initializeApp(self.PBD_FIREBASE.config);
     firebase.messaging().onBackgroundMessage(p => {
       const d = (p && p.data) || {};
+      // การลา (คำขอใหม่/ผลอนุมัติ) · กิจกรรม (ใหม่/เตือนก่อนวันงาน) · สิทธิประโยชน์ใหม่ → แสดงข้อความ กดแล้วเปิดหน้าที่เกี่ยวข้อง
+      if (d.kind === 'leave' || d.kind === 'event' || d.kind === 'reward') return self.registration.showNotification(d.title || 'PBD Wallet', {
+        body: d.body || '', icon: './icons/icon-192.png', badge: './icons/icon-192.png', tag: 'pbd-' + d.kind + '-' + (d.id || ''), renotify: true,
+        vibrate: [150, 80, 150], data: { url: d.url || (d.kind === 'leave' ? 'leave.html' : './') } });
       if (d.kind !== 'commission') return;
       return self.registration.showNotification(d.title || 'เงินเข้าแล้ว', {
         body: d.body || '', icon: './icons/icon-192.png', badge: './icons/icon-192.png', tag: 'pbd-cash', renotify: true,
@@ -24,7 +28,9 @@ if (self.PBD_FIREBASE && self.PBD_FIREBASE.config) {
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const d = e.notification.data || {}, url = new URL('./?cash=' + encodeURIComponent(d.amount || ''), self.registration.scope).href;
+  const d = e.notification.data || {};
+  if (d.url) { const u = new URL(d.url, self.registration.scope).href; e.waitUntil(self.clients.openWindow(u)); return; }   // การลา → เปิดหน้าขอลา/อนุมัติ
+  const url = new URL('./?cash=' + encodeURIComponent(d.amount || ''), self.registration.scope).href;
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     const c = cs.find(x => x.url.indexOf(self.registration.scope) === 0);
     if (c) { c.postMessage({ type: 'cash', amount: d.amount, total: d.total }); return c.focus(); }
