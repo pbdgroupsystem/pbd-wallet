@@ -1400,8 +1400,18 @@
                 Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจสัญญาณอินเทอร์เน็ต แล้วปิด-เปิดหน้านี้ใหม่', 'error');
             }
         }
+        // รูปโปรไฟล์: LINE (เปิดใน LINE) → รูปที่ระบบเก็บไว้จาก LINE (แอปบนเครื่อง) → รูปเริ่มต้น · รูปเสีย/หมดอายุ → กลับไปรูปเริ่มต้น
+        var PIC_DEFAULT = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+        function setProfilePic() {
+            const url = appState.pictureUrl || appState.pic || '';
+            ['profileImage', 'profileCardImage'].forEach(id => {
+                const im = $id(id); if (!im) return;
+                im.onerror = () => { im.onerror = () => { im.onerror = null; im.src = 'icons/icon-192.png'; }; im.src = PIC_DEFAULT; };
+                const want = url || PIC_DEFAULT; if (im.getAttribute('src') !== want) im.src = want;
+            });
+        }
         function renderAll() {
-            renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems(); renderMenus();
+            setProfilePic(); renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems(); renderMenus();
         }
         function showRegister(lineUserId) {
             $id('userName').innerText = lineDisplayName || 'ยังไม่ได้ลงทะเบียน';
