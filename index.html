@@ -1413,7 +1413,7 @@
             showConfigBtn(false);
             loadLocalMe();
             await fetchUserData();
-            cashFromUrl(); pushStartup();
+            cashFromUrl(); noticeFromUrl(); pushStartup();
         }
 
         // ---------- หน้าจับคู่เครื่อง (เปิดแอปจากไอคอนครั้งแรก) ----------
@@ -1617,7 +1617,20 @@
             await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
             if (!firebase.apps.length) firebase.initializeApp(FB.config);
             fbMsg = firebase.messaging();
-            fbMsg.onMessage(p => { const d = (p && p.data) || {}; if (d.kind === 'commission') { showCash(+d.amount, +d.total); fetchUserData(true); } });
+            fbMsg.onMessage(p => { const d = (p && p.data) || {};
+                if (d.kind === 'commission') { showCash(+d.amount, +d.total); fetchUserData(true); }
+                else if (d.kind === 'event' || d.kind === 'reward') {   // กิจกรรมใหม่ / เตือนก่อนวันงาน / สิทธิประโยชน์ใหม่ ขณะเปิดแอปอยู่
+                    try { if (navigator.vibrate) navigator.vibrate([150, 80, 150]); } catch (e) { }
+                    fetchUserData(true).then(() => Swal.fire({ toast: true, position: 'top', icon: 'info', title: d.title || '', text: d.body || '', showConfirmButton: true,
+                        confirmButtonText: 'เปิดดู', confirmButtonColor: '#dc2626', showCloseButton: true, timer: 12000 }).then(r => { if (r.isConfirmed) openFromNotice(/open=coupon/.test(d.url || '') ? 'coupon' : d.kind); }));
+                }
+                else if (d.kind === 'leave') {   // คำขอลาใหม่ (ผู้อนุมัติ) / ผลอนุมัติ (พนักงาน) ขณะเปิดแอปอยู่
+                    try { if (navigator.vibrate) navigator.vibrate([150, 80, 150]); } catch (e) { }
+                    Swal.fire({ toast: true, position: 'top', icon: d.ok === 'no' ? 'error' : d.ok === 'yes' ? 'success' : 'info', title: d.title || 'การลา', text: d.body || '',
+                        showConfirmButton: true, confirmButtonText: 'เปิดดู', confirmButtonColor: '#dc2626', showCloseButton: true, timer: 12000 })
+                        .then(r => { if (r.isConfirmed) location.href = d.url || 'leave.html'; });
+                    fetchUserData(true);
+                } });
             return fbMsg;
         }
         async function pushRegister(silent) {
@@ -1665,13 +1678,23 @@
             if (!(amount > 0)) return;
             const ok = await playCash(amount);
             Swal.fire({
-                html: `<div class="text-5xl mb-2">💰</div><p class="text-lg font-extrabold text-gray-900">เงินเข้าแล้ว</p><p class="text-4xl font-extrabold text-green-600 my-1">+${num(amount)} บาท</p>
+                html: `<div class="text-5xl mb-2">💰</div><p class="text-lg font-extrabold text-gray-900">เงินเข้าแล้ว</p><p class="text-4xl font-extrabold text-green-600 my-1">${num(amount)} บาท</p>
                        ${total ? `<p class="text-xs text-gray-500">ค่าคอมพีเรียดนี้ประมาณ ${num(total)} บาท (ยังไม่หักรายการ)</p>` : ''}${test ? '<p class="text-[11px] text-gray-400 mt-1">ทดลองเสียง</p>' : ''}`,
                 showConfirmButton: !ok, confirmButtonText: '<i class="fa-solid fa-volume-high"></i> ฟังเสียง', confirmButtonColor: '#16a34a',
                 showCloseButton: true, timer: ok ? 5000 : undefined
             }).then(r => { if (r.isConfirmed) playCash(amount); });
         }
         // กดแจ้งเตือนเข้ามา (?cash=590) หรือ service worker ส่งข้อความมา (แอปเปิดอยู่)
+        /** เปิดจากการแจ้งเตือน: กิจกรรม → เลื่อนไปที่การ์ดกิจกรรม · สิทธิประโยชน์ → เปิดหน้าแลกคูปอง */
+        function openFromNotice(kind) {
+            if (kind === 'reward') { try { openSection('rewardsModal'); } catch (e) { } }
+            else if (kind === 'coupon') { try { openSection('rewardsModal'); switchRewardTab('myCoupons'); } catch (e) { } }   // คูปองของฉัน (ใช้แล้ว / ใกล้หมดอายุ)
+            else if (kind === 'event') { const b = $id('eventsBox'); if (b && !b.classList.contains('hidden')) b.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        }
+        function noticeFromUrl() {
+            const k = new URLSearchParams(location.search).get('open');
+            if (k === 'event' || k === 'reward' || k === 'coupon') { try { history.replaceState(null, '', location.pathname); } catch (e) { } openFromNotice(k); }
+        }
         function cashFromUrl() {
             const c = +new URLSearchParams(location.search).get('cash');
             if (c > 0) { try { history.replaceState(null, '', location.pathname); } catch (e) { } setTimeout(() => showCash(c), 600); }
@@ -1699,7 +1722,7 @@
                 showConfigBtn(false);
                 loadLocalMe();
                 await fetchUserData();
-                cashFromUrl(); if (!IN_LINE) pushStartup();
+                cashFromUrl(); noticeFromUrl(); if (!IN_LINE) pushStartup();
                 handlePairParam();   // เปิดจากลิงก์ "ยืนยันใน LINE" ของแอปบนเครื่อง (?pair=รหัส)
             } catch (err) {
                 console.error('LIFF Init Error:', err);
@@ -1717,9 +1740,15 @@
             { id: 'history', label: 'ประวัติย้อนหลัง', icon: 'fa-clock-rotate-left', run: "openSection('historyModal')", show: R => !R.mgmt },
             { id: 'verify', label: 'ขอตรวจสอบยอด', icon: 'fa-magnifying-glass-dollar', run: 'requestVerify()', show: R => !R.mgmt },
             { id: 'team', label: 'ใบแจ้งยอดทีม', icon: 'fa-people-group', run: 'openLeaderReport()', show: R => R.leader },
+            { id: 'staff', label: 'พนักงาน', icon: 'fa-users', run: "openAdminPage('staff.html')", show: R => R.fieldLead || R.exec || R.lvApprover },   // ผู้จัดการ/หัวหน้าทีม: สแกนหน้าของพนักงานในสาขาวันนี้
             { id: 'requests', label: 'คำขอรอดำเนินการ', icon: 'fa-inbox', run: 'openRequests()', badge: R => R.nReq ? { t: R.nReq, c: 'bg-amber-500 text-white' } : null, show: R => R.exec },
             { id: 'pending', label: 'รายการรอหักทั้งหมด', icon: 'fa-file-invoice-dollar', run: 'openPendingAll()', show: R => R.exec },
             { id: 'coupon', label: 'ตรวจสอบคูปอง', icon: 'fa-ticket', run: "openSection('adminModal')", show: R => R.admin },
+            { id: 'leave', label: 'ขอลางาน', icon: 'fa-calendar-minus', run: "openAdminPage('leave.html')", show: R => R.myQr },
+            { id: 'leaveok', label: 'อนุมัติการลา', icon: 'fa-calendar-check', run: "openAdminPage('leave.html#approve')", badge: R => R.lvPending ? { t: R.lvPending, c: 'bg-amber-500 text-white' } : null, show: R => R.lvApprover },
+            { id: 'myqr', label: 'QR ของฉัน', icon: 'fa-id-card', run: 'showMyQr()', show: R => R.myQr },
+            { id: 'baadmin', label: 'บันทึกรายการหัก', icon: 'fa-file-invoice-dollar', run: "openAdminPage('admin-branch.html')", show: R => R.baAdmin },
+            { id: 'aaadmin', label: 'จัดการคูปอง', icon: 'fa-ticket', run: "openAdminPage('admin-activity.html')", show: R => R.aaAdmin },
             { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
             { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
@@ -1739,7 +1768,12 @@
                 fieldLead: !!(appState.leader && appState.leader.length) || /ผู้จัดการ|หัวหน้าทีม/.test(String(appState.position || '') + ' ' + String(appState.role || '')) || /Team_Leader/i.test(String(appState.role || '')),   // ผู้จัดการสาขา/หัวหน้าทีม
                 exec: o.pendingCount !== undefined,                     // ผู้ดูแลระบบ/ผู้บริหาร (เห็นคำขอ + รายการรอหัก)
                 admin: !!appState.isAdmin || (appState.mode === 'mgmt' && o.pendingCount !== undefined),   // แอดมินตรวจสอบคูปอง
-                nReq: (o.requests || []).length
+                nReq: (o.requests || []).length,
+                myQr: !!appState.myQr,                                  // QR ประจำตัว (แอดมินสาขาสแกนบันทึกรายการหัก / มอบคูปอง)
+                baAdmin: !!(appState.adminPages && appState.adminPages.branch),     // หน้าแอดมินสาขา
+                aaAdmin: !!(appState.adminPages && appState.adminPages.activity),   // หน้าแอดมินกิจกรรม
+                lvApprover: !!(appState.leaveRights && appState.leaveRights.approver),   // ผู้จัดการ/หัวหน้าทีม: อนุมัติการลา
+                lvPending: (appState.leaveRights && appState.leaveRights.pending) || 0
             };
         }
         function renderMenus() {
@@ -1770,7 +1804,7 @@
                 </button>`;
         }
         async function openScanner() {
-            if (!idToken) { Swal.fire('เปิดผ่านแอป LINE', 'การสแกนเบิกของต้องเปิดจากลิงก์ในแอป LINE', 'info'); return; }
+            if (!idToken && !DEVICE.mode) { Swal.fire('เปิดผ่านแอป LINE', 'การสแกนเบิกของต้องเปิดจากลิงก์ในแอป LINE', 'info'); return; }
             renderQuickItems();
             $id('qrScannerModal').classList.remove('hidden');
             const statusMsg = $id('cameraStatusMsg');
@@ -1827,11 +1861,35 @@
         async function processScannedCode(rawCode) {
             await closeQrScannerModal();
             const raw = String(rawCode || '').trim();
+            if (/^PBDX1\./.test(raw)) return claimAdminQr(raw);   // QR รายการที่แอดมินสาขาสร้าง (เบิกเงินล่วงหน้า / ค่าเสื้อ / ค่าใช้จ่าย)
+            if (/^PBDE1\./.test(raw)) return Swal.fire('นี่คือ QR ประจำตัวพนักงาน', 'ใช้ให้แอดมินสแกน — ไม่ต้องสแกนเอง', 'info');
             const it = (appState.scanItems || []).find(x => x.id === raw || raw.split('|')[0] === x.id);
             if (it) return confirmDeduct({ itemId: it.id, item: it.name, amount: it.amount });
             const p = raw.split('|');
             if (p.length >= 3 && parseFloat(p[2]) > 0) return confirmDeduct({ code: p[0], item: p[1], amount: parseFloat(p[2]) });
             Swal.fire('ไม่รู้จัก QR นี้', `รหัส: ${esc(raw)}<br>ให้แอดมินเพิ่มรหัสนี้ในแท็บ Scan_Items หรือกรอกรายการเอง`, 'warning');
+        }
+        /** สแกน QR ของแอดมินสาขา → ดูรายการ → ยืนยัน → เป็นรายการรอหักของตัวเอง (QR ใช้ได้ครั้งเดียว) */
+        async function claimAdminQr(code) {
+            Swal.fire({ title: 'กำลังตรวจ QR…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                const p = await api({ wl: 'xq', code: code });
+                if (!p.ok) return apiError(p);
+                const res = await Swal.fire({
+                    title: 'ยืนยันรายการ?', icon: 'question', showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก',
+                    html: `<div class="text-sm text-left bg-red-50 p-3 rounded-xl border border-red-200 space-y-1">
+                        <div><b>รายการ:</b> ${esc(p.item)}</div>
+                        <div><b>บันทึกเป็นรายการรอหัก:</b> <strong class="text-red-600">฿ ${num(p.amount)}</strong></div>
+                        <div class="text-xs text-gray-500">สร้างโดย ${esc(p.by)}${p.branch ? ' · สาขา ' + esc(p.branch) : ''}</div></div>`
+                });
+                if (!res.isConfirmed) return;
+                Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const j = await api({ wl: 'scan', code: code });
+                if (!j.ok) return apiError(j);
+                await fetchUserData(true);
+                Swal.fire('บันทึกแล้ว', `"${esc(j.item)}" รอหัก ฿${num(j.amount)}`, 'success');
+            } catch (e) { apiError(null); }
         }
         function confirmDeduct(x) {
             Swal.fire({
@@ -1880,7 +1938,7 @@
                 .then(r => { if (r.isConfirmed && r.value) { rwSort = r.value; renderCouponsAndCatalog(); } });
         }
         function renderCouponsAndCatalog() {
-            const avail = appState.coupons.filter(c => c.status === 'Available'), used = appState.coupons.filter(c => c.status === 'Used');
+            const avail = appState.coupons.filter(c => c.status === 'Available'), used = appState.coupons.filter(c => c.status === 'Used' || c.status === 'Expired');
             const coins = +appState.pbdCoins || 0, byName = n => appState.catalog.find(x => x.name === n) || {};
             $id('availableCouponCount').innerText = avail.length;
             $id('modalCoinBalance').innerText = num(appState.pbdCoins);
@@ -1897,7 +1955,8 @@
                     <div class="min-w-0 flex-1 flex flex-col gap-1.5">
                         <p class="font-bold text-[15px] text-gray-900 leading-snug rw-clamp2">${esc(item.name)}</p>
                         <p class="text-[13px] text-gray-500 leading-snug rw-clamp2">${esc(item.desc || (+item.cost > 0 ? `ใช้ ${num(item.cost)} PBD Coin แลก${item.name}` : `รับฟรี ${item.name}`))}</p>
-                        ${item.expire ? `<p class="text-[13px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i>ใช้ได้จนถึง ${rwDate(item.expire)}</p>` : ''}
+                        ${item.event ? `<p class="text-[13px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i>วันจัดกิจกรรม ${rwDate(item.event)}</p>` : item.expire ? `<p class="text-[13px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i>ใช้ได้จนถึง ${rwDate(item.expire)}</p>` : ''}
+                        ${item.to ? `<p class="text-[12px] text-orange-700 flex items-center gap-1.5"><i class="fa-regular fa-clock"></i>แลกได้ถึง ${rwDate(item.to)}</p>` : ''}
                         <p class="flex items-center gap-2 mt-0.5"><span class="rw-p w-6 h-6 text-xs">P</span><span class="text-[19px] font-extrabold text-orange-600 leading-none">${rwCost(item.cost)}</span></p>
                         ${ok ? '' : `<p class="text-[11px] text-gray-400">ขาดอีก ${num(item.cost - coins)} Coin</p>`}
                     </div>
@@ -1910,6 +1969,7 @@
                         <p class="font-bold text-[15px] text-gray-900 leading-snug rw-clamp2">${esc(c.rewardName)}</p>
                         <p class="text-[12px] text-gray-500">รหัส <strong class="font-mono">${esc(c.couponId)}</strong></p>
                         <p class="text-[12px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar"></i>แลกเมื่อ ${esc(c.dateRedeemed)}</p>
+                        ${c.expire ? `<p class="text-[12px] text-red-600 font-semibold flex items-center gap-1.5"><i class="fa-regular fa-hourglass-half"></i>ใช้ได้ถึง ${rwDate(c.expire)} ${esc(String(c.expire).slice(11, 16))} น.</p>` : ''}
                         <button onclick="useCoupon('${esc(c.couponId)}')" class="self-start mt-1 bg-[#F26A21] text-white px-4 py-2 rounded-xl text-xs font-bold shadow active:scale-95"><i class="fa-solid fa-qrcode mr-1"></i>ใช้คูปอง</button>
                     </div>
                 </div>`; }).join('') : `<div class="text-center py-10 text-gray-400 text-sm">ยังไม่มีคูปองพร้อมใช้<br><button onclick="switchRewardTab('catalog')" class="mt-3 text-orange-600 font-bold">ไปแลกคูปอง</button></div>`;
@@ -1920,8 +1980,8 @@
                     <div class="min-w-0 flex-1 flex flex-col gap-1.5">
                         <p class="font-bold text-[15px] text-gray-700 leading-snug rw-clamp2">${esc(c.rewardName)}</p>
                         <p class="text-[12px] text-gray-500">รหัส ${esc(c.couponId)}</p>
-                        <p class="text-[12px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar-check"></i>ใช้เมื่อ ${esc(c.usedDate)}</p>
-                        <span class="self-start bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold">ใช้แล้ว</span>
+                        <p class="text-[12px] text-gray-500 flex items-center gap-1.5"><i class="fa-regular fa-calendar-check"></i>${c.status === 'Expired' ? 'หมดอายุ ' + rwDate(c.expire) + ' ' + esc(String(c.expire).slice(11, 16)) + ' น.' : 'ใช้เมื่อ ' + esc(c.usedDate)}</p>
+                        <span class="self-start bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold">${c.status === 'Expired' ? 'หมดอายุ' : 'ใช้แล้ว'}</span>
                     </div>
                 </div>`; }).join('') : `<div class="text-center py-10 text-gray-400 text-sm">ยังไม่มีประวัติการใช้คูปอง</div>`;
         }
@@ -1931,6 +1991,19 @@
             try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); }
             catch (e) { return `<img alt="QR" class="w-full" src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(text)}">`; }
         }
+        /** QR ประจำตัวพนักงาน — ให้แอดมินสาขาสแกนบันทึกเบิกเงิน/ค่าเสื้อ/ค่าใช้จ่าย หรือแอดมินกิจกรรมสแกนมอบคูปอง */
+        function showMyQr() {
+            if (!appState.myQr) { Swal.fire('ยังไม่มี QR', 'กดรีเฟรชข้อมูลแล้วลองใหม่', 'info'); return; }
+            Swal.fire({
+                title: 'QR ของฉัน',
+                html: `<div class="mx-auto w-60 bg-white p-2 rounded-2xl border border-gray-200">${qrSvg(appState.myQr)}</div>
+                    <p class="mt-3 font-bold text-gray-900">${esc(appState.name)}</p>
+                    <p class="text-xs text-gray-500">รหัส ${esc(appState.empId)}${appState.branch ? ' · ' + esc(appState.branch) : ''}</p>
+                    <p class="text-[11px] text-gray-400 mt-2">ให้แอดมินสาขาสแกนเพื่อบันทึก เบิกเงินล่วงหน้า / ค่าเสื้อ / ค่าใช้จ่าย<br>รายการจะขึ้นในหน้านี้เป็น "รอหัก"</p>`,
+                confirmButtonText: 'ปิด', confirmButtonColor: '#dc2626'
+            }).then(() => fetchUserData(true));
+        }
+        function openAdminPage(page) { location.href = page; }
         function useCoupon(couponId) {
             const c = appState.coupons.find(x => x.couponId === couponId);
             if (!c) return;

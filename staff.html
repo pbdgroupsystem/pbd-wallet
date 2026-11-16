@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#7f1d1d">
+    <title>PBD พนักงานในสาขา</title>
+    <link rel="icon" href="icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } } };</script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .hero { background: linear-gradient(135deg, #111827 0%, #7f1d1d 55%, #dc2626 100%); }
+        .kpi[aria-pressed="true"] { box-shadow: 0 0 0 2px #dc2626; }
+        .swal2-popup { font-family: 'Kanit', sans-serif; }
+        .num { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-gray-900">
+    <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
+        <div class="flex items-center justify-between max-w-md mx-auto gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <button onclick="goBack()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="กลับ"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="min-w-0">
+                    <p class="text-[11px] text-red-100">PBD Smart Wallet · พนักงาน</p>
+                    <h1 class="text-xl font-bold leading-tight" id="title">สแกนหน้าเข้างาน</h1>
+                    <p id="who" class="text-xs text-red-100 truncate">กำลังเชื่อมต่อ…</p>
+                </div>
+            </div>
+            <button onclick="load()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="รีเฟรช"><i id="spin" class="fa-solid fa-rotate-right"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 -mt-12 space-y-3">
+        <!-- วันที่ + สาขา -->
+        <section class="bg-white rounded-2xl shadow-md p-3">
+            <div class="flex items-center gap-2">
+                <button onclick="shift(-1)" id="prev" class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 disabled:opacity-30" aria-label="วันก่อนหน้า"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="flex-1 text-center min-w-0">
+                    <p id="dateText" class="font-bold leading-tight">–</p>
+                    <p id="syncText" class="text-[11px] text-gray-400">–</p>
+                </div>
+                <button onclick="shift(1)" id="next" class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 disabled:opacity-30" aria-label="วันถัดไป"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div id="branchBox" class="hidden mt-3 flex gap-1.5 overflow-x-auto pb-1"></div>
+        </section>
+
+        <!-- สรุป (กดเพื่อกรอง) -->
+        <section class="grid grid-cols-4 gap-2" id="kpis">
+            <button class="kpi bg-white rounded-2xl shadow-md p-2.5 text-center" data-f="in" aria-pressed="false"><p class="text-[11px] text-gray-500">สแกนแล้ว</p><p id="kIn" class="num text-2xl font-extrabold text-green-600 leading-tight">–</p><p id="kAll" class="text-[10px] text-gray-400">จาก – คน</p></button>
+            <button class="kpi bg-white rounded-2xl shadow-md p-2.5 text-center" data-f="late" aria-pressed="false"><p class="text-[11px] text-gray-500">สาย</p><p id="kLate" class="num text-2xl font-extrabold text-amber-600 leading-tight">–</p><p class="text-[10px] text-gray-400">คน</p></button>
+            <button class="kpi bg-white rounded-2xl shadow-md p-2.5 text-center" data-f="none" aria-pressed="false"><p class="text-[11px] text-gray-500">ไม่สแกน</p><p id="kNone" class="num text-2xl font-extrabold text-red-600 leading-tight">–</p><p id="kNoneSub" class="text-[10px] text-gray-400">คน</p></button>
+            <button class="kpi bg-white rounded-2xl shadow-md p-2.5 text-center" data-f="off" aria-pressed="false"><p class="text-[11px] text-gray-500">ลา/ออกแวน</p><p id="kOff" class="num text-2xl font-extrabold text-sky-600 leading-tight">–</p><p class="text-[10px] text-gray-400">คน</p></button>
+        </section>
+        <p id="filterNote" class="hidden text-xs text-gray-500 px-1"></p>
+
+        <section id="list" class="space-y-2"><div class="bg-white rounded-2xl shadow-md p-8 text-center text-sm text-gray-400">กำลังโหลด…</div></section>
+        <p class="text-center text-[10px] text-gray-400 leading-relaxed">ข้อมูลจากระบบสแกนหน้า · อัปเดตทุกประมาณ 30 นาที<br>ยังไม่สแกนก่อน <span id="cut">09:45</span> น. = รอยืนยัน · หลังจากนั้นนับเป็นไม่สแกน</p>
+    </main>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    const LIFF_ID = '2012225566-hFrR9T1Q';
+    const IN_LINE = /\bLine\//i.test(navigator.userAgent);
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], TH_D = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+    const thd = s => { const d = new Date(s + 'T00:00:00Z'); return 'วัน' + TH_D[d.getUTCDay()] + 'ที่ ' + d.getUTCDate() + ' ' + TH_M[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear() + 543).slice(2); };
+    const addDays = (d, n) => new Date(new Date(d + 'T00:00:00Z').getTime() + n * 864e5).toISOString().slice(0, 10);
+    let AUTH = null, D = null, date = '', branch = '', filter = '';
+
+    // ---------- ล็อกอิน: แอปบนเครื่อง (รหัสเครื่อง) หรือ LINE ----------
+    const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    async function auth() {
+        const dt = lsGet('PBD_DT'); let useLine = ''; try { useLine = sessionStorage.getItem('PBD_USE_LINE') || ''; } catch (e) { }
+        if (!IN_LINE && dt && !useLine) { AUTH = { dt: dt }; return true; }
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return false; }
+        let at = ''; try { at = liff.getAccessToken() || ''; } catch (e) { }
+        AUTH = { idToken: liff.getIDToken() || '', accessToken: at };
+        return true;
+    }
+    async function api(body) {
+        const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, AUTH, body)) });
+        const j = await r.json();
+        if (!j.ok && (j.authFail || j.devFail)) {
+            await Swal.fire({ icon: 'warning', title: 'ต้องเข้าสู่ระบบใหม่', text: 'กดตกลงเพื่อเข้าสู่ระบบด้วย LINE', confirmButtonColor: '#dc2626' });
+            try { sessionStorage.setItem('PBD_USE_LINE', '1'); if (window.liff && liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch (e) { }
+            location.reload(); throw new Error('relogin');
+        }
+        return j;
+    }
+    function goBack() { if (history.length > 1) history.back(); else location.href = './'; }
+
+    /** จัดกลุ่มจากสถานะในแท็บสแกนเข้างาน */
+    function kind(r) {
+        const s = String(r.status || ''), n = String(r.note || '');
+        if (/ไม่สแกน/.test(s)) return /รอยืนยัน/.test(n) || /รอ/.test(s) ? 'wait' : 'none';
+        if (/รอ/.test(s)) return 'wait';
+        if (/สาย/.test(s)) return 'late';
+        if (/ลา|ขาด|ออกแวน|พักงาน|บวช/.test(s)) return 'off';
+        if (/หยุด/.test(s)) return 'holiday';
+        if (/ยกเว้น/.test(s)) return r.tin ? 'ok' : 'holiday';
+        return r.tin ? 'ok' : 'holiday';
+    }
+    const KIND = {
+        none: { t: 'ไม่สแกน', c: 'bg-red-100 text-red-700', bar: 'bg-red-500', o: 0 },
+        wait: { t: 'ยังไม่สแกน', c: 'bg-gray-200 text-gray-700', bar: 'bg-gray-400', o: 1 },
+        late: { t: 'สาย', c: 'bg-amber-100 text-amber-800', bar: 'bg-amber-500', o: 2 },
+        ok: { t: 'ตรงเวลา', c: 'bg-green-100 text-green-700', bar: 'bg-green-500', o: 3 },
+        off: { t: 'ลา/ออกแวน', c: 'bg-sky-100 text-sky-700', bar: 'bg-sky-500', o: 4 },
+        holiday: { t: 'วันหยุด', c: 'bg-gray-100 text-gray-500', bar: 'bg-gray-300', o: 5 },
+    };
+
+    async function load() {
+        $('spin').classList.add('fa-spin');
+        try {
+            const j = await api({ wl: 'st_day', date: date, branch: branch });
+            if (!j.ok) { $('who').innerText = 'ใช้งานไม่ได้'; $('list').innerHTML = `<div class="bg-white rounded-2xl shadow-md p-8 text-center text-sm text-red-600">${esc(j.error)}</div>`; return; }
+            D = j; date = j.date; branch = j.branch;
+            D.rows.forEach(r => r.k = kind(r));
+            $('who').innerText = (j.name ? j.name + ' · ' : '') + 'สาขา ' + (j.branch || '-');
+            $('dateText').innerText = (j.date === j.today ? 'วันนี้ · ' : '') + thd(j.date);
+            $('syncText').innerText = j.date === j.today && j.lastSync ? 'ข้อมูลล่าสุด ' + String(j.lastSync).slice(11) + ' น.' : j.date === j.today ? '' : 'ข้อมูลย้อนหลัง';
+            $('prev').disabled = j.date <= j.minDate; $('next').disabled = j.date >= j.today;
+            $('cut').innerText = j.cutoff || '09:45';
+            if (j.all && j.branches) {
+                $('branchBox').classList.remove('hidden');
+                $('branchBox').innerHTML = j.branches.map(b => `<button onclick="branch='${esc(b.branch)}';filter='';load()" class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold ${b.branch === j.branch ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'}">${esc(b.branch)}${b.late + b.none ? ` <span class="${b.branch === j.branch ? 'text-red-100' : 'text-red-600'}">${b.late + b.none}</span>` : ''}</button>`).join('');
+            }
+            render();
+        } catch (e) { if (e.message !== 'relogin') Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจอินเทอร์เน็ต แล้วลองใหม่', 'error'); }
+        finally { $('spin').classList.remove('fa-spin'); }
+    }
+    function shift(n) { if (!D) return; const d = addDays(date, n); if (d > D.today || d < D.minDate) return; date = d; filter = ''; load(); }
+
+    const inGroup = (r, f) => f === 'in' ? (r.k === 'ok' || r.k === 'late') : f === 'late' ? r.k === 'late' : f === 'none' ? (r.k === 'none' || r.k === 'wait') : f === 'off' ? r.k === 'off' : true;
+    function render() {
+        const rows = D.rows, work = rows.filter(r => r.k !== 'holiday');
+        const n = k => rows.filter(r => r.k === k).length;
+        $('kIn').innerText = n('ok') + n('late'); $('kAll').innerText = 'จาก ' + work.length + ' คน';
+        $('kLate').innerText = n('late'); $('kNone').innerText = n('none') + n('wait');
+        $('kNoneSub').innerText = n('wait') ? 'รอยืนยัน ' + n('wait') : 'คน';
+        $('kOff').innerText = n('off');
+        document.querySelectorAll('#kpis .kpi').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === filter));
+        const F = { in: 'สแกนแล้ว', late: 'มาสาย', none: 'ไม่สแกน / ยังไม่สแกน', off: 'ลา / ออกแวน' };
+        $('filterNote').classList.toggle('hidden', !filter);
+        $('filterNote').innerHTML = filter ? `แสดงเฉพาะ: <strong>${F[filter]}</strong> · <a href="#" onclick="filter='';render();return false" class="text-red-600 underline">ดูทั้งหมด</a>` : '';
+        const show = rows.filter(r => inGroup(r, filter)).sort((a, b) => KIND[a.k].o - KIND[b.k].o || (b.late - a.late) || String(a.tin || '99').localeCompare(String(b.tin || '99')) || String(a.nick).localeCompare(String(b.nick)));
+        if (!rows.length) { $('list').innerHTML = `<div class="bg-white rounded-2xl shadow-md p-8 text-center text-sm text-gray-400">ยังไม่มีข้อมูลสแกนของวันนี้<br><span class="text-xs">ระบบดึงข้อมูลรอบแรกหลัง 06:00 น.</span></div>`; return; }
+        $('list').innerHTML = show.length ? show.map(r => {
+            const K = KIND[r.k], nm = String(r.name || '').split('-')[0].trim();
+            const sub = r.k === 'late' ? `สาย ${r.late} นาที${r.fine ? ' · ปรับ ฿' + r.fine : ''}` : r.k === 'none' ? (r.fine ? 'ปรับ ฿' + r.fine : '') : r.k === 'off' ? esc(r.status) : '';
+            return `<div class="bg-white rounded-2xl shadow-md overflow-hidden flex">
+                <div class="w-1.5 ${K.bar} shrink-0"></div>
+                <div class="flex-1 min-w-0 p-3 flex items-center gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-bold truncate">${esc(r.nick || nm)} <span class="text-xs font-normal text-gray-400">${esc(nm)}</span></p>
+                        <p class="text-[11px] text-gray-500 truncate">${esc(r.pos || '')}${r.shift ? ' · เข้างาน ' + esc(r.shift) : ''}</p>
+                        ${r.note && (r.k === 'none' || r.k === 'off' || r.k === 'wait') ? `<p class="text-[11px] text-gray-500 mt-0.5 break-words">${esc(r.note)}</p>` : ''}
+                    </div>
+                    <div class="text-right shrink-0">
+                        <p class="num text-xl font-extrabold leading-tight ${r.k === 'late' ? 'text-amber-600' : r.tin ? 'text-gray-900' : 'text-gray-300'}">${esc(r.tin || '–:–')}</p>
+                        ${r.tout ? `<p class="num text-[10px] text-gray-400">ออก ${esc(r.tout)}</p>` : ''}
+                        <span class="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${K.c}">${K.t}</span>
+                        ${sub ? `<p class="text-[10px] ${r.k === 'late' || r.k === 'none' ? 'text-red-600' : 'text-gray-500'} mt-0.5">${sub}</p>` : ''}
+                    </div>
+                </div></div>`;
+        }).join('') : `<div class="bg-white rounded-2xl shadow-md p-8 text-center text-sm text-gray-400">ไม่มีพนักงานในกลุ่มนี้</div>`;
+    }
+    document.querySelectorAll('#kpis .kpi').forEach(b => b.onclick = () => { filter = filter === b.dataset.f ? '' : b.dataset.f; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+    (async () => {
+        try { if (await auth()) load(); }
+        catch (e) { $('who').innerText = 'เชื่อมต่อ LINE ไม่ได้'; Swal.fire('เชื่อมต่อ LINE ไม่ได้', 'เปิดหน้านี้จากเมนูใน PBD Wallet', 'warning'); }
+    })();
+</script>
+</body>
+</html>

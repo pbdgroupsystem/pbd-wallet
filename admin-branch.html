@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#7f1d1d">
+    <title>PBD แอดมินสาขา</title>
+    <link rel="icon" href="icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } } };</script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .hero { background: linear-gradient(135deg, #111827 0%, #7f1d1d 55%, #dc2626 100%); }
+        #reader video { border-radius: 1rem; object-fit: cover; }
+        #reader { border: none !important; }
+        .type-btn[aria-pressed="true"] { border-color: #dc2626; background: #fef2f2; color: #991b1b; box-shadow: 0 0 0 2px #fecaca; }
+        .type-btn[aria-pressed="true"] .ti { background: #dc2626; color: #fff; }
+        .chip[aria-pressed="true"] { background: #dc2626; color: #fff; }
+        .mode[aria-selected="true"] { background: #fff; color: #b91c1c; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+        .amt::-webkit-outer-spin-button, .amt::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .amt { -moz-appearance: textfield; }
+        .swal2-popup { font-family: 'Kanit', sans-serif; }
+        .qrbox svg { width: 100%; height: auto; display: block; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-gray-900">
+    <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
+        <div class="flex items-center justify-between max-w-md mx-auto gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <div class="min-w-0">
+                    <p class="text-[11px] text-red-100">PBD Smart · แอดมินสาขา</p>
+                    <h1 class="text-xl font-bold leading-tight">รายการหักพนักงาน</h1>
+                    <p id="who" class="text-xs text-red-100 truncate">กำลังเชื่อมต่อ…</p>
+                </div>
+            </div>
+            <button onclick="loadInfo()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="รีเฟรช"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 -mt-12 space-y-4">
+        <section class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-2xl shadow-md p-4">
+                <p class="text-xs text-gray-500">รอหักในสาขา</p>
+                <p class="text-2xl font-extrabold text-red-600 leading-tight">฿<span id="pendTotal">–</span></p>
+                <p class="text-[11px] text-gray-400"><span id="pendCount">–</span> รายการ</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-md p-4">
+                <p class="text-xs text-gray-500">บันทึกวันนี้</p>
+                <p class="text-2xl font-extrabold text-gray-900 leading-tight">฿<span id="todayTotal">–</span></p>
+                <p class="text-[11px] text-gray-400 truncate" id="periodLabel">พีเรียด –</p>
+            </div>
+        </section>
+
+        <!-- สร้างรายการ -->
+        <section class="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div class="p-4 space-y-4">
+                <h2 class="font-bold text-base">สร้างรายการรอหัก</h2>
+                <div>
+                    <p class="text-sm font-semibold mb-2">ประเภท</p>
+                    <div id="types" class="grid grid-cols-3 gap-2"></div>
+                </div>
+                <div>
+                    <label for="amount" class="text-sm font-semibold">จำนวนเงิน (บาท)</label>
+                    <div class="mt-1 flex items-center border-2 border-gray-200 focus-within:border-red-500 rounded-2xl px-3">
+                        <span class="text-2xl font-bold text-gray-400">฿</span>
+                        <input id="amount" type="number" inputmode="decimal" min="1" step="0.01" class="amt flex-1 min-w-0 py-3 px-2 text-3xl font-extrabold outline-none bg-transparent" placeholder="0">
+                    </div>
+                    <div id="quick" class="mt-2 flex flex-wrap gap-1.5"></div>
+                </div>
+                <div>
+                    <label for="note" class="text-sm font-semibold">รายละเอียด <span id="noteReq" class="text-red-600 font-normal text-xs"></span></label>
+                    <input id="note" maxlength="100" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm" placeholder="เช่น เสื้อโปโล 2 ตัว">
+                </div>
+
+                <div>
+                    <p class="text-sm font-semibold mb-2">ให้พนักงานรับรายการอย่างไร</p>
+                    <div class="bg-gray-100 rounded-2xl p-1 grid grid-cols-2 text-[13px] font-semibold text-gray-600" role="tablist">
+                        <button class="mode py-2.5 rounded-xl" data-m="qr" role="tab" aria-selected="true"><i class="fa-solid fa-qrcode"></i> สร้าง QR ให้สแกน</button>
+                        <button class="mode py-2.5 rounded-xl" data-m="direct" role="tab" aria-selected="false"><i class="fa-solid fa-user-pen"></i> บันทึกให้โดยตรง</button>
+                    </div>
+                    <p id="modeHelp" class="text-xs text-gray-500 mt-2"></p>
+                </div>
+
+                <div id="directBox" class="hidden space-y-2">
+                    <div class="flex gap-2">
+                        <input id="empInput" list="empList" class="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-2.5 text-sm" placeholder="พิมพ์ชื่อ หรือรหัสพนักงาน" oninput="pickEmp(this.value)">
+                        <button onclick="startScan()" class="px-3.5 rounded-xl bg-gray-900 text-white text-sm font-bold shrink-0" aria-label="สแกน QR ของพนักงาน"><i class="fa-solid fa-camera"></i> สแกน</button>
+                    </div>
+                    <datalist id="empList"></datalist>
+                    <div id="readerWrap" class="hidden">
+                        <div id="reader" class="w-full overflow-hidden rounded-2xl bg-black"></div>
+                        <button onclick="stopScan()" class="mt-2 w-full py-2 rounded-xl bg-gray-200 font-semibold text-sm">ปิดกล้อง</button>
+                    </div>
+                    <div id="empCard" class="hidden p-3 rounded-xl bg-gray-900 text-white flex items-center gap-3">
+                        <div id="empAvatar" class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center font-bold shrink-0">–</div>
+                        <div class="min-w-0 flex-1"><p id="empName" class="font-bold truncate">–</p><p id="empMeta" class="text-[11px] text-gray-300 truncate">–</p></div>
+                        <div class="text-right shrink-0"><p class="text-[10px] text-gray-400">รอหักอยู่</p><p class="font-bold text-amber-300">฿<span id="empPending">0</span></p></div>
+                    </div>
+                </div>
+
+                <button id="saveBtn" onclick="submitItem()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-red-700 to-red-500 text-white font-bold text-lg shadow active:scale-[.98] transition disabled:opacity-50"></button>
+            </div>
+        </section>
+
+        <!-- QR ที่สร้าง -->
+        <section id="qrSec" class="hidden bg-white rounded-2xl shadow-md p-4">
+            <h2 class="font-bold text-base mb-3"><i class="fa-solid fa-qrcode text-red-600"></i> QR ที่สร้างล่าสุด</h2>
+            <div id="qrList" class="space-y-2"></div>
+        </section>
+
+        <!-- ประวัติ -->
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <div class="flex items-center justify-between gap-2 mb-3">
+                <h2 class="font-bold text-base"><i class="fa-solid fa-clock-rotate-left text-red-600"></i> ประวัติรายการ</h2>
+                <button onclick="exportCsv()" class="text-xs px-3 py-1.5 rounded-full bg-gray-900 text-white font-semibold shrink-0"><i class="fa-solid fa-download"></i> CSV</button>
+            </div>
+            <div class="flex flex-wrap gap-1 text-xs mb-2" id="filters">
+                <button data-f="today" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold" aria-pressed="true">วันนี้</button>
+                <button data-f="pending" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold">รอหักทั้งหมด</button>
+                <button data-f="period" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold">พีเรียดนี้</button>
+                <button data-f="range" class="chip px-2.5 py-1 rounded-full bg-gray-100 font-semibold">เลือกช่วงวันที่</button>
+            </div>
+            <div id="rangeBox" class="hidden grid grid-cols-[1fr_1fr_auto] gap-2 mb-2 items-end">
+                <label class="text-[11px] text-gray-500">ตั้งแต่<input id="hFrom" type="date" class="w-full border border-gray-300 rounded-xl px-2 py-2 text-sm text-gray-900"></label>
+                <label class="text-[11px] text-gray-500">ถึง<input id="hTo" type="date" class="w-full border border-gray-300 rounded-xl px-2 py-2 text-sm text-gray-900"></label>
+                <button onclick="loadRange()" class="px-3 py-2 rounded-xl bg-red-600 text-white text-sm font-bold">ดู</button>
+            </div>
+            <input id="search" oninput="renderList()" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2" placeholder="ค้นหา ชื่อ / รหัส / รายการ">
+            <div id="sumBar" class="flex justify-between text-xs text-gray-600 bg-gray-50 rounded-xl px-3 py-2 mb-2"></div>
+            <div id="list" class="space-y-2"><p class="text-center text-sm text-gray-400 py-6">กำลังโหลด…</p></div>
+            <button id="moreBtn" onclick="shown += 50; renderList()" class="hidden mt-3 w-full py-2 rounded-xl bg-gray-100 text-sm font-semibold">แสดงเพิ่ม</button>
+        </section>
+        <p class="text-center text-[10px] text-gray-400 leading-relaxed">รายการขึ้นใน Wallet ของพนักงานเป็น "รอหัก" · ฝ่ายบัญชีเปลี่ยนเป็น "หักแล้ว" ตอนหักเงินเดือนจริง<br>QR ใช้ได้ครั้งเดียว หมดอายุ 23:59 ของวันที่สร้าง</p>
+    </main>
+    <div id="fileReader" class="hidden"></div>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    const LIFF_ID = '2012225566-hFrR9T1Q';
+    const IN_LINE = /\bLine\//i.test(navigator.userAgent);
+    const TYPES = {
+        'เบิกเงินล่วงหน้า': { icon: 'fa-money-bill-transfer', quick: [500, 1000, 2000, 3000], ph: 'เช่น เบิกค่าน้ำมัน', req: false },
+        'ค่าเสื้อ': { icon: 'fa-shirt', quick: [150, 250, 300, 500], ph: 'เช่น เสื้อโปโล 2 ตัว', req: false },
+        'ค่าใช้จ่ายพนักงาน': { icon: 'fa-receipt', quick: [100, 200, 500, 1000], ph: 'ระบุว่าค่าอะไร เช่น บัตรพนักงานหาย', req: true },
+    };
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const baht = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    const today = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
+    const dmy = s => String(s).slice(8, 10) + '/' + String(s).slice(5, 7) + '/' + String(s).slice(2, 4);
+    let AUTH = null, info = null, type = '', mode = 'qr', empCode = '', filter = 'today', rangeRows = null, shown = 50, scanner = null, busy = false, poll = null;
+
+    // ---------- ล็อกอิน: แอปบนเครื่องที่จับคู่แล้ว (รหัสเครื่อง) หรือ LINE ----------
+    const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    async function auth() {
+        const dt = lsGet('PBD_DT'); let useLine = ''; try { useLine = sessionStorage.getItem('PBD_USE_LINE') || ''; } catch (e) { }
+        if (!IN_LINE && dt && !useLine) { AUTH = { dt: dt }; return true; }
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return false; }
+        let at = ''; try { at = liff.getAccessToken() || ''; } catch (e) { }
+        AUTH = { idToken: liff.getIDToken() || '', accessToken: at };
+        return true;
+    }
+    async function api(body) {
+        const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, AUTH, body)) });
+        const j = await r.json();
+        if (!j.ok && (j.authFail || j.devFail)) {
+            busy = false;
+            await Swal.fire({ icon: 'warning', title: 'ต้องเข้าสู่ระบบใหม่', text: 'กดตกลงเพื่อเข้าสู่ระบบด้วย LINE', confirmButtonColor: '#dc2626' });
+            try { sessionStorage.setItem('PBD_USE_LINE', '1'); if (window.liff && liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch (e) { }
+            location.reload(); throw new Error('relogin');
+        }
+        return j;
+    }
+    const fail = e => { busy = false; if (!e || e.message !== 'relogin') Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจอินเทอร์เน็ต แล้วลองใหม่', 'error'); };
+    function qrSvg(text) { try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); } catch (e) { return '<p class="text-xs text-red-600 p-6">สร้างรูป QR ไม่ได้</p>'; } }
+
+    async function loadInfo() {
+        try {
+            const j = await api({ wl: 'ba_info' });
+            if (!j.ok) { $('who').innerText = 'ไม่มีสิทธิ์ใช้งาน'; $('list').innerHTML = `<p class="text-center text-sm text-red-600 py-6">${esc(j.error)}</p>`; Swal.fire('เปิดหน้าไม่ได้', esc(j.error), 'error'); return; }
+            info = j;
+            $('who').innerText = j.admin.name + ' · ' + j.admin.branch;
+            $('pendTotal').innerText = baht(j.pendingTotal); $('pendCount').innerText = baht(j.pendingCount);
+            const t = today();
+            $('todayTotal').innerText = baht((j.recent || []).filter(r => String(r.date).slice(0, 10) === t && r.status !== 'ยกเลิก').reduce((a, r) => a + r.amount, 0));
+            $('periodLabel').innerText = j.period ? 'พีเรียด ' + j.period.label : 'พีเรียด –';
+            $('empList').innerHTML = (j.employees || []).map(e => `<option value="${esc(e.empId)} · ${esc(e.name)}${j.admin.all && e.branch ? ' · ' + esc(e.branch) : ''}">`).join('');
+            if (!$('hFrom').value) { $('hFrom').value = j.period ? j.period.start : t; $('hTo').value = t; }
+            renderQrs();
+            if (filter === 'period' || filter === 'range') loadRange(); else renderList();
+        } catch (e) { fail(e); }
+    }
+
+    // ---------- ฟอร์ม ----------
+    function renderTypes() {
+        $('types').innerHTML = Object.keys(TYPES).map(k => `<button type="button" data-t="${esc(k)}" onclick="pickType(this.dataset.t)" class="type-btn border-2 border-gray-200 rounded-2xl p-2.5 flex flex-col items-center gap-1.5 text-center transition" aria-pressed="false">
+            <span class="ti w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg"><i class="fa-solid ${TYPES[k].icon}"></i></span>
+            <span class="text-[12px] font-semibold leading-tight">${esc(k)}</span></button>`).join('');
+    }
+    function pickType(t) {
+        type = t; const T = TYPES[t];
+        document.querySelectorAll('.type-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t));
+        $('quick').innerHTML = T.quick.map(v => `<button type="button" onclick="$('amount').value=${v}" class="px-3 py-1.5 rounded-full bg-gray-100 text-sm font-semibold active:bg-red-100">฿${baht(v)}</button>`).join('');
+        $('note').placeholder = T.ph; $('noteReq').innerText = T.req ? '(จำเป็น)' : '(ไม่บังคับ)';
+    }
+    function setMode(m) {
+        mode = m;
+        document.querySelectorAll('.mode').forEach(b => b.setAttribute('aria-selected', b.dataset.m === m));
+        $('directBox').classList.toggle('hidden', m !== 'direct');
+        $('modeHelp').innerHTML = m === 'qr' ? 'ระบบสร้าง QR ให้พนักงานเปิด Wallet → <strong>สแกน</strong> แล้วกดยืนยันเอง · QR ใช้ได้ 1 คน 1 ครั้ง' : 'เลือกพนักงาน (พิมพ์ชื่อ/รหัส หรือสแกน <strong>QR ของฉัน</strong> ใน Wallet ของพนักงาน) แล้วบันทึกทันที';
+        $('saveBtn').innerHTML = m === 'qr' ? '<i class="fa-solid fa-qrcode"></i> สร้าง QR ให้พนักงานสแกน' : '<i class="fa-solid fa-floppy-disk"></i> บันทึกเป็นรายการรอหัก';
+        if (m !== 'direct') stopScan();
+    }
+    document.querySelectorAll('.mode').forEach(b => b.onclick = () => setMode(b.dataset.m));
+
+    let empTimer = null;
+    function pickEmp(v) {
+        v = String(v || '').trim(); clearTimeout(empTimer);
+        const id = (v.match(/^0*(\d{1,8})(\s|·|$)/) || [])[1];
+        const e = id && info && (info.employees || []).find(x => String(x.empId).replace(/^0+/, '') === id);
+        if (!e) { empCode = ''; $('empCard').classList.add('hidden'); return; }
+        empCode = e.empId; showEmp(e, null);
+        empTimer = setTimeout(async () => { try { const j = await api({ wl: 'ba_emp', code: e.empId }); if (j.ok && empCode === e.empId) $('empPending').innerText = baht(j.pendingTotal); } catch (x) { } }, 300);
+    }
+    function showEmp(e, pending) {
+        $('empCard').classList.remove('hidden');
+        $('empAvatar').innerText = String(e.name || '?').replace(/^(นาย|นางสาว|นาง|น\.ส\.)\s*/, '').trim().charAt(0) || '?';
+        $('empName').innerText = e.name; $('empMeta').innerText = 'รหัส ' + e.empId + (e.branch ? ' · ' + e.branch : '');
+        $('empPending').innerText = pending == null ? '…' : baht(pending);
+    }
+    async function onEmpQr(txt) {
+        Swal.fire({ title: 'กำลังค้นหาพนักงาน…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api({ wl: 'ba_emp', code: txt });
+            if (!j.ok) return Swal.fire('ใช้ QR นี้ไม่ได้', esc(j.error), 'error');
+            Swal.close(); empCode = txt.trim(); $('empInput').value = j.emp.empId + ' · ' + j.emp.name; showEmp(j.emp, j.pendingTotal);
+        } catch (e) { fail(e); }
+    }
+
+    // ---------- สแกน QR ของฉัน (พนักงาน) ----------
+    async function startScan() {
+        if (typeof Html5Qrcode === 'undefined') { Swal.fire('โหลดตัวสแกนไม่สำเร็จ', 'พิมพ์ชื่อหรือรหัสพนักงานแทน', 'warning'); return; }
+        $('readerWrap').classList.remove('hidden');
+        scanner = new Html5Qrcode('reader');
+        try { await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, txt => { stopScan(); onEmpQr(txt); }, () => { }); }
+        catch (e) { stopScan(); Swal.fire('เปิดกล้องไม่ได้', 'อนุญาตการใช้กล้อง หรือพิมพ์ชื่อ/รหัสพนักงานแทน', 'warning'); }
+    }
+    async function stopScan() { $('readerWrap').classList.add('hidden'); if (scanner) { try { await scanner.stop(); scanner.clear(); } catch (e) { } scanner = null; } }
+
+    function readForm() {
+        const amount = Number($('amount').value), note = $('note').value.trim(), max = info ? info.max : 20000;
+        if (!(amount > 0)) { Swal.fire('ใส่จำนวนเงิน', '', 'warning'); return null; }
+        if (amount > max) { Swal.fire('จำนวนเงินเกินกำหนด', 'ไม่เกิน ฿' + baht(max) + ' ต่อรายการ', 'warning'); return null; }
+        if (TYPES[type].req && !note) { $('note').focus(); Swal.fire('ใส่รายละเอียดค่าใช้จ่าย', '', 'warning'); return null; }
+        return { type: type, amount: amount, note: note };
+    }
+    async function submitItem() {
+        if (busy) return;
+        const it = readForm(); if (!it) return;
+        if (mode === 'direct' && !empCode) return Swal.fire('เลือกพนักงาน', 'พิมพ์ชื่อ/รหัส หรือสแกน QR ของฉัน', 'warning');
+        const who = mode === 'direct' ? `<p><strong>${esc($('empName').innerText)}</strong> (${esc($('empMeta').innerText)})</p>` : '<p class="text-gray-500">พนักงานที่สแกน QR</p>';
+        const c = await Swal.fire({
+            title: mode === 'qr' ? 'สร้าง QR รายการนี้?' : 'ยืนยันบันทึกรายการ?', icon: 'question', showCancelButton: true,
+            confirmButtonText: mode === 'qr' ? 'สร้าง QR' : 'บันทึก', cancelButtonText: 'แก้ไข', confirmButtonColor: '#dc2626',
+            html: `<div class="text-left text-sm bg-gray-50 rounded-xl p-3 space-y-1">${who}<p>${esc(it.type)}${it.note ? ' · ' + esc(it.note) : ''}</p><p class="text-2xl font-extrabold text-red-600">฿${baht(it.amount)}</p></div>`
+        });
+        if (!c.isConfirmed) return;
+        busy = true; $('saveBtn').disabled = true;
+        Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api(Object.assign({ wl: mode === 'qr' ? 'ba_qr' : 'ba_add', code: empCode }, it));
+            busy = false; $('saveBtn').disabled = false;
+            if (!j.ok) return Swal.fire('บันทึกไม่สำเร็จ', esc(j.error), 'error');
+            $('amount').value = ''; $('note').value = '';
+            if (mode === 'qr') { loadInfo(); return showQr(j.qr); }
+            const empName = $('empName').innerText;
+            const again = await Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', html: `${esc(empName)} · ${esc(j.tx.item)}<br><strong class="text-red-600">฿${baht(j.tx.amount)}</strong> รอหัก`,
+                showCancelButton: true, confirmButtonText: 'คนถัดไป', cancelButtonText: 'เพิ่มให้คนเดิม', confirmButtonColor: '#dc2626' });
+            if (again.isConfirmed) { empCode = ''; $('empInput').value = ''; $('empCard').classList.add('hidden'); }
+            else pickEmp($('empInput').value);
+            loadInfo();
+        } catch (e) { $('saveBtn').disabled = false; fail(e); }
+    }
+
+    // ---------- QR ให้พนักงานสแกน ----------
+    const QR_CSS = { 'รอสแกน': 'bg-amber-100 text-amber-800', 'ใช้แล้ว': 'bg-green-100 text-green-700', 'ยกเลิก': 'bg-gray-200 text-gray-500', 'หมดอายุ': 'bg-gray-200 text-gray-500' };
+    function showQr(q) {
+        if (poll) { clearInterval(poll); poll = null; }
+        Swal.fire({
+            title: esc(q.type), showCloseButton: true, confirmButtonText: 'ปิด', confirmButtonColor: '#6b7280', allowOutsideClick: false,
+            html: `<p class="text-3xl font-extrabold text-red-600">฿${baht(q.amount)}</p>${q.note ? `<p class="text-sm text-gray-600">${esc(q.note)}</p>` : ''}
+                <div class="qrbox mx-auto mt-3 w-64 bg-white p-2 rounded-2xl border border-gray-200">${qrSvg(q.token)}</div>
+                <p class="text-xs text-gray-500 mt-2">ให้พนักงานเปิด PBD Wallet → สแกน QR · ใช้ได้ถึง ${esc(String(q.expires).slice(11))} น. วันนี้</p>
+                <p id="qrState" class="mt-2 text-sm font-semibold text-amber-700"><i class="fa-solid fa-spinner fa-spin"></i> รอพนักงานสแกน…</p>`,
+            willClose: () => { if (poll) { clearInterval(poll); poll = null; } }
+        });
+        const t0 = Date.now();
+        poll = setInterval(async () => {
+            if (Date.now() - t0 > 5 * 60e3) { clearInterval(poll); poll = null; const el = $('qrState'); if (el) el.innerText = 'หยุดรอแล้ว — QR ยังใช้ได้ ดูสถานะที่ "QR ที่สร้างล่าสุด"'; return; }
+            try {
+                const j = await api({ wl: 'ba_qrstat', id: q.id });
+                if (j.ok && j.qr.status !== 'รอสแกน') {
+                    clearInterval(poll); poll = null; loadInfo();
+                    if (j.qr.status === 'ใช้แล้ว') Swal.fire({ icon: 'success', title: 'พนักงานสแกนแล้ว', html: `<strong>${esc(j.qr.name)}</strong> (${esc(j.qr.empId)})<br>${esc(j.qr.type)} · ฿${baht(j.qr.amount)} รอหัก`, confirmButtonColor: '#dc2626' });
+                }
+            } catch (e) { }
+        }, 3000);
+    }
+    function renderQrs() {
+        const qs = (info.qrs || []);
+        $('qrSec').classList.toggle('hidden', !qs.length);
+        $('qrList').innerHTML = qs.map((q, i) => `<div class="p-3 rounded-xl border border-gray-100 flex items-center gap-3">
+            <div class="min-w-0 flex-1"><p class="text-sm font-bold truncate">${esc(q.type)} · ฿${baht(q.amount)}</p>
+                <p class="text-[11px] text-gray-500 truncate">${q.note ? esc(q.note) + ' · ' : ''}${esc(dmy(q.created))} ${esc(String(q.created).slice(11, 16))}${q.status === 'ใช้แล้ว' ? ' → ' + esc(q.name) : ''}</p></div>
+            <div class="text-right shrink-0"><span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${QR_CSS[q.status] || 'bg-gray-100'}">${esc(q.status)}</span>
+                ${q.status === 'รอสแกน' ? `<div class="mt-1 flex gap-2 justify-end text-[11px]"><button onclick="showQr(info.qrs[${i}])" class="text-red-600 font-semibold">แสดง QR</button><button onclick="cancelQr('${esc(q.id)}')" class="text-gray-500 underline">ยกเลิก</button></div>` : ''}</div></div>`).join('');
+    }
+    async function cancelQr(id) {
+        const c = await Swal.fire({ title: 'ยกเลิก QR นี้?', text: 'พนักงานจะสแกน QR นี้ไม่ได้อีก', icon: 'warning', showCancelButton: true, confirmButtonText: 'ยกเลิก QR', cancelButtonText: 'ไม่ใช่', confirmButtonColor: '#dc2626' });
+        if (!c.isConfirmed) return;
+        try { const j = await api({ wl: 'ba_qrcancel', id: id }); if (!j.ok) return Swal.fire('ยกเลิกไม่ได้', esc(j.error), 'error'); loadInfo(); } catch (e) { fail(e); }
+    }
+
+    // ---------- ประวัติ ----------
+    const STATUS_CSS = { 'รอหัก': 'bg-amber-100 text-amber-800', 'หักแล้ว': 'bg-green-100 text-green-700', 'ยกเลิก': 'bg-gray-200 text-gray-500 line-through' };
+    const typeOf = item => Object.keys(TYPES).find(k => String(item).indexOf(k) === 0);
+    function row(r) {
+        const tp = typeOf(r.item), ic = tp ? TYPES[tp].icon : 'fa-box';
+        return `<div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 ${r.status === 'ยกเลิก' ? 'bg-gray-50 opacity-70' : 'bg-white'}">
+            <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0"><i class="fa-solid ${ic}"></i></div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-bold truncate">${esc(r.name || '-')} <span class="font-normal text-gray-400 text-xs">${esc(r.empId)}${info && info.admin.all && r.branch ? ' · ' + esc(r.branch) : ''}</span></p>
+                <p class="text-xs text-gray-600 truncate">${esc(r.item)}</p>
+                <p class="text-[10px] text-gray-400">${esc(dmy(r.date) + ' ' + String(r.date).slice(11, 16))} · ${esc(String(r.by || '').split(' (')[0].split(' · ')[0] || '-')}${r.viaQr ? ' · <i class="fa-solid fa-qrcode"></i> สแกน QR' : ''}</p>
+            </div>
+            <div class="text-right shrink-0">
+                <p class="font-extrabold text-red-600">฿${baht(r.amount)}</p>
+                <span class="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_CSS[r.status] || 'bg-gray-100'}">${esc(r.status)}</span>
+                ${r.status === 'รอหัก' ? `<button onclick="cancelTx('${esc(r.txId)}')" class="block ml-auto mt-1 text-[11px] text-gray-500 underline">ยกเลิก</button>` : ''}
+            </div></div>`;
+    }
+    function rowsNow() {
+        if (!info) return [];
+        const q = $('search').value.trim().toLowerCase(), t = today();
+        const base = (filter === 'period' || filter === 'range') ? (rangeRows || []) : (info.recent || []);
+        return base.filter(r => {
+            if (filter === 'today' && String(r.date).slice(0, 10) !== t) return false;
+            if (filter === 'pending' && r.status !== 'รอหัก') return false;
+            return !q || [r.name, r.empId, r.item, r.branch].join(' ').toLowerCase().indexOf(q) >= 0;
+        });
+    }
+    function renderList() {
+        const rows = rowsNow(), live = rows.filter(r => r.status !== 'ยกเลิก');
+        const sum = k => baht(live.filter(r => typeOf(r.item) === k).reduce((a, r) => a + r.amount, 0));
+        $('sumBar').innerHTML = `<span>${baht(rows.length)} รายการ · รวม <strong class="text-red-600">฿${baht(live.reduce((a, r) => a + r.amount, 0))}</strong></span><span class="text-gray-400 truncate ml-2">เบิก ${sum('เบิกเงินล่วงหน้า')} · เสื้อ ${sum('ค่าเสื้อ')}</span>`;
+        $('list').innerHTML = rows.length ? rows.slice(0, shown).map(row).join('') : '<p class="text-center text-sm text-gray-400 py-6">ไม่มีรายการ</p>';
+        $('moreBtn').classList.toggle('hidden', rows.length <= shown);
+    }
+    async function loadRange() {
+        let from = $('hFrom').value, to = $('hTo').value;
+        if (filter === 'period' && info && info.period) { from = info.period.start; to = today(); }
+        if (!from || !to) return Swal.fire('เลือกช่วงวันที่', '', 'warning');
+        $('list').innerHTML = '<p class="text-center text-sm text-gray-400 py-6"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด…</p>';
+        try {
+            const j = await api({ wl: 'ba_hist', from: from, to: to });
+            if (!j.ok) return Swal.fire('โหลดประวัติไม่ได้', esc(j.error), 'error');
+            rangeRows = j.rows; shown = 50; renderList();
+        } catch (e) { fail(e); }
+    }
+    document.querySelectorAll('#filters button').forEach(b => b.onclick = () => {
+        filter = b.dataset.f; shown = 50; document.querySelectorAll('#filters button').forEach(x => x.setAttribute('aria-pressed', x === b));
+        $('rangeBox').classList.toggle('hidden', filter !== 'range');
+        if (filter === 'period' || filter === 'range') loadRange(); else renderList();
+    });
+    function exportCsv() {
+        const head = ['วันที่', 'รหัสพนักงาน', 'ชื่อ', 'สาขา', 'รายการ', 'จำนวนเงิน', 'สถานะ', 'บันทึกโดย', 'Transaction_ID'];
+        const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        const lines = [head.map(q).join(',')].concat(rowsNow().map(r => [r.date, r.empId, r.name, r.branch, r.item, r.amount, r.status, r.by, r.txId].map(q).join(',')));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }));
+        a.download = 'รายการหัก-' + (info ? info.admin.branch : '') + '-' + today() + '.csv'; a.click();
+    }
+    async function cancelTx(txId) {
+        const r = (rangeRows || []).concat(info.recent || []).find(x => x.txId === txId); if (!r) return;
+        const c = await Swal.fire({ title: 'ยกเลิกรายการนี้?', icon: 'warning', input: 'text', inputPlaceholder: 'เหตุผล เช่น บันทึกผิดจำนวน', showCancelButton: true,
+            confirmButtonText: 'ยกเลิกรายการ', cancelButtonText: 'ไม่ใช่', confirmButtonColor: '#dc2626',
+            html: `<p class="text-sm">${esc(r.name)} · ${esc(r.item)} · <strong>฿${baht(r.amount)}</strong></p><p class="text-xs text-gray-500 mt-1">แถวในชีตยังอยู่ สถานะเปลี่ยนเป็น "ยกเลิก"</p>`,
+            inputValidator: v => !String(v || '').trim() && 'ใส่เหตุผล' });
+        if (!c.isConfirmed) return;
+        Swal.fire({ title: 'กำลังยกเลิก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api({ wl: 'ba_cancel', txId: txId, reason: c.value });
+            if (!j.ok) return Swal.fire('ยกเลิกไม่ได้', esc(j.error), 'error');
+            Swal.fire({ icon: 'success', title: 'ยกเลิกแล้ว', timer: 1500, showConfirmButton: false });
+            loadInfo();
+        } catch (e) { fail(e); }
+    }
+
+    renderTypes(); pickType(Object.keys(TYPES)[0]); setMode('qr');
+    (async () => {
+        try { if (await auth()) loadInfo(); }
+        catch (e) { $('who').innerText = 'เชื่อมต่อ LINE ไม่ได้'; Swal.fire('เชื่อมต่อ LINE ไม่ได้', 'เปิดหน้านี้จากลิงก์ในแอป LINE', 'warning'); }
+    })();
+</script>
+</body>
+</html>

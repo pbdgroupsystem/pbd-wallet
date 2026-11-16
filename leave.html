@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#7f1d1d">
+    <title>PBD ขอลางาน</title>
+    <link rel="icon" href="icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } } };</script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .hero { background: linear-gradient(135deg, #111827 0%, #7f1d1d 55%, #dc2626 100%); }
+        .tab[aria-selected="true"] { background: #fff; color: #b91c1c; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+        .opt[aria-pressed="true"] { border-color: #dc2626; background: #fef2f2; color: #991b1b; box-shadow: 0 0 0 2px #fecaca; }
+        .opt[aria-pressed="true"] .oi { background: #dc2626; color: #fff; }
+        .seg[aria-pressed="true"] { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .swal2-popup { font-family: 'Kanit', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-gray-900">
+    <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
+        <div class="flex items-center justify-between max-w-md mx-auto gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <button onclick="goBack()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="กลับ"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="min-w-0">
+                    <p class="text-[11px] text-red-100">PBD Smart Wallet</p>
+                    <h1 class="text-xl font-bold leading-tight" id="pageTitle">ขอลางาน</h1>
+                    <p id="who" class="text-xs text-red-100 truncate">กำลังเชื่อมต่อ…</p>
+                </div>
+            </div>
+            <button onclick="load()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="รีเฟรช"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 -mt-12 space-y-4">
+        <nav id="tabs" class="bg-gray-200 rounded-2xl p-1 grid grid-cols-2 text-[13px] font-semibold text-gray-600 shadow-md" role="tablist"></nav>
+
+        <!-- ขอลา -->
+        <section id="pane-form" class="hidden bg-white rounded-2xl shadow-md p-4 space-y-4">
+            <div class="grid grid-cols-[1fr_auto] gap-2">
+                <label class="block text-xs text-gray-500">ชื่อ<input id="fName" readonly class="mt-1 block w-full border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 text-sm text-gray-900"></label>
+                <label class="block text-xs text-gray-500">รหัสพนักงาน<input id="fId" readonly class="mt-1 block w-28 border border-gray-200 bg-gray-50 rounded-xl px-3 py-2.5 text-sm text-gray-900"></label>
+            </div>
+            <div>
+                <p class="text-sm font-semibold mb-2">ประเภทการลา</p>
+                <div class="grid grid-cols-2 gap-2" id="types">
+                    <button type="button" data-v="ลาป่วย" class="opt border-2 border-gray-200 rounded-2xl p-3 flex items-center gap-2.5 text-left transition" aria-pressed="false">
+                        <span class="oi w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-briefcase-medical"></i></span><span class="font-bold">ลาป่วย</span></button>
+                    <button type="button" data-v="ลากิจ" class="opt border-2 border-gray-200 rounded-2xl p-3 flex items-center gap-2.5 text-left transition" aria-pressed="false">
+                        <span class="oi w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-person-walking-luggage"></i></span><span class="font-bold">ลากิจ</span></button>
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-semibold mb-2">วันที่ลา</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="block text-xs text-gray-500">ตั้งแต่<input id="fFrom" type="date" class="mt-1 w-full border border-gray-300 rounded-xl px-2 py-2.5 text-sm text-gray-900"></label>
+                    <label class="block text-xs text-gray-500">ถึง<input id="fTo" type="date" class="mt-1 w-full border border-gray-300 rounded-xl px-2 py-2.5 text-sm text-gray-900"></label>
+                </div>
+                <div id="partBox" class="mt-2 grid grid-cols-3 gap-1.5 text-xs font-semibold">
+                    <button type="button" data-v="เต็มวัน" class="seg border border-gray-300 rounded-xl py-2" aria-pressed="true">เต็มวัน</button>
+                    <button type="button" data-v="ครึ่งวันเช้า" class="seg border border-gray-300 rounded-xl py-2" aria-pressed="false">ครึ่งวันเช้า</button>
+                    <button type="button" data-v="ครึ่งวันบ่าย" class="seg border border-gray-300 rounded-xl py-2" aria-pressed="false">ครึ่งวันบ่าย</button>
+                </div>
+                <p id="daysInfo" class="mt-2 text-sm text-gray-600"></p>
+            </div>
+            <label class="block text-sm font-semibold">เหตุผล
+                <textarea id="fReason" rows="3" maxlength="300" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-normal" placeholder="เช่น ไม่สบาย มีไข้ / ธุระที่อำเภอ"></textarea></label>
+            <label class="block text-sm font-semibold">ผู้อนุมัติ
+                <select id="fApprover" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-normal bg-white"></select>
+                <span class="text-[11px] font-normal text-gray-500">ผู้จัดการสาขา หรือหัวหน้าทีมของสาขาคุณ — ระบบแจ้งเตือนผู้อนุมัติทันที</span></label>
+            <button id="sendBtn" onclick="submitLeave()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-red-700 to-red-500 text-white font-bold text-lg shadow active:scale-[.98] transition disabled:opacity-50"><i class="fa-solid fa-paper-plane"></i> ส่งคำขอลา</button>
+        </section>
+
+        <!-- คำขอของฉัน -->
+        <section id="pane-mine" class="hidden space-y-2"></section>
+
+        <!-- รออนุมัติ -->
+        <section id="pane-approve" class="hidden space-y-2"></section>
+
+        <!-- ประวัติการอนุมัติ -->
+        <section id="pane-history" class="hidden space-y-2">
+            <div class="bg-white rounded-2xl shadow-md p-3 flex flex-wrap gap-1 text-xs" id="hFilter">
+                <button data-s="" class="seg border border-gray-300 rounded-full px-3 py-1 font-semibold" aria-pressed="true">ทั้งหมด</button>
+                <button data-s="อนุมัติ" class="seg border border-gray-300 rounded-full px-3 py-1 font-semibold" aria-pressed="false">อนุมัติ</button>
+                <button data-s="ไม่อนุมัติ" class="seg border border-gray-300 rounded-full px-3 py-1 font-semibold" aria-pressed="false">ไม่อนุมัติ</button>
+                <button data-s="ยกเลิก" class="seg border border-gray-300 rounded-full px-3 py-1 font-semibold" aria-pressed="false">ผู้ขอยกเลิก</button>
+                <input id="hSearch" oninput="renderHistory()" class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" placeholder="ค้นหาชื่อ / รหัสพนักงาน">
+            </div>
+            <div id="historyList" class="space-y-2"></div>
+        </section>
+        <p class="text-center text-[10px] text-gray-400 leading-relaxed">แจ้งเตือนผ่านแอป PBD Wallet บนมือถือ (เปิดรับแจ้งเตือนไว้)<br>แอดมินสาขาเป็นผู้ลงใบลาในระบบสแกนหน้า (yunatt)</p>
+    </main>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    const LIFF_ID = '2012225566-hFrR9T1Q';
+    const IN_LINE = /\bLine\//i.test(navigator.userAgent);
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const thd = s => { const p = String(s || '').split('-'); return p.length === 3 ? (+p[2]) + ' ' + TH_M[+p[1] - 1] + ' ' + String(+p[0] + 543).slice(2) : s; };
+    const range = v => (v.from === v.to ? thd(v.from) : thd(v.from) + ' – ' + thd(v.to)) + ' · ' + (v.days === 0.5 ? v.part : v.days + ' วัน');
+    const addDays = (d, n) => new Date(new Date(d + 'T00:00:00Z').getTime() + n * 864e5).toISOString().slice(0, 10);
+    let AUTH = null, D = null, type = '', part = 'เต็มวัน', tab = '', hStatus = '', busy = false;
+
+    // ---------- ล็อกอิน: แอปบนเครื่อง (รหัสเครื่อง) หรือ LINE ----------
+    const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    async function auth() {
+        const dt = lsGet('PBD_DT'); let useLine = ''; try { useLine = sessionStorage.getItem('PBD_USE_LINE') || ''; } catch (e) { }
+        if (!IN_LINE && dt && !useLine) { AUTH = { dt: dt }; return true; }
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return false; }
+        let at = ''; try { at = liff.getAccessToken() || ''; } catch (e) { }
+        AUTH = { idToken: liff.getIDToken() || '', accessToken: at };
+        return true;
+    }
+    async function api(body) {
+        const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, AUTH, body)) });
+        const j = await r.json();
+        if (!j.ok && (j.authFail || j.devFail)) {
+            busy = false;
+            await Swal.fire({ icon: 'warning', title: 'ต้องเข้าสู่ระบบใหม่', text: 'กดตกลงเพื่อเข้าสู่ระบบด้วย LINE', confirmButtonColor: '#dc2626' });
+            try { sessionStorage.setItem('PBD_USE_LINE', '1'); if (window.liff && liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch (e) { }
+            location.reload(); throw new Error('relogin');
+        }
+        return j;
+    }
+    const fail = e => { busy = false; if (!e || e.message !== 'relogin') Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจอินเทอร์เน็ต แล้วลองใหม่', 'error'); };
+    function goBack() { if (history.length > 1) history.back(); else location.href = './'; }
+
+    async function load() {
+        try {
+            const j = await api({ wl: 'lv_info' });
+            if (!j.ok) { $('who').innerText = 'ใช้งานไม่ได้'; Swal.fire('เปิดหน้าไม่ได้', esc(j.error), 'error'); return; }
+            D = j;
+            $('who').innerText = j.me ? j.me.name + ' · ' + (j.me.branch || '-') : 'ผู้อนุมัติ';
+            if (j.me) {
+                $('fName').value = j.me.name; $('fId').value = j.me.empId;
+                $('fApprover').innerHTML = (j.approvers || []).length ? '<option value="">— เลือกผู้อนุมัติ —</option>' + j.approvers.map(a => `<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.title)}</option>`).join('') : '<option value="">ไม่พบผู้จัดการ/หัวหน้าทีมของสาขา — ติดต่อแอดมิน</option>';
+                if (j.approvers && j.approvers.length === 1) $('fApprover').value = j.approvers[0].id;
+                const lo = addDays(j.today, -j.backDays), hi = addDays(j.today, j.aheadDays);
+                ['fFrom', 'fTo'].forEach(k => { $(k).min = lo; $(k).max = hi; });
+                if (!$('fFrom').value) { $('fFrom').value = j.today; $('fTo').value = j.today; }
+                updDays();
+            }
+            renderTabs(); renderMine(); renderApprove(); renderHistory();
+        } catch (e) { fail(e); }
+    }
+
+    // ---------- แท็บ ----------
+    function renderTabs() {
+        const T = [];
+        if (D.me) T.push(['form', '<i class="fa-solid fa-pen-to-square"></i> ขอลา'], ['mine', '<i class="fa-solid fa-list"></i> คำขอของฉัน' + cnt((D.mine || []).filter(x => x.status === 'รออนุมัติ').length, 'bg-gray-500')]);
+        if (D.approver) T.push(['approve', '<i class="fa-solid fa-inbox"></i> รออนุมัติ' + cnt((D.pending || []).length, 'bg-amber-500')], ['history', '<i class="fa-solid fa-clock-rotate-left"></i> ประวัติอนุมัติ']);
+        $('tabs').className = 'bg-gray-200 rounded-2xl p-1 grid text-[12.5px] font-semibold text-gray-600 shadow-md grid-cols-' + T.length;
+        if (!tab || !T.some(t => t[0] === tab)) tab = location.hash === '#approve' && D.approver ? 'approve' : T[0][0];
+        $('tabs').innerHTML = T.map(t => `<button class="tab py-2.5 rounded-xl" data-t="${t[0]}" role="tab" aria-selected="${t[0] === tab}">${t[1]}</button>`).join('');
+        document.querySelectorAll('#tabs .tab').forEach(b => b.onclick = () => { tab = b.dataset.t; renderTabs(); });
+        ['form', 'mine', 'approve', 'history'].forEach(k => $('pane-' + k).classList.toggle('hidden', k !== tab));
+        $('pageTitle').innerText = tab === 'approve' || tab === 'history' ? 'อนุมัติการลา' : 'ขอลางาน';
+    }
+    const cnt = (n, c) => n ? ` <span class="${c} text-white text-[10px] font-bold px-1.5 rounded-full">${n}</span>` : '';
+
+    // ---------- แบบฟอร์ม ----------
+    document.querySelectorAll('#types .opt').forEach(b => b.onclick = () => { type = b.dataset.v; document.querySelectorAll('#types .opt').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+    document.querySelectorAll('#partBox .seg').forEach(b => b.onclick = () => { part = b.dataset.v; document.querySelectorAll('#partBox .seg').forEach(x => x.setAttribute('aria-pressed', x === b)); updDays(); });
+    $('fFrom').onchange = () => { if (!$('fTo').value || $('fTo').value < $('fFrom').value) $('fTo').value = $('fFrom').value; updDays(); };
+    $('fTo').onchange = updDays;
+    function days() {
+        const f = $('fFrom').value, t = $('fTo').value;
+        if (!f || !t || t < f) return 0;
+        if (f === t && part !== 'เต็มวัน') return 0.5;
+        return Math.round((new Date(t + 'T00:00:00Z') - new Date(f + 'T00:00:00Z')) / 864e5) + 1;
+    }
+    function updDays() {
+        const single = $('fFrom').value && $('fFrom').value === $('fTo').value;
+        $('partBox').classList.toggle('hidden', !single);
+        if (!single && part !== 'เต็มวัน') { part = 'เต็มวัน'; document.querySelectorAll('#partBox .seg').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'เต็มวัน')); }
+        const n = days();
+        $('daysInfo').innerHTML = n ? `รวม <strong class="text-red-600">${n === 0.5 ? 'ครึ่งวัน (' + esc(part) + ')' : n + ' วัน'}</strong>` : '<span class="text-red-600">วันที่ไม่ถูกต้อง</span>';
+    }
+    async function submitLeave() {
+        if (busy) return;
+        const v = { type: type, from: $('fFrom').value, to: $('fTo').value, part: part, reason: $('fReason').value.trim(), approver: $('fApprover').value };
+        if (!v.type) return Swal.fire('เลือกประเภทการลา', 'ลาป่วย หรือ ลากิจ', 'warning');
+        if (!days()) return Swal.fire('วันที่ลาไม่ถูกต้อง', '', 'warning');
+        if (!v.reason) { $('fReason').focus(); return Swal.fire('ใส่เหตุผลการลา', '', 'warning'); }
+        if (!v.approver) return Swal.fire('เลือกผู้อนุมัติ', '', 'warning');
+        const ap = $('fApprover').selectedOptions[0].textContent, n = days();
+        const c = await Swal.fire({ title: 'ส่งคำขอลา?', icon: 'question', showCancelButton: true, confirmButtonText: 'ส่งคำขอ', cancelButtonText: 'แก้ไข', confirmButtonColor: '#dc2626',
+            html: `<div class="text-left text-sm bg-gray-50 rounded-xl p-3 space-y-1"><p><strong>${esc(v.type)}</strong> · ${esc(range({ from: v.from, to: v.to, days: n, part: v.part }))}</p><p class="text-gray-600">${esc(v.reason)}</p><p class="text-xs text-gray-500">ผู้อนุมัติ: ${esc(ap)}</p></div>` });
+        if (!c.isConfirmed) return;
+        busy = true; $('sendBtn').disabled = true;
+        Swal.fire({ title: 'กำลังส่ง…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api(Object.assign({ wl: 'lv_new' }, v));
+            busy = false; $('sendBtn').disabled = false;
+            if (!j.ok) return Swal.fire('ส่งไม่สำเร็จ', esc(j.error), 'error');
+            $('fReason').value = '';
+            await Swal.fire({ icon: 'success', title: 'ส่งคำขอแล้ว', html: 'รอ ' + esc(ap.split(' · ')[0]) + ' อนุมัติ<br><span class="text-xs text-gray-500">ระบบแจ้งเตือนเมื่อมีผลอนุมัติ</span>', confirmButtonColor: '#dc2626' });
+            tab = 'mine'; load();
+        } catch (e) { $('sendBtn').disabled = false; fail(e); }
+    }
+
+    // ---------- รายการ ----------
+    const ST = { 'รออนุมัติ': 'bg-amber-100 text-amber-800', 'อนุมัติ': 'bg-green-100 text-green-700', 'ไม่อนุมัติ': 'bg-red-100 text-red-700', 'ยกเลิก': 'bg-gray-200 text-gray-500' };
+    const icon = t => t === 'ลาป่วย' ? 'fa-briefcase-medical' : 'fa-person-walking-luggage';
+    function card(v, opt) {
+        return `<div class="bg-white rounded-2xl shadow-md p-4">
+            <div class="flex items-start gap-3">
+                <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg shrink-0"><i class="fa-solid ${icon(v.type)}"></i></div>
+                <div class="min-w-0 flex-1">
+                    ${opt.who ? `<p class="font-bold truncate">${esc(v.name)} <span class="text-xs font-normal text-gray-400">${esc(v.empId)} · ${esc(v.branch)}</span></p>` : ''}
+                    <p class="${opt.who ? 'text-sm' : 'font-bold'}">${esc(v.type)} · ${esc(range(v))}</p>
+                    <p class="text-sm text-gray-600 mt-0.5 break-words">${esc(v.reason)}</p>
+                    <p class="text-[11px] text-gray-400 mt-1">ส่ง ${esc(thd(String(v.sent).slice(0, 10)))} ${esc(String(v.sent).slice(11, 16))}${opt.who ? '' : ' · ผู้อนุมัติ ' + esc(v.approver)}${v.decided ? ' · ' + (v.status === 'ยกเลิก' ? 'ยกเลิก ' : 'ตัดสิน ') + esc(thd(String(v.decided).slice(0, 10))) : ''}</p>
+                    ${v.note ? `<p class="text-xs mt-1 ${v.status === 'ไม่อนุมัติ' ? 'text-red-700' : 'text-gray-600'}"><i class="fa-regular fa-comment"></i> ${esc(v.note)}</p>` : ''}
+                </div>
+                <span class="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ST[v.status] || 'bg-gray-100'}">${esc(v.status)}</span>
+            </div>
+            ${opt.decide ? `<div class="mt-3 grid grid-cols-2 gap-2"><button onclick="decide('${esc(v.id)}',false)" class="py-2.5 rounded-xl bg-gray-100 font-semibold text-sm"><i class="fa-solid fa-xmark"></i> ไม่อนุมัติ</button>
+                <button onclick="decide('${esc(v.id)}',true)" class="py-2.5 rounded-xl bg-green-600 text-white font-bold text-sm"><i class="fa-solid fa-check"></i> อนุมัติ</button></div>` : ''}
+            ${opt.cancel && v.status === 'รออนุมัติ' ? `<button onclick="cancelReq('${esc(v.id)}')" class="mt-2 text-xs text-gray-500 underline">ยกเลิกคำขอ</button>` : ''}</div>`;
+    }
+    const empty = t => `<div class="bg-white rounded-2xl shadow-md p-8 text-center text-sm text-gray-400">${t}</div>`;
+    function renderMine() { if (D.me) $('pane-mine').innerHTML = (D.mine || []).length ? D.mine.map(v => card(v, { cancel: 1 })).join('') : empty('ยังไม่มีคำขอลา'); }
+    function renderApprove() {
+        if (!D.approver) return;
+        const p = D.pending || [];
+        $('pane-approve').innerHTML = p.length ? `<p class="text-xs text-gray-500 px-1">รออนุมัติ ${p.length} รายการ${D.admin ? ' (ผู้ดูแลระบบ: เห็นทุกสาขา)' : ''}</p>` + p.map(v => card(v, { who: 1, decide: 1 })).join('') : empty('<i class="fa-regular fa-circle-check text-3xl text-green-500 mb-2"></i><br>ไม่มีคำขอรออนุมัติ');
+    }
+    function renderHistory() {
+        if (!D || !D.approver) return;
+        const q = $('hSearch').value.trim().toLowerCase();
+        const h = (D.history || []).filter(v => (!hStatus || v.status === hStatus) && (!q || (v.name + ' ' + v.empId).toLowerCase().indexOf(q) >= 0));
+        $('historyList').innerHTML = h.length ? h.map(v => card(v, { who: 1 })).join('') : empty('ไม่มีประวัติ');
+    }
+    document.querySelectorAll('#hFilter .seg').forEach(b => b.onclick = () => { hStatus = b.dataset.s; document.querySelectorAll('#hFilter .seg').forEach(x => x.setAttribute('aria-pressed', x === b)); renderHistory(); });
+
+    async function decide(id, ok) {
+        const v = (D.pending || []).find(x => x.id === id); if (!v) return;
+        const r = await Swal.fire({
+            title: ok ? 'อนุมัติการลา?' : 'ไม่อนุมัติการลา?', icon: ok ? 'question' : 'warning', showCancelButton: true,
+            confirmButtonText: ok ? 'อนุมัติ' : 'ไม่อนุมัติ', cancelButtonText: 'กลับ', confirmButtonColor: ok ? '#16a34a' : '#dc2626',
+            html: `<p class="text-sm"><strong>${esc(v.name)}</strong> · ${esc(v.type)}<br>${esc(range(v))}</p>`,
+            input: 'text', inputPlaceholder: ok ? 'หมายเหตุ (ไม่บังคับ)' : 'เหตุผลที่ไม่อนุมัติ (จำเป็น)',
+            inputValidator: x => !ok && !String(x || '').trim() && 'ใส่เหตุผล'
+        });
+        if (!r.isConfirmed) return;
+        Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api({ wl: 'lv_decide', id: id, decision: ok ? 'approve' : 'reject', note: r.value || '' });
+            if (!j.ok) return Swal.fire('บันทึกไม่สำเร็จ', esc(j.error), 'error');
+            Swal.fire({ icon: 'success', title: ok ? 'อนุมัติแล้ว' : 'ไม่อนุมัติแล้ว', text: 'ระบบแจ้งเตือน ' + v.name + ' แล้ว', timer: 1800, showConfirmButton: false });
+            load();
+        } catch (e) { fail(e); }
+    }
+    async function cancelReq(id) {
+        const c = await Swal.fire({ title: 'ยกเลิกคำขอลานี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ยกเลิกคำขอ', cancelButtonText: 'ไม่', confirmButtonColor: '#dc2626' });
+        if (!c.isConfirmed) return;
+        try { const j = await api({ wl: 'lv_cancel', id: id }); if (!j.ok) return Swal.fire('ยกเลิกไม่ได้', esc(j.error), 'error'); load(); } catch (e) { fail(e); }
+    }
+
+    (async () => {
+        try { if (await auth()) load(); }
+        catch (e) { $('who').innerText = 'เชื่อมต่อ LINE ไม่ได้'; Swal.fire('เชื่อมต่อ LINE ไม่ได้', 'เปิดหน้านี้จากเมนูใน PBD Wallet', 'warning'); }
+    })();
+</script>
+</body>
+</html>
