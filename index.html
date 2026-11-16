@@ -114,6 +114,37 @@
             font-size: 11.5px; font-weight: 600; color: #1f2937; box-shadow: 0 1px 3px rgba(0,0,0,.08); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
         #wxChip b { font-weight: 800; }
 
+
+        /* ===== ธีมเทศกาล (festivals.json) — พื้นหลังด้านบน + ของตกแต่งเคลื่อนไหว · ช่วงเทศกาลแทนพื้นหลังสภาพอากาศ ===== */
+        #fxBg { position: absolute; top: 0; left: 0; right: 0; height: 150px; z-index: 0; pointer-events: none; overflow: hidden; display: none;
+            -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
+        body.fx-on #fxBg { display: block; } body.fx-on #wxBg { display: none; }
+        #fxBg > i { position: absolute; display: block; font-style: normal; line-height: 1; will-change: transform; }
+        .fx-loy { background: radial-gradient(circle at 78% 22%, rgba(255,240,200,.55) 0 18px, rgba(255,240,200,0) 40px), linear-gradient(180deg, #0b1c3d 0%, #1e3a6e 62%, #c8c9da 100%); }
+        .fx-xmas { background: linear-gradient(180deg, #0f3d2e 0%, #1b5e3f 62%, #d7e6dc 100%); }
+        .fx-newyear { background: linear-gradient(180deg, #120b2e 0%, #3b1f6b 62%, #d6cfe6 100%); }
+        .fx-cny { background: linear-gradient(180deg, #8b1414 0%, #c81e1e 60%, #fde9c0 100%); }
+        .fx-buddha { background: radial-gradient(circle at 50% 35%, rgba(255,214,120,.55) 0 30px, rgba(255,214,120,0) 90px), linear-gradient(180deg, #fff3d6 0%, #fde7b0 60%, #f3f4f6 100%); }
+        .fx-songkran { background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 60%, #f0f9ff 100%); }
+        .fx-mother { background: linear-gradient(180deg, #bfdbfe 0%, #dbeafe 60%, #f3f4f6 100%); }
+        .fx-father { background: linear-gradient(180deg, #fcd34d 0%, #fde68a 60%, #f3f4f6 100%); }
+        .fxa-fall { top: -24px; animation: fxFall linear infinite; }
+        .fxa-rise { bottom: -20px; animation: fxRise linear infinite; }
+        .fxa-float { animation: fxFloat ease-in-out infinite alternate; }
+        .fxa-drift { animation: fxDrift linear infinite; }
+        .fxa-swing { top: -4px; transform-origin: 50% 0; animation: fxSwing 3s ease-in-out infinite alternate; }
+        .fxa-burst { width: 4px; height: 4px; border-radius: 50%; animation: fxBurst 2.6s ease-out infinite; }
+        @keyframes fxFall { to { transform: translate(18px, 190px) rotate(200deg); } }
+        @keyframes fxRise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .95; } 100% { transform: translate(-14px, -170px); opacity: 0; } }
+        @keyframes fxFloat { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
+        @keyframes fxDrift { from { transform: translateX(-60px); } to { transform: translateX(460px); } }
+        @keyframes fxSwing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+        @keyframes fxBurst { 0% { box-shadow: 0 0 0 0 currentColor; opacity: 1; transform: scale(.4); } 70% { opacity: .9; }
+            100% { opacity: 0; transform: scale(1); box-shadow: 0 -26px 0 -1px currentColor, 18px -18px 0 -1px currentColor, 26px 0 0 -1px currentColor, 18px 18px 0 -1px currentColor, 0 26px 0 -1px currentColor, -18px 18px 0 -1px currentColor, -26px 0 0 -1px currentColor, -18px -18px 0 -1px currentColor; } }
+        @media (prefers-reduced-motion: reduce) { #fxBg > i { animation: none !important; } }
+        #festChip { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        body.fx-on .wallet-card { box-shadow: 0 10px 30px -10px var(--fx-glow, rgba(0,0,0,.4)); }
+
         /* Wallet Card Gradient */
         .wallet-card {
             background: radial-gradient(circle at 85% 20%, #dc2626 0%, #7f1d1d 45%, #111111 95%);
@@ -212,6 +243,7 @@
 
     <!-- พื้นหลังสภาพอากาศ (ด้านหลังส่วนหัว) -->
     <div id="wxBg" aria-hidden="true"></div>
+    <div id="fxBg" aria-hidden="true"></div>
     <!-- Decorative Corner Ribbons -->
     <div class="top-accent-red"></div>
     <div class="top-accent-dark"></div>
@@ -226,6 +258,7 @@
             <div class="min-w-0">
                 <div class="flex items-center gap-1.5">
                     <span class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider uppercase shadow-sm">PBD Smart</span>
+                    <span id="festChip" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm"></span>
                     <button onclick="configureLiffIdPrompt()" id="ConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
                         ตั้งค่า LIFF ID
                     </button>
@@ -2385,7 +2418,7 @@
             fog: '<i class="fogband" style="top:28px"></i><i class="fogband" style="top:60px;animation-delay:-7s"></i><i class="fogband" style="top:92px;animation-delay:-3s"></i>',
         };
         bg.className = 'wx-' + k; bg.innerHTML = H[k] || '';
-        document.body.classList.toggle('wx-dark-top', k === 'night' || k === 'storm');
+        if (!document.body.classList.contains('fx-on')) document.body.classList.toggle('wx-dark-top', k === 'night' || k === 'storm');   // ช่วงเทศกาล: ธีมเทศกาลกำหนดสีตัวอักษร
     }
     async function wxPlace(p) {
         const c = wxLS.get('PBD_WX_PLACE');
@@ -2426,6 +2459,72 @@
                 <p class="text-[10px] text-gray-400 mt-1">ข้อมูลจาก Open-Meteo ตามตำแหน่งมือถือ · อัปเดตทุก 30 นาที</p>` });
     }
     loadWeather(); setInterval(loadWeather, WX.REFRESH_MIN * 60e3);
+    </script>
+
+    <script>
+    // ===== ธีมเทศกาล — อ่านวันที่จาก festivals.json (แก้ไฟล์นี้ใน GitHub ได้เลย) · ?fest=xmas = ดูตัวอย่างธีม =====
+    const FX_THEMES = {
+        loy:      { dark: 1, emoji: '🪷', chip: 'bg-amber-300 text-indigo-950', glow: 'rgba(253,224,71,.45)',
+                    parts: [['🏮', 'rise', 9, 13, 18], ['🪷', 'drift', 3, 18, 22, 'bottom:6px'], ['✨', 'float', 6, 10, 12]] },
+        xmas:     { dark: 1, emoji: '🎄', chip: 'bg-green-600 text-white', glow: 'rgba(34,197,94,.45)',
+                    parts: [['❄', 'fall', 22, 8, 14, 'color:#fff'], ['🎄', 'float', 1, 30, 34, 'bottom:20px;right:96px'], ['⭐', 'float', 1, 14, 16, 'top:10px;right:150px']] },
+        newyear:  { dark: 1, emoji: '🎆', chip: 'bg-fuchsia-500 text-white', glow: 'rgba(217,70,239,.45)',
+                    parts: [['', 'burst', 8, 0, 0], ['✨', 'float', 8, 10, 14]] },
+        cny:      { dark: 1, emoji: '🧧', chip: 'bg-yellow-300 text-red-800', glow: 'rgba(250,204,21,.5)',
+                    parts: [['🏮', 'swing', 4, 22, 28], ['🪙', 'fall', 8, 12, 16]] },
+        buddha:   { dark: 0, emoji: '🪷', chip: 'bg-amber-500 text-white', glow: 'rgba(245,158,11,.4)',
+                    parts: [['☸️', 'float', 1, 30, 34, 'top:22px;left:calc(50% - 16px)'], ['🪷', 'float', 5, 14, 20], ['✦', 'rise', 8, 8, 10, 'color:#f59e0b']] },
+        songkran: { dark: 0, emoji: '💦', chip: 'bg-sky-500 text-white', glow: 'rgba(14,165,233,.45)',
+                    parts: [['💧', 'fall', 16, 10, 14], ['🌸', 'fall', 5, 12, 16]] },
+        mother:   { dark: 0, emoji: '💮', chip: 'bg-blue-500 text-white', glow: 'rgba(59,130,246,.4)',
+                    parts: [['💮', 'fall', 10, 12, 16], ['🤍', 'float', 4, 12, 14]] },
+        father:   { dark: 0, emoji: '🌼', chip: 'bg-yellow-400 text-yellow-900', glow: 'rgba(234,179,8,.45)',
+                    parts: [['🌼', 'fall', 10, 12, 16], ['💛', 'float', 4, 12, 14]] },
+    };
+    const FX_DEFAULT = { loy: 'สุขสันต์วันลอยกระทง', xmas: 'Merry Christmas', newyear: 'สวัสดีปีใหม่', cny: 'ซินเจียยู่อี่ ซินนี้ฮวดไช้', buddha: 'วันสำคัญทางพุทธศาสนา', songkran: 'สุขสันต์วันสงกรานต์', mother: 'วันแม่แห่งชาติ', father: 'วันพ่อแห่งชาติ' };
+    function fxToday() { return new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10); }   // วันที่ตามเวลาไทย
+    function fxApply(f) {
+        const T = f && FX_THEMES[f.theme], bg = document.getElementById('fxBg'), chip = document.getElementById('festChip');
+        document.body.classList.toggle('fx-on', !!T);
+        if (!T) { bg.innerHTML = ''; chip.classList.add('hidden'); return; }
+        const rnd = (a, b) => a + Math.random() * (b - a), out = [];
+        T.parts.forEach(([ch, kind, n, s1, s2, extra]) => {
+            for (let i = 0; i < n; i++) {
+                let st = '';
+                if (kind === 'burst') st = `left:${rnd(8, 92)}%;top:${rnd(14, 80)}px;color:${['#fde047', '#f472b6', '#60a5fa', '#34d399', '#fb923c'][i % 5]};animation-delay:${rnd(0, 2.6).toFixed(2)}s`;
+                else {
+                    st = `font-size:${rnd(s1, s2).toFixed(0)}px;`;
+                    if (kind === 'fall') st += `left:${rnd(0, 98)}%;animation-duration:${rnd(5, 10).toFixed(1)}s;animation-delay:-${rnd(0, 10).toFixed(1)}s;opacity:${rnd(.6, 1).toFixed(2)};`;
+                    if (kind === 'rise') st += `left:${rnd(2, 96)}%;animation-duration:${rnd(6, 11).toFixed(1)}s;animation-delay:-${rnd(0, 11).toFixed(1)}s;`;
+                    if (kind === 'drift') st += `left:0;animation-duration:${rnd(16, 26).toFixed(1)}s;animation-delay:-${rnd(0, 26).toFixed(1)}s;`;
+                    if (kind === 'float') st += (extra ? '' : `left:${rnd(4, 92)}%;top:${rnd(8, 100)}px;`) + `animation-duration:${rnd(2.2, 4).toFixed(1)}s;animation-delay:-${rnd(0, 4).toFixed(1)}s;`;
+                    if (kind === 'swing') st += `left:${[6, 30, 62, 86][i % 4]}%;animation-delay:-${rnd(0, 3).toFixed(1)}s;`;
+                    st += extra || '';
+                }
+                out.push(`<i class="fxa-${kind}" style="${st}">${ch}</i>`);
+            }
+        });
+        bg.className = 'fx-' + f.theme; bg.innerHTML = out.join('');
+        document.documentElement.style.setProperty('--fx-glow', T.glow);
+        document.body.classList.toggle('wx-dark-top', !!T.dark);
+        const today = f.day && f.day === fxToday();
+        chip.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm ' + T.chip;
+        chip.textContent = T.emoji + ' ' + (f.title || FX_DEFAULT[f.theme] || '') + (today ? ' · วันนี้' : '');
+        chip.title = f.title || '';
+    }
+    async function loadFestival() {
+        let f = null;
+        try {
+            const q = new URLSearchParams(location.search).get('fest');   // ดูตัวอย่าง: ?fest=loy | xmas | newyear | cny | buddha | songkran | mother | father
+            if (q && FX_THEMES[q]) f = { theme: q, title: FX_DEFAULT[q] };
+            else if (q !== 'off') {
+                const j = await (await fetch('festivals.json?d=' + fxToday(), { cache: 'no-cache' })).json(), d = fxToday();
+                f = (j.festivals || []).find(x => x && x.from <= d && d <= x.to && FX_THEMES[x.theme]) || null;
+            }
+        } catch (e) { }
+        fxApply(f);
+    }
+    loadFestival(); setInterval(loadFestival, 60 * 60e3);
     </script>
 </body>
 </html>
