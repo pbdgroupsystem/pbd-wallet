@@ -148,6 +148,16 @@
             /* เมนูใช้งานด่วนแบบไดนามิก: เส้นแบ่งช่อง (จำนวนช่องเปลี่ยนตามสิทธิ์) */
         .qm-grid { background: rgba(229,231,235,.8); gap: 1px; }
         .qm-grid > * { background: #fff; }
+        /* ไอคอนเมนูแบบกระเบื้องนูน (ตามแบบ PBD_Connect_icon) */
+        .qm-btn { padding: 14px 6px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: background .15s; }
+        .qm-btn:active { background: #fef2f2; }
+        .qm-tile { position: relative; width: 66px; height: 66px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(180deg, #ffffff 0%, #f1f3f8 100%); border: 1px solid #fff;
+            box-shadow: 0 8px 16px -6px rgba(17,24,39,.18), 0 2px 4px rgba(17,24,39,.06), inset 0 1px 0 #fff; }
+        .qm-tile img { width: 46px; height: 46px; object-fit: contain; }
+        .qm-tile .qm-fa { font-size: 28px; color: #1e2a44; }
+        .qm-tile .qm-badge { position: absolute; top: -5px; right: -7px; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+        .qm-label { font-size: 12.5px; font-weight: 700; color: #1e2a44; line-height: 1.2; }
             /* หน้าสิทธิประโยชน์ (แบบการ์ดคูปอง) */
         .rw-p { display:inline-flex; align-items:center; justify-content:center; border-radius:9999px; background:#F26A21; color:#fff; font-weight:900; box-shadow:0 0 0 4px #FDE3D3; flex:none; }
         .rw-card { background:#fff; border:1px solid #E5E7EB; border-radius:18px; padding:12px; display:flex; gap:14px; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,.04); text-align:left; width:100%; transition:transform .1s; }
@@ -1780,13 +1790,13 @@
             const R = menuRights(), box = $id(R.mgmt ? 'mgmtMenu' : 'quickMenu'); if (!box) return;
             const v = x => typeof x === 'function' ? x(R) : x;
             const items = QUICK_MENU.filter(m => { try { return m.show(R); } catch (e) { return false; } });
+            const IMG = { dash: 1, team: 1, staff: 1, requests: 1, pending: 1, coupon: 1, leave: 1, leaveok: 1, myqr: 1, baadmin: 1, aaadmin: 1, facescan: 1, award: 1, rewards: 1 };   // icons/menu/<id>.png
             let html = items.map(m => {
                 const b = m.badge ? m.badge(R) : null;
-                const ic = m.hero ? 'bg-red-600 text-white' : m.dark ? 'bg-gradient-to-br from-gray-900 to-red-800 text-yellow-300' : 'bg-red-50 text-red-600';
-                return '<button type="button" onclick="' + m.run + '" class="p-3.5 flex flex-col items-center justify-start gap-1.5 hover:bg-red-50/50 active:bg-red-100/50 transition">'
-                    + '<div class="w-11 h-11 rounded-xl ' + ic + ' flex items-center justify-center text-2xl shadow-sm relative"><i class="fa-solid ' + v(m.icon) + '"></i>'
-                    + (b ? '<span class="absolute -top-1 -right-1 ' + b.c + ' text-[8px] font-extrabold px-1.5 rounded-full shadow">' + esc(b.t) + '</span>' : '') + '</div>'
-                    + '<span class="text-xs ' + (m.hero ? 'font-bold text-red-700' : 'font-semibold text-gray-800') + '">' + esc(v(m.label)) + '</span></button>';
+                const icon = IMG[m.id] ? '<img src="icons/menu/' + m.id + '.png" alt="" loading="lazy">' : '<i class="fa-solid ' + v(m.icon) + ' qm-fa"></i>';
+                return '<button type="button" onclick="' + m.run + '" class="qm-btn">'
+                    + '<div class="qm-tile">' + icon + (b ? '<span class="qm-badge ' + b.c + '">' + esc(b.t) + '</span>' : '') + '</div>'
+                    + '<span class="qm-label">' + esc(v(m.label)) + '</span></button>';
             }).join('');
             for (let i = items.length; i % 3; i++) html += '<div></div>';   // เติมช่องว่างให้ครบแถว
             box.innerHTML = html;
