@@ -275,6 +275,34 @@
                 </div>
             </div>
         </section>
+        <!-- การ์ดเวลาทำงาน (พนักงานที่ไม่ใช่ฝ่ายขาย + Admin: เวลาทำงานของตัวเอง) -->
+        <section id="workCard" data-mode="staff mgmt" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
+            <div class="flex justify-between items-center relative z-10">
+                <div class="pr-2 cursor-pointer active:scale-95 transition" onclick="showWorkDays()">
+                    <p class="text-xs sm:text-sm font-medium text-gray-200">เวลาทำงาน <span id="wkMonth" class="text-xs opacity-80"></span></p>
+                    <div class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-0.5 drop-shadow">ทำงาน <span id="wkWork">–</span> <span class="text-lg font-bold">วัน</span></div>
+                </div>
+                <div class="wk-coin h-14 w-[1px] bg-white/25 mx-1"></div>
+                <div onclick="openSection('rewardsModal')" class="wk-coin flex items-center gap-2.5 pl-2 cursor-pointer active:scale-95 transition">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 flex items-center justify-center shadow-inner"><span class="text-amber-900 font-black text-lg">$</span></div>
+                    <div><div id="wkCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">–</div><div class="text-xs font-medium text-yellow-200 mt-0.5">PBD Coin</div></div>
+                </div>
+            </div>
+            <div onclick="showWorkDays()" class="relative z-10 mt-4 grid grid-cols-4 gap-2 text-center cursor-pointer">
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkScan" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">สแกนหน้า</div></div>
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLate" class="text-xl font-extrabold leading-none text-yellow-200">–</div><div class="text-[10px] text-gray-200 mt-1">สาย</div></div>
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkNo" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ไม่สแกน/ขาด</div></div>
+                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLeave" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ลา</div></div>
+            </div>
+            <div onclick="showWorkDays()" class="relative z-10 mt-3 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer active:scale-95 transition">
+                <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow"><i class="fa-solid fa-clock"></i></span>
+                <span>ค่าปรับเดือนนี้: <strong class="font-bold text-yellow-200">฿<span id="wkFine">0</span></strong> · รอหัก: <strong class="font-bold text-yellow-200">฿<span id="wkPend">0</span></strong></span>
+                <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
+            </div>
+        </section>
+
 
         <section data-mode="mgmt" class="hidden relative z-10 mx-4">
             <div class="ribbon-tab w-48 py-1.5 px-4 text-white font-bold text-sm flex items-center gap-2 rounded-tl-xl shadow">
@@ -346,34 +374,6 @@
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </span>
                 <span>รอหัก: <strong class="font-bold text-yellow-200">฿<span id="pendingDeduct">0</span></strong> · ค่าปรับ: <strong class="font-bold text-yellow-200">฿<span id="fineTotalPill">0</span></strong></span>
-                <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
-            </div>
-        </section>
-
-        <!-- การ์ดเวลาทำงาน (พนักงานที่ไม่ใช่ฝ่ายขาย: HR / IT / ช่าง ฯลฯ) -->
-        <section data-mode="staff" class="hidden relative z-10 mx-4 mt-1 p-5 rounded-3xl wallet-card text-white overflow-hidden border border-red-500/30">
-            <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-            <div class="absolute right-3 bottom-1 opacity-15 text-5xl font-black italic tracking-wider pointer-events-none select-none">PBD</div>
-            <div class="flex justify-between items-center relative z-10">
-                <div class="pr-2 cursor-pointer active:scale-95 transition" onclick="showWorkDays()">
-                    <p class="text-xs sm:text-sm font-medium text-gray-200">เวลาทำงาน <span id="wkMonth" class="text-xs opacity-80"></span></p>
-                    <div class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-0.5 drop-shadow">ทำงาน <span id="wkWork">–</span> <span class="text-lg font-bold">วัน</span></div>
-                </div>
-                <div class="h-14 w-[1px] bg-white/25 mx-1"></div>
-                <div onclick="openSection('rewardsModal')" class="flex items-center gap-2.5 pl-2 cursor-pointer active:scale-95 transition">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-600 border-2 border-yellow-100 flex items-center justify-center shadow-inner"><span class="text-amber-900 font-black text-lg">$</span></div>
-                    <div><div id="wkCoins" class="text-2xl sm:text-3xl font-extrabold text-white leading-none drop-shadow">–</div><div class="text-xs font-medium text-yellow-200 mt-0.5">PBD Coin</div></div>
-                </div>
-            </div>
-            <div onclick="showWorkDays()" class="relative z-10 mt-4 grid grid-cols-4 gap-2 text-center cursor-pointer">
-                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkScan" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">สแกนหน้า</div></div>
-                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLate" class="text-xl font-extrabold leading-none text-yellow-200">–</div><div class="text-[10px] text-gray-200 mt-1">สาย</div></div>
-                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkNo" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ไม่สแกน/ขาด</div></div>
-                <div class="rounded-2xl bg-white/10 border border-white/15 py-2"><div id="wkLeave" class="text-xl font-extrabold leading-none">–</div><div class="text-[10px] text-gray-200 mt-1">ลา</div></div>
-            </div>
-            <div onclick="showWorkDays()" class="relative z-10 mt-3 bg-gradient-to-r from-red-900/90 via-red-700/90 to-red-600/90 border border-red-400/40 rounded-full py-1.5 px-3.5 inline-flex items-center gap-2 text-xs sm:text-sm font-medium shadow-md cursor-pointer active:scale-95 transition">
-                <span class="bg-amber-400 text-black w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shadow"><i class="fa-solid fa-clock"></i></span>
-                <span>ค่าปรับเดือนนี้: <strong class="font-bold text-yellow-200">฿<span id="wkFine">0</span></strong> · รอหัก: <strong class="font-bold text-yellow-200">฿<span id="wkPend">0</span></strong></span>
                 <i class="fa-solid fa-chevron-right text-xs ml-1 opacity-80"></i>
             </div>
         </section>
@@ -954,7 +954,9 @@
         function renderMode() {
             const mg = appState.mode === 'mgmt', md = mg ? 'mgmt' : appState.mode === 'staff' ? 'staff' : 'sales';
             document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('hidden', el.getAttribute('data-mode').split(' ').indexOf(md) < 0));
-            if (md === 'staff') renderWork();
+            if (md !== 'sales') renderWork();
+            document.querySelectorAll('.wk-coin').forEach(e => e.classList.toggle('hidden', mg));   // Admin มี Coin ในการ์ดด้านบนแล้ว
+            if (mg) $id('workCard').classList.toggle('hidden', !(appState.work && (appState.work.days || []).length));   // Admin: แสดงเมื่อมีเวลาสแกนหน้าของตัวเอง
             if (!mg) return;
             const o = appState.overview || {};
             $id('mgCoins').innerText = num(appState.pbdCoins);
