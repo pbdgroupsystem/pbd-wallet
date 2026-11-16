@@ -1,5 +1,7 @@
 {
   "_อธิบาย": "ธีมเทศกาลของ PBD Wallet · แก้วันที่ได้ที่ไฟล์นี้ (from/to = yyyy-mm-dd ตามเวลาไทย รวมวันสุดท้าย) · theme = loy | xmas | newyear | cny | buddha | songkran | mother | father · วันพระใหญ่ใช้ theme buddha (สงบ ไม่มีพลุ) · ทดลองดูธีม: เปิด Wallet ต่อท้ายลิงก์ ?fest=xmas",
+  "glass": true,
+  "_glass": "true = ทุกเทศกาลใช้ฟิลเตอร์กระจก (พื้นหลังเทศกาลเต็มจอ + การ์ดโปร่งแสง) · ปิดเฉพาะเทศกาลใดให้ใส่ \"glass\": false ในเทศกาลนั้น",
   "festivals": [
     { "id": "loy-2569", "theme": "loy", "from": "2026-11-21", "to": "2026-11-25", "title": "สุขสันต์วันลอยกระทง", "day": "2026-11-24" },
     { "id": "xmas-2569", "theme": "xmas", "from": "2026-12-20", "to": "2026-12-26", "title": "Merry Christmas", "day": "2026-12-25" },
