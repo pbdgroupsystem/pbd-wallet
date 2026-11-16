@@ -159,6 +159,28 @@
         #festChip { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         body.fx-on .wallet-card { box-shadow: 0 10px 30px -10px var(--fx-glow, rgba(0,0,0,.4)); }
 
+
+        /* ===== ฟิลเตอร์กระจก (ทดลอง) — ช่วงเทศกาล: พื้นหลังเทศกาลเต็มจอ + การ์ดโปร่งแสงแบบกระจกฝ้า · เปิดด้วย ?glass=1 หรือ "glass": true ใน festivals.json ===== */
+        body.fx-on.fx-glass #fxBg { position: fixed; height: auto; bottom: 0; -webkit-mask-image: none; mask-image: none; }
+        body.fx-on.fx-glass .fxa-fall, body.fx-on.fx-glass .fxa-confetti { animation-name: fxFallFull; }
+        body.fx-on.fx-glass .fxa-rise { animation-name: fxRiseFull; }
+        @keyframes fxFallFull { to { transform: translate(24px, 105vh) rotate(260deg); } }
+        @keyframes fxRiseFull { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: .95; } 100% { transform: translate(-20px, -90vh); opacity: 0; } }
+        body.fx-on.fx-glass .fx-loy { background: linear-gradient(180deg, #0b1c3d 0%, #1e3a6e 45%, #3b4f86 100%); }
+        body.fx-on.fx-glass .fx-xmas { background: linear-gradient(180deg, #0f3d2e 0%, #1b5e3f 50%, #2f7a55 100%); }
+        body.fx-on.fx-glass .fx-newyear { background: linear-gradient(180deg, #120b2e 0%, #3b1f6b 55%, #5b3a8f 100%); }
+        body.fx-on.fx-glass .fx-cny { background: linear-gradient(180deg, #8b1414 0%, #c81e1e 55%, #e2562b 100%); }
+        body.fx-on.fx-glass .fx-buddha { background: radial-gradient(circle at 68% 12%, rgba(255,214,120,.6) 0 40px, rgba(255,214,120,0) 140px), linear-gradient(180deg, #fff3d6 0%, #fde7b0 55%, #f6d58a 100%); }
+        body.fx-on.fx-glass .fx-songkran { background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 55%, #93c5fd 100%); }
+        body.fx-on.fx-glass .fx-mother { background: linear-gradient(180deg, #bfdbfe 0%, #dbeafe 55%, #c7d2fe 100%); }
+        body.fx-on.fx-glass .fx-father { background: linear-gradient(180deg, #fcd34d 0%, #fde68a 55%, #fcd34d 100%); }
+        body.fx-on.fx-glass .wallet-card { background: linear-gradient(135deg, rgba(220,38,38,.62) 0%, rgba(127,29,29,.55) 50%, rgba(17,17,17,.5) 100%) !important;
+            -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); border: 1px solid rgba(255,255,255,.35) !important; }
+        body.fx-on.fx-glass main .bg-white, body.fx-on.fx-glass > nav { background: rgba(255,255,255,.6) !important;
+            -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); border-color: rgba(255,255,255,.55) !important; }
+        body.fx-on.fx-glass .qm-grid { background: rgba(255,255,255,.35); } body.fx-on.fx-glass .qm-grid > * { background: rgba(255,255,255,.45); }
+        body.fx-on.fx-glass main .bg-white .bg-white { background: rgba(255,255,255,.55) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+
         /* Wallet Card Gradient */
         .wallet-card {
             background: radial-gradient(circle at 85% 20%, #dc2626 0%, #7f1d1d 45%, #111111 95%);
@@ -2532,12 +2554,16 @@
         let f = null;
         try {
             const q = new URLSearchParams(location.search).get('fest');   // ดูตัวอย่าง: ?fest=loy | xmas | newyear | cny | buddha | songkran | mother | father
+            const g = new URLSearchParams(location.search).get('glass');   // ?glass=1 = ลองฟิลเตอร์กระจก · ?glass=0 = ปิด
             if (q && FX_THEMES[q]) f = { theme: q, title: FX_DEFAULT[q] };
             else if (q !== 'off') {
                 const j = await (await fetch('festivals.json?d=' + fxToday(), { cache: 'no-cache' })).json(), d = fxToday();
                 f = (j.festivals || []).find(x => x && x.from <= d && d <= x.to && FX_THEMES[x.theme]) || null;
+                if (f && f.glass === undefined) f.glass = !!j.glass;
             }
+            if (f && g !== null) f.glass = g === '1';
         } catch (e) { }
+        document.body.classList.toggle('fx-glass', !!(f && f.glass));
         fxApply(f);
     }
     loadFestival(); setInterval(loadFestival, 60 * 60e3);
