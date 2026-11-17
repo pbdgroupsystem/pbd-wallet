@@ -189,11 +189,17 @@
 
         /* ===== กระจกดำ (ค่าเริ่มต้น · "glassStyle": "light" ใน festivals.json = กระจกขาวแบบเดิม) — การ์ดดำโปร่งแสง เบลอแรง ขอบขาวบาง ตัวอักษรขาว ===== */
         body.fx-on.fx-glass.fx-gdark .wallet-card, body.fx-on.fx-glass.fx-gdark main .bg-white, body.fx-on.fx-glass.fx-gdark > nav {
-            background: rgba(12,12,16,.46) !important; -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
+            background: rgba(10,10,14,.58) !important; -webkit-backdrop-filter: blur(24px) saturate(130%) brightness(.85); backdrop-filter: blur(24px) saturate(130%) brightness(.85);
             border: 1px solid rgba(255,255,255,.28) !important; box-shadow: 0 10px 30px -12px rgba(0,0,0,.55) !important; color: #fff; }
         body.fx-on.fx-glass.fx-gdark main .bg-white .bg-white { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.16) !important; box-shadow: none !important; }
         body.fx-on.fx-glass.fx-gdark main .bg-white :is(.text-gray-900, .text-gray-800, .text-gray-700, .text-black) { color: #fff !important; }
-        body.fx-on.fx-glass.fx-gdark main .bg-white :is(.text-gray-600, .text-gray-500, .text-gray-400) { color: rgba(255,255,255,.72) !important; }
+        body.fx-on.fx-glass.fx-gdark main .bg-white :is(.text-gray-600, .text-gray-500, .text-gray-400) { color: rgba(255,255,255,.88) !important; }
+        /* ตัวอักษรสีเทาทุกจุดบนกระจกดำ → ขาวนวล อ่านชัด (เว้นในกรอบไอคอนสีขาว) */
+        body.fx-on.fx-glass.fx-gdark :is(main, .wallet-card, body > nav) :is([class*="text-gray-"], [class*="text-slate-"], [class*="text-zinc-"]):not(.qm-tile *) { color: rgba(255,255,255,.9) !important; }
+        body.fx-on.fx-glass.fx-gdark :is(main, .wallet-card, body > nav) :is(.text-gray-900, .text-gray-800, .text-black) { color: #fff !important; }
+        body.fx-on.fx-glass.fx-gdark :is(main, .wallet-card) { text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+        body.fx-on.fx-glass.fx-gdark main .bg-white :is(.text-red-600, .text-red-500, .text-red-700) { color: #fca5a5 !important; } body.fx-on.fx-glass.fx-gdark main .bg-white .text-green-600 { color: #86efac !important; } body.fx-on.fx-glass.fx-gdark main .bg-white .text-sky-600 { color: #7dd3fc !important; }
+        body.fx-img-on:not(.wx-dark-top) header :is(h1, #userRole, #userBranchHeader, .text-gray-500) { color: #111827 !important; }
         body.fx-on.fx-glass.fx-gdark main :is(.bg-gray-50, .bg-gray-100) { background: rgba(255,255,255,.1) !important; }
         body.fx-on.fx-glass.fx-gdark main :is(.border-gray-100, .border-gray-200, .divide-gray-200 > *) { border-color: rgba(255,255,255,.16) !important; }
         body.fx-on.fx-glass.fx-gdark .qm-grid { background: rgba(255,255,255,.14) !important; } body.fx-on.fx-glass.fx-gdark .qm-grid > * { background: transparent !important; }
