@@ -186,6 +186,23 @@
         body.fx-on.fx-glass .qm-grid { background: rgba(255,255,255,.35); } body.fx-on.fx-glass .qm-grid > * { background: rgba(255,255,255,.45); }
         body.fx-on.fx-glass main .bg-white .bg-white { background: rgba(255,255,255,.55) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 
+
+        /* ===== กระจกดำ (ค่าเริ่มต้น · "glassStyle": "light" ใน festivals.json = กระจกขาวแบบเดิม) — การ์ดดำโปร่งแสง เบลอแรง ขอบขาวบาง ตัวอักษรขาว ===== */
+        body.fx-on.fx-glass.fx-gdark .wallet-card, body.fx-on.fx-glass.fx-gdark main .bg-white, body.fx-on.fx-glass.fx-gdark > nav {
+            background: rgba(12,12,16,.46) !important; -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
+            border: 1px solid rgba(255,255,255,.28) !important; box-shadow: 0 10px 30px -12px rgba(0,0,0,.55) !important; color: #fff; }
+        body.fx-on.fx-glass.fx-gdark main .bg-white .bg-white { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.16) !important; box-shadow: none !important; }
+        body.fx-on.fx-glass.fx-gdark main .bg-white :is(.text-gray-900, .text-gray-800, .text-gray-700, .text-black) { color: #fff !important; }
+        body.fx-on.fx-glass.fx-gdark main .bg-white :is(.text-gray-600, .text-gray-500, .text-gray-400) { color: rgba(255,255,255,.72) !important; }
+        body.fx-on.fx-glass.fx-gdark main :is(.bg-gray-50, .bg-gray-100) { background: rgba(255,255,255,.1) !important; }
+        body.fx-on.fx-glass.fx-gdark main :is(.border-gray-100, .border-gray-200, .divide-gray-200 > *) { border-color: rgba(255,255,255,.16) !important; }
+        body.fx-on.fx-glass.fx-gdark .qm-grid { background: rgba(255,255,255,.14) !important; } body.fx-on.fx-glass.fx-gdark .qm-grid > * { background: transparent !important; }
+        body.fx-on.fx-glass.fx-gdark .qm-label { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+        body.fx-on.fx-glass.fx-gdark .qm-btn:active { background: rgba(255,255,255,.12); }
+        body.fx-on.fx-glass.fx-gdark > nav :is(.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700) { color: rgba(255,255,255,.85) !important; }
+        body.fx-on.fx-glass.fx-gdark > nav .text-red-600 { color: #fca5a5 !important; } body.fx-on.fx-glass.fx-gdark > nav .bg-red-600.nav-indicator { background: #fca5a5 !important; }
+        body.fx-on.fx-glass.fx-gdark .wallet-card .opacity-15, body.fx-on.fx-glass.fx-gdark .wallet-card [class*="opacity-1"] { opacity: .08; }
+
         /* Wallet Card Gradient */
         .wallet-card {
             background: radial-gradient(circle at 85% 20%, #dc2626 0%, #7f1d1d 45%, #111111 95%);
@@ -2569,10 +2586,12 @@
                 f = q && FX_THEMES[q] ? Object.assign({ title: FX_DEFAULT[q] }, (j.festivals || []).find(x => x && x.theme === q && x.to >= d) || {}, { theme: q })   // ?fest= ดูตัวอย่าง: ใช้ค่าเดียวกับเทศกาลจริง (กระจก/ภาพ)
                     : (j.festivals || []).find(x => x && x.from <= d && d <= x.to && FX_THEMES[x.theme]) || null;
                 if (f && f.glass === undefined) f.glass = !!j.glass;
+                if (f && f.glassStyle === undefined) f.glassStyle = j.glassStyle || 'dark';
             }
             if (f && g !== null) f.glass = g === '1';
         } catch (e) { const q = new URLSearchParams(location.search).get('fest'); if (q && FX_THEMES[q]) f = { theme: q, title: FX_DEFAULT[q], glass: new URLSearchParams(location.search).get('glass') !== '0' }; }
         document.body.classList.toggle('fx-glass', !!(f && f.glass));
+        document.body.classList.toggle('fx-gdark', !!(f && f.glass && f.glassStyle !== 'light'));   // กระจกดำเป็นค่าเริ่มต้น
         fxApply(f);
     }
     loadFestival(); setInterval(loadFestival, 60 * 60e3);
