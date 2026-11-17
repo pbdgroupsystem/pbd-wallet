@@ -2564,14 +2564,14 @@
         try {
             const q = new URLSearchParams(location.search).get('fest');   // ดูตัวอย่าง: ?fest=loy | xmas | newyear | cny | buddha | songkran | mother | father
             const g = new URLSearchParams(location.search).get('glass');   // ?glass=1 = ลองฟิลเตอร์กระจก · ?glass=0 = ปิด
-            if (q && FX_THEMES[q]) f = { theme: q, title: FX_DEFAULT[q] };
-            else if (q !== 'off') {
+            if (q !== 'off') {
                 const j = await (await fetch('festivals.json?d=' + fxToday(), { cache: 'no-cache' })).json(), d = fxToday();
-                f = (j.festivals || []).find(x => x && x.from <= d && d <= x.to && FX_THEMES[x.theme]) || null;
+                f = q && FX_THEMES[q] ? Object.assign({ title: FX_DEFAULT[q] }, (j.festivals || []).find(x => x && x.theme === q && x.to >= d) || {}, { theme: q })   // ?fest= ดูตัวอย่าง: ใช้ค่าเดียวกับเทศกาลจริง (กระจก/ภาพ)
+                    : (j.festivals || []).find(x => x && x.from <= d && d <= x.to && FX_THEMES[x.theme]) || null;
                 if (f && f.glass === undefined) f.glass = !!j.glass;
             }
             if (f && g !== null) f.glass = g === '1';
-        } catch (e) { }
+        } catch (e) { const q = new URLSearchParams(location.search).get('fest'); if (q && FX_THEMES[q]) f = { theme: q, title: FX_DEFAULT[q], glass: new URLSearchParams(location.search).get('glass') !== '0' }; }
         document.body.classList.toggle('fx-glass', !!(f && f.glass));
         fxApply(f);
     }
