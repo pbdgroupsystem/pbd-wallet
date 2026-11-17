@@ -1902,6 +1902,10 @@
                     fetchUserData(true).then(() => Swal.fire({ toast: true, position: 'top', icon: 'info', title: d.title || '', text: d.body || '', showConfirmButton: true,
                         confirmButtonText: 'เปิดดู', confirmButtonColor: '#dc2626', showCloseButton: true, timer: 12000 }).then(r => { if (r.isConfirmed) openFromNotice(/open=coupon/.test(d.url || '') ? 'coupon' : d.kind); }));
                 }
+                else if (d.kind === 'notice') {   // หักพ้อยเครื่องคืน ฯลฯ ขณะเปิดแอปอยู่
+                    try { if (navigator.vibrate) navigator.vibrate([150, 80, 150]); } catch (e) { }
+                    fetchUserData(true).then(() => Swal.fire({ toast: true, position: 'top', icon: 'warning', title: d.title || '', text: d.body || '', showConfirmButton: false, showCloseButton: true, timer: 12000 }));
+                }
                 else if (d.kind === 'leave') {   // คำขอลาใหม่ (ผู้อนุมัติ) / ผลอนุมัติ (พนักงาน) ขณะเปิดแอปอยู่
                     try { if (navigator.vibrate) navigator.vibrate([150, 80, 150]); } catch (e) { }
                     Swal.fire({ toast: true, position: 'top', icon: d.ok === 'no' ? 'error' : d.ok === 'yes' ? 'success' : 'info', title: d.title || 'การลา', text: d.body || '',
@@ -2027,6 +2031,7 @@
             { id: 'myqr', label: 'QR ของฉัน', icon: 'fa-id-card', run: 'showMyQr()', show: R => R.myQr },
             { id: 'baadmin', label: 'บันทึกรายการหัก', icon: 'fa-file-invoice-dollar', run: "openAdminPage('admin-branch.html')", show: R => R.baAdmin },
             { id: 'aaadmin', label: 'จัดการคูปอง', icon: 'fa-ticket', run: "openAdminPage('admin-activity.html')", show: R => R.aaAdmin },
+            { id: 'pdxadmin', label: 'หักพ้อยคืน', icon: 'fa-rotate-left', run: "openAdminPage('admin-deduct.html')", show: R => R.allAdmin },
             { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
             { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
@@ -2051,6 +2056,7 @@
                 myQr: !!appState.myQr,                                  // QR ประจำตัว (แอดมินสาขาสแกนบันทึกรายการหัก / มอบคูปอง)
                 baAdmin: !!(appState.adminPages && appState.adminPages.branch),     // หน้าแอดมินสาขา
                 aaAdmin: !!(appState.adminPages && appState.adminPages.activity),   // หน้าแอดมินกิจกรรม
+                allAdmin: !!(appState.adminPages && appState.adminPages.all),       // ผู้ดูแลระบบ: นำเข้าไฟล์หักพ้อยเครื่องคืน
                 lvApprover: !!(appState.leaveRights && appState.leaveRights.approver),   // ผู้จัดการ/หัวหน้าทีม: อนุมัติการลา
                 lvPending: (appState.leaveRights && appState.leaveRights.pending) || 0
             };

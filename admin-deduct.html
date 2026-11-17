@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#7f1d1d">
+    <title>PBD หักพ้อยเครื่องคืน</title>
+    <link rel="icon" href="icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } } };</script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f3f4f6; }
+        .hero { background: linear-gradient(135deg, #111827 0%, #7f1d1d 55%, #dc2626 100%); }
+        .swal2-popup { font-family: 'Kanit', sans-serif; }
+        #drop.over { border-color: #dc2626; background: #fef2f2; }
+        th, td { white-space: nowrap; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-gray-900">
+    <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
+        <div class="flex items-center justify-between max-w-md lg:max-w-5xl mx-auto gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-rotate-left"></i></div>
+                <div class="min-w-0">
+                    <p class="text-[11px] text-red-100">PBD Smart · ผู้ดูแลระบบ</p>
+                    <h1 class="text-xl font-bold leading-tight">หักพ้อยเครื่องคืน</h1>
+                    <p id="who" class="text-xs text-red-100 truncate">กำลังเชื่อมต่อ…</p>
+                </div>
+            </div>
+            <button onclick="loadInfo()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="รีเฟรช"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md lg:max-w-5xl mx-auto px-4 -mt-12 space-y-4">
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <h2 class="font-bold text-gray-900 mb-1"><i class="fa-solid fa-file-excel text-green-600"></i> 1. เลือกไฟล์รายการหัก (.xlsx)</h2>
+            <p class="text-xs text-gray-500 mb-3">ระบบอ่านเฉพาะ "ใบปะหน้า" (รหัสพนักงาน · หักพ้อย · หักเงิน(บาท)) ในเครื่องนี้ — ข้อมูลลูกค้าไม่ถูกส่งเข้าระบบ</p>
+            <label id="drop" class="block border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center cursor-pointer transition">
+                <input id="file" type="file" accept=".xlsx,.xls" class="hidden" onchange="readFile(this.files[0])">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400"></i>
+                <p class="text-sm font-semibold text-gray-700 mt-2">แตะเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง</p>
+                <p id="fileName" class="text-xs text-gray-400 mt-1">ยังไม่ได้เลือกไฟล์</p>
+            </label>
+        </section>
+
+        <section id="previewBox" class="hidden bg-white rounded-2xl shadow-md p-4">
+            <h2 class="font-bold text-gray-900 mb-3"><i class="fa-solid fa-list-check text-red-600"></i> 2. ตรวจรายการก่อนบันทึก</h2>
+            <div class="grid sm:grid-cols-2 gap-3 mb-3">
+                <label class="block"><span class="text-xs text-gray-500">ชื่อรอบ (แสดงให้พนักงานเห็น)</span>
+                    <input id="label" class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm" maxlength="120"></label>
+                <div><span class="text-xs text-gray-500">หักในพีเรียด</span>
+                    <p id="periodText" class="mt-1 rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-semibold">–</p></div>
+            </div>
+            <div id="sumBox" class="grid grid-cols-3 gap-2 mb-3 text-center"></div>
+            <div id="dupBox" class="hidden mb-3 rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-800"></div>
+            <div id="skipBox" class="hidden mb-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800"></div>
+            <div class="overflow-x-auto -mx-4 px-4">
+                <table class="w-full text-xs">
+                    <thead><tr class="text-left text-gray-500 border-b"><th class="py-2 pr-2">รหัส</th><th class="pr-2">ชื่อในระบบ</th><th class="pr-2">ส่วน</th><th class="pr-2">รายการหัก</th><th class="pr-2 text-right">ไม่หัก</th><th class="text-right">หักเงิน (บาท)</th></tr></thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+            <button id="saveBtn" onclick="doImport()" class="mt-4 w-full rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold py-3 shadow"><i class="fa-solid fa-check"></i> ยืนยันบันทึกการหัก</button>
+            <p class="text-[11px] text-gray-400 mt-2 text-center">บันทึกแล้ว: พ้อยที่หักจะลดจากพีเรียดนี้ทันที · หักเงินเข้า "รอหัก" · ส่งแจ้งเตือนให้พนักงานในแอป · ยกเลิกทั้งรอบได้ด้านล่าง</p>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <h2 class="font-bold text-gray-900 mb-3"><i class="fa-solid fa-clock-rotate-left text-gray-500"></i> รอบที่นำเข้าแล้ว</h2>
+            <div id="batches" class="space-y-2 text-sm"><p class="text-gray-400 text-center py-4">กำลังโหลด…</p></div>
+        </section>
+    </main>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    const LIFF_ID = '2012225566-hFrR9T1Q';
+    const IN_LINE = /\bLine\//i.test(navigator.userAgent);
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const num = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    const r2 = n => Math.round(n * 100) / 100;
+    let AUTH = null, info = null, parsed = null;
+
+    const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    async function auth() {
+        const dt = lsGet('PBD_DT'); let useLine = ''; try { useLine = sessionStorage.getItem('PBD_USE_LINE') || ''; } catch (e) { }
+        if (!IN_LINE && dt && !useLine) { AUTH = { dt: dt }; return true; }
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return false; }
+        let at = ''; try { at = liff.getAccessToken() || ''; } catch (e) { }
+        AUTH = { idToken: liff.getIDToken() || '', accessToken: at };
+        return true;
+    }
+    async function api(body) {
+        const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, AUTH, body)) });
+        const j = await r.json();
+        if (!j.ok && (j.authFail || j.devFail)) {
+            await Swal.fire({ icon: 'warning', title: 'ต้องเข้าสู่ระบบใหม่', text: 'กดตกลงเพื่อเข้าสู่ระบบด้วย LINE', confirmButtonColor: '#dc2626' });
+            try { sessionStorage.setItem('PBD_USE_LINE', '1'); if (window.liff && liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch (e) { }
+            location.reload(); throw new Error('relogin');
+        }
+        return j;
+    }
+    const fail = e => { if (!e || e.message !== 'relogin') Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจอินเทอร์เน็ต แล้วลองใหม่', 'error'); };
+
+    async function loadInfo() {
+        try {
+            const j = await api({ wl: 'dd_info' });
+            if (!j.ok) { $('who').innerText = 'ไม่มีสิทธิ์ใช้งาน'; $('batches').innerHTML = `<p class="text-center text-sm text-red-600 py-4">${esc(j.error)}</p>`; return; }
+            info = j; $('who').innerText = j.admin.name + (j.period ? ' · พีเรียด ' + j.period.label : '');
+            $('periodText').innerText = j.period ? j.period.label + ' (พีเรียดปัจจุบัน)' : 'อ่านพีเรียดไม่ได้';
+            renderBatches(j.batches);
+            if (parsed) renderPreview();
+        } catch (e) { fail(e); }
+    }
+    function renderBatches(list) {
+        $('batches').innerHTML = (list || []).length ? list.map(b => `<div class="rounded-xl border ${b.cancelled ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-gray-200'} p-3 flex items-center gap-3">
+            <div class="min-w-0 flex-1"><p class="font-semibold truncate">${esc(b.label)}</p>
+                <p class="text-[11px] text-gray-500">นำเข้า ${esc(b.at)} · ${esc(b.by)} · ${num(b.people)} คน · หัก ${num(b.points)} พ้อย${b.baht ? ' · ฿' + num(b.baht) : ''}${b.cancelled ? ' · <b class="text-gray-600">ยกเลิกแล้ว</b>' : ''}</p></div>
+            ${b.cancelled ? '' : `<button onclick="cancelBatch('${esc(b.id)}')" class="text-xs font-semibold text-red-600 border border-red-200 rounded-full px-3 py-1 shrink-0">ยกเลิกรอบนี้</button>`}</div>`).join('')
+            : '<p class="text-gray-400 text-center py-4">ยังไม่มีรอบที่นำเข้า</p>';
+    }
+
+    // ---------- อ่านไฟล์ (ในเครื่อง) — เฉพาะชีตชื่อ "ใบปะหน้า…" ----------
+    const drop = $('drop');
+    ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+    function readFile(f) {
+        if (!f) return;
+        $('fileName').innerText = f.name;
+        const rd = new FileReader();
+        rd.onload = () => {
+            try { parsed = parseBook(XLSX.read(rd.result, { type: 'array' })); }
+            catch (e) { Swal.fire('อ่านไฟล์ไม่ได้', esc(e.message), 'error'); return; }
+            if (!parsed.people.length && !parsed.skipped.length) { Swal.fire('ไม่พบรายการหัก', 'ไฟล์ต้องมีชีต "ใบปะหน้า…" ที่มีคอลัมน์ หักพ้อย / หักเงิน(บาท)', 'warning'); return; }
+            $('label').value = parsed.label; renderPreview();
+        };
+        rd.readAsArrayBuffer(f);
+    }
+    const cell = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+    const val = v => { const n = parseFloat(String(v == null ? '' : v).replace(/[,฿\s]|บาท/g, '')); return isFinite(n) ? n : 0; };
+    function parseBook(wb) {
+        const people = {}, skipped = [];
+        let label = '';
+        wb.SheetNames.filter(n => /ใบปะหน้า/.test(n)).forEach(sn => {
+            const A = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: '', raw: true });
+            let H = null, part = '', title = '';
+            A.forEach(row => {
+                const c = row.map(cell), first = c[0];
+                if (c.indexOf('ลำดับ') >= 0 && c.some(x => /^หัก/.test(x))) {
+                    const has = t => c.some(x => x === t);
+                    part = has('พนง.ขาย') ? 'พนักงานขาย' : has('หัวหน้าทีม') ? 'หัวหน้าทีม' : 'ผู้จัดการ';
+                    const nameCol = c.indexOf(part === 'พนักงานขาย' ? 'พนง.ขาย' : part);
+                    H = { nameCol: nameCol, keep: c.indexOf('ไม่หัก'), baht: c.findIndex(x => /^หักเงิน/.test(x)), pts: [] };
+                    c.forEach((x, i) => {
+                        if (!/^หักพ้อย/.test(x)) return;
+                        const k = (x.match(/หักพ้อย\s*(SUP|PRO|SS|NS)/i) || [])[1];
+                        H.pts.push({ i: i, type: part === 'ผู้จัดการ' ? 'ยอดสาขา' : !k || /SUP/i.test(k) ? 'ขายเอง' : 'ลูกทีม ' + k.toUpperCase() });
+                    });
+                    if (!label && title) label = title;
+                    return;
+                }
+                if (!H) { if (first && !/^\d+$/.test(first)) title = first; return; }
+                if (!/^\d+$/.test(first)) { if (first && !c.slice(1).some(Boolean)) { H = null; title = first; } return; }
+                const raw = c[H.nameCol] || '', m = raw.match(/-(\d{3,5})\s*$/), code = m ? m[1] : '';
+                const keep = H.keep >= 0 ? val(row[H.keep]) : 0, baht = H.baht >= 0 ? val(row[H.baht]) : 0;
+                const items = H.pts.map(p => ({ type: p.type, points: val(row[p.i]) })).filter(x => x.points > 0);
+                if (!items.length && !keep && !baht) return;
+                if (!code) { skipped.push({ name: raw, part: part, items: items, baht: baht }); return; }
+                const k = code + '|' + part, P = people[k] || (people[k] = { code: code, name: raw.replace(/-\d{3,5}\s*$/, ''), part: part, items: {}, keep: 0, baht: 0 });
+                items.forEach(x => P.items[x.type] = r2((P.items[x.type] || 0) + x.points));
+                P.keep = r2(P.keep + keep); P.baht = r2(P.baht + baht);
+            });
+        });
+        const short = (label.match(/เดือน\s*([^\s(]+)\s*\(?\s*(P\.\s*\d)\s*(\d{4})/) || []);
+        return { label: short.length ? 'งวด ' + short[1] + ' ' + short[2].replace(/\s/g, '') + ' ' + short[3] : (label || 'หักพ้อยเครื่องคืน').slice(0, 120),
+            people: Object.keys(people).map(k => people[k]), skipped: skipped };
+    }
+    function renderPreview() {
+        if (!parsed) return;
+        const refs = (info && info.refs) || {}, nk = s => String(s).replace(/^0+(?=\d)/, '');
+        const ok = parsed.people.filter(p => refs[nk(p.code)]), bad = parsed.people.filter(p => !refs[nk(p.code)]);
+        const pts = ok.reduce((a, p) => a + Object.keys(p.items).reduce((s, k) => s + p.items[k], 0), 0), baht = ok.reduce((a, p) => a + p.baht, 0);
+        $('sumBox').innerHTML = [['คน', new Set(ok.map(p => p.code)).size], ['หักพ้อยรวม', r2(pts)], ['หักเงินรวม', '฿' + num(baht)]].map(x => `<div class="rounded-xl bg-red-50 p-2"><p class="text-lg font-extrabold text-red-700">${typeof x[1] === 'number' ? num(x[1]) : x[1]}</p><p class="text-[11px] text-gray-600">${x[0]}</p></div>`).join('');
+        // คนเดียวกันถูกหัก "ขายเอง" ทั้งในใบปะหน้าพนักงานขายและหัวหน้าทีม (SUP ขายเอง) → อาจหักซ้ำ ให้ตรวจไฟล์
+        const own = {}; ok.forEach(p => { if (p.items['ขายเอง']) (own[p.code] = own[p.code] || []).push(p.part + ' ' + num(p.items['ขายเอง'])); });
+        const dup = Object.keys(own).filter(k => own[k].length > 1).map(k => esc(refs[nk(k)] || k) + ' (' + own[k].join(' + ') + ' พ้อย)');
+        $('dupBox').classList.toggle('hidden', !dup.length);
+        $('dupBox').innerHTML = '<b><i class="fa-solid fa-circle-exclamation"></i> หัก "ขายเอง" ซ้ำ 2 ใบปะหน้า — ระบบจะหักรวมทั้งสองยอด ตรวจไฟล์ก่อนบันทึก:</b><br>' + dup.join('<br>');
+        const skip = parsed.skipped.map(s => esc(s.name) + ' (' + esc(s.part) + ')').concat(bad.map(p => esc(p.name) + ' · รหัส ' + esc(p.code) + ' ไม่พบในระบบ'));
+        $('skipBox').classList.toggle('hidden', !skip.length);
+        $('skipBox').innerHTML = '<b><i class="fa-solid fa-triangle-exclamation"></i> ข้ามรายการเหล่านี้ (ไม่มีรหัส / ไม่พบในระบบ):</b><br>' + skip.join('<br>');
+        $('rows').innerHTML = ok.map(p => `<tr class="border-b border-gray-100 align-top"><td class="py-2 pr-2 font-mono">${esc(p.code)}</td><td class="pr-2">${esc(refs[nk(p.code)])}<div class="text-[10px] text-gray-400">${esc(p.name)}</div></td><td class="pr-2">${esc(p.part)}</td>
+            <td class="pr-2">${Object.keys(p.items).map(k => `<div>${esc(k)} <b class="text-red-600">−${num(p.items[k])}</b> พ้อย</div>`).join('') || '<span class="text-gray-400">–</span>'}</td>
+            <td class="pr-2 text-right text-gray-500">${p.keep ? num(p.keep) : ''}</td><td class="text-right font-bold">${p.baht ? '฿' + num(p.baht) : ''}</td></tr>`).join('');
+        $('previewBox').classList.remove('hidden');
+        $('saveBtn').disabled = !ok.length; $('saveBtn').classList.toggle('opacity-50', !ok.length);
+    }
+    async function doImport() {
+        if (!parsed || !info) return;
+        const refs = info.refs || {}, nk = s => String(s).replace(/^0+(?=\d)/, ''), rows = [];
+        parsed.people.filter(p => refs[nk(p.code)]).forEach(p => {
+            const types = Object.keys(p.items), base = p.part === 'ผู้จัดการ' ? 'ยอดสาขา' : 'ขายเอง';
+            if (!types.length) rows.push({ code: p.code, name: p.name, part: p.part, type: base, points: 0, keep: p.keep, baht: p.baht });
+            types.forEach((t, i) => rows.push({ code: p.code, name: p.name, part: p.part, type: t, points: p.items[t], keep: i ? 0 : p.keep, baht: i ? 0 : p.baht }));
+        });
+        const label = $('label').value.trim() || parsed.label;
+        const c = await Swal.fire({ icon: 'question', title: 'ยืนยันบันทึกการหัก?', html: `${esc(label)}<br>${num(new Set(rows.map(r => r.code)).size)} คน · หักในพีเรียด ${esc(info.period ? info.period.label : '')}`, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626' });
+        if (!c.isConfirmed) return;
+        Swal.fire({ title: 'กำลังบันทึก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const j = await api({ wl: 'dd_import', label: label, rows: rows });
+            if (!j.ok) { Swal.fire('บันทึกไม่ได้', esc(j.error), 'error'); return; }
+            Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', html: `${num(j.people)} คน · ส่งแจ้งเตือน ${num(j.pushed)} คน`, confirmButtonColor: '#dc2626' });
+            parsed = null; $('previewBox').classList.add('hidden'); $('file').value = ''; $('fileName').innerText = 'ยังไม่ได้เลือกไฟล์';
+            renderBatches(j.batches);
+        } catch (e) { fail(e); }
+    }
+    async function cancelBatch(id) {
+        const c = await Swal.fire({ icon: 'warning', title: 'ยกเลิกรอบนี้?', text: 'พ้อยที่หักจะกลับคืน และรายการหักเงินที่ยังไม่ได้หักจะถูกยกเลิก', showCancelButton: true, confirmButtonText: 'ยกเลิกรอบ', cancelButtonText: 'ไม่', confirmButtonColor: '#dc2626' });
+        if (!c.isConfirmed) return;
+        try { const j = await api({ wl: 'dd_cancel', batch: id }); if (!j.ok) { Swal.fire('ยกเลิกไม่ได้', esc(j.error), 'error'); return; } renderBatches(j.batches); Swal.fire({ icon: 'success', title: 'ยกเลิกแล้ว', timer: 1400, showConfirmButton: false }); }
+        catch (e) { fail(e); }
+    }
+    (async () => { try { if (await auth()) loadInfo(); } catch (e) { fail(e); } })();
+</script>
+</body>
+</html>
