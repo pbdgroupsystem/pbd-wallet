@@ -180,6 +180,8 @@
             -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); border-color: rgba(255,255,255,.55) !important; }
         body.fx-on.fx-glass #fxBg.fx-img { background-size: cover; background-position: center top; background-repeat: no-repeat; }
         body.fx-on.fx-glass #fxBg.fx-img::after { animation-duration: 9s; }
+        body.fx-img-on header h1, body.fx-img-on #userRole, body.fx-img-on #userBranchHeader { text-shadow: 0 1px 3px rgba(0,0,0,.35), 0 0 12px rgba(0,0,0,.25); }
+        body.fx-img-on:not(.wx-dark-top) header h1, body.fx-img-on:not(.wx-dark-top) #userRole { text-shadow: 0 0 6px rgba(255,255,255,.9), 0 0 14px rgba(255,255,255,.7); }
         body.fx-on.fx-glass #fxBg.fx-img > i:nth-child(2n) { display: none; }   /* มีภาพพื้นหลังแล้ว: ลดของตกแต่งลงครึ่งหนึ่ง */
         body.fx-on.fx-glass .qm-grid { background: rgba(255,255,255,.35); } body.fx-on.fx-glass .qm-grid > * { background: rgba(255,255,255,.45); }
         body.fx-on.fx-glass main .bg-white .bg-white { background: rgba(255,255,255,.55) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -2547,9 +2549,9 @@
         });
         bg.className = 'fx-' + f.theme; bg.innerHTML = out.join('');
         // ภาพพื้นหลังเทศกาล (โหมดกระจก): themes/<ธีม>.jpg หรือ "bg" ในไฟล์ festivals.json · โหลดไม่ได้ = ใช้สีไล่ระดับเดิม
-        bg.style.backgroundImage = ''; bg.classList.remove('fx-img');
+        bg.style.backgroundImage = ''; bg.classList.remove('fx-img'); document.body.classList.remove('fx-img-on');
         const img = f.glass !== false && document.body.classList.contains('fx-glass') ? (f.bg || 'themes/' + f.theme + '.jpg') : '';
-        if (img) { const im = new Image(); im.onload = () => { if (bg.className.indexOf('fx-' + f.theme) === 0) { bg.style.backgroundImage = 'url("' + img + '")'; bg.classList.add('fx-img'); } }; im.src = img; }
+        if (img) { const im = new Image(); im.onload = () => { if (bg.className.indexOf('fx-' + f.theme) === 0) { bg.style.backgroundImage = 'url("' + img + '")'; bg.classList.add('fx-img'); document.body.classList.add('fx-img-on'); } }; im.src = img; }
         document.documentElement.style.setProperty('--fx-glow', T.glow);
         document.body.classList.toggle('wx-dark-top', f.dark !== undefined ? !!f.dark : !!T.dark);   // "dark" ใน festivals.json = ตัวอักษรด้านบนสีขาว
         const today = f.day && f.day === fxToday();
