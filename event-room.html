@@ -46,6 +46,14 @@
         #send input { flex: 1; min-width: 0; border: 1px solid var(--bd); border-radius: 999px; background: rgba(255, 255, 255, .1); color: #fff; padding: 9px 14px; font: inherit; font-size: 14px; outline: none; }
         #send input::placeholder { color: #94a3b8; }
         #send button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--acc); color: #1f2937; }
+        .m .at { color: #7dd3fc; font-weight: 600; }
+        .m.hit { background: rgba(251, 191, 36, .16); border-left: 3px solid var(--acc); padding: 3px 8px; border-radius: 8px; }
+        #mention { position: absolute; left: 10px; right: 10px; bottom: 100%; margin-bottom: 6px; display: none; max-height: 220px; overflow-y: auto; padding: 4px; z-index: 8; background: rgba(15, 23, 42, .94); }
+        #mention.on { display: block; }
+        #mention button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: none; color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 14px; }
+        #mention button.sel, #mention button:hover { background: rgba(251, 191, 36, .2); }
+        #mention small { color: var(--mut); margin-left: auto; font-size: 11px; }
+        #send { position: relative; }
         #emo { display: flex; gap: 4px; padding: 0 10px 8px; overflow-x: auto; scrollbar-width: none; }
         #emo button { border: 1px solid var(--bd); background: rgba(255, 255, 255, .08); border-radius: 999px; font-size: 16px; padding: 3px 9px; }
         @media (min-width: 820px) {
@@ -112,7 +120,8 @@
         <div id="msgs"></div>
         <div id="emo"></div>
         <form id="send" onsubmit="return sendChat(event)">
-            <input id="msg" maxlength="200" placeholder="พิมพ์ข้อความ…" autocomplete="off" onfocus="openChat()">
+            <div id="mention" class="glass"></div>
+            <input id="msg" maxlength="200" placeholder="พิมพ์ข้อความ… (@ เพื่อแท็กเพื่อน)" autocomplete="off" onfocus="openChat()">
             <button aria-label="ส่ง"><i class="fa-solid fa-paper-plane"></i></button>
         </form>
     </section>
@@ -479,7 +488,7 @@ const NET = {
         this.base.child('stats').on('value', s => onStats(s.val() || {}));
     },
     set(patch) { Object.assign(this.me, patch); if (this.demo) return this.demoSet(); this.pref && this.pref.update(patch); },
-    chat(text) { const m = { uid: this.uid, name: this.me.name, text, t: this.demo ? this.now() : firebase.database.ServerValue.TIMESTAMP }; if (this.demo) return onChat(Object.assign(m, { t: this.now() })); this.base.child('chat').push(m); },
+    chat(text, mentions) { const m = { uid: this.uid, name: this.me.name, text, mentions: mentions && mentions.length ? mentions.slice(0, 10) : null, t: this.demo ? this.now() : firebase.database.ServerValue.TIMESTAMP }; if (this.demo) return onChat(Object.assign(m, { t: this.now() })); this.base.child('chat').push(m); },
     krathong(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addKrathong('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); return; }
         this.base.child('krathong').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/krathong').transaction(n => (n || 0) + 1); },
     wianDone() { if (this.demo) { onStats({ krathong: this.ds.krathong, wian: ++this.ds.wian }); return; } this.base.child('stats/wian').transaction(n => (n || 0) + 1); },
@@ -508,13 +517,52 @@ let chatReady = false; const seen = new Set();
 function onChat(m) {
     if (!m || !m.text) return; const key = (m.uid || '') + (m.t || '') + m.text; if (seen.has(key)) return; seen.add(key);
     const d = document.createElement('div'); d.className = 'm' + (m.uid === NET.uid ? ' me' : '');
-    d.innerHTML = `<b>${esc(m.name)}</b>${esc(m.text)}`; const box = $('msgs'), stick = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    const hit = m.uid !== NET.uid && ((m.mentions || []).indexOf(NET.uid) >= 0 || (NET.me && String(m.text).indexOf('@' + NET.me.name) >= 0));
+    if (hit) d.classList.add('hit');
+    d.innerHTML = `<b>${esc(m.name)}</b>${markAt(m.text)}`;
+    if (hit && chatReady) { toast('📣 ' + m.name + ' แท็กคุณในแชท'); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) { } if ($('chat').classList.contains('min')) openChat(); } const box = $('msgs'), stick = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
     box.appendChild(d); while (box.children.length > 120) box.removeChild(box.firstChild); if (stick || m.uid === NET.uid) box.scrollTop = box.scrollHeight;
     if (chatReady || NET.now() - (m.t || 0) < 8000) showBubble(m.uid, m.text);
 }
+// ---------- @แท็กเพื่อน ----------
+function roomNames() { const n = {}; Object.keys(peersCache).forEach(k => { const p = peersCache[k]; if (p && p.name) n[p.name] = 1; }); return Object.keys(n).sort((a, b) => b.length - a.length); }
+function markAt(text) { return applyAt(esc(text)); }
+function applyAt(h) {
+    const names = roomNames(); if (!names.length) return h;
+    const re = new RegExp('@(' + names.map(n => esc(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
+    return h.replace(re, '<span class="at">@$1</span>');
+}
+let mSel = 0, mList = [];
+function atToken() { const el = $('msg'), c = el.selectionStart == null ? el.value.length : el.selectionStart, m = el.value.slice(0, c).match(/(^|\s)@([^\s@]*)$/); return m ? { q: m[2], start: c - m[2].length - 1, end: c } : null; }
+function mentionUpdate() {
+    const tk = atToken(), box = $('mention');
+    if (!tk) { box.classList.remove('on'); mList = []; return; }
+    const q = tk.q.toLowerCase(), list = Object.keys(peersCache).filter(k => k !== NET.uid && peersCache[k] && peersCache[k].name).map(k => ({ uid: k, name: peersCache[k].name, sex: peersCache[k].sex }))
+        .filter(p => !q || p.name.toLowerCase().indexOf(q) >= 0).sort((a, b) => a.name.localeCompare(b.name, 'th')).slice(0, 8);
+    mList = list; mSel = 0;
+    if (!list.length) { box.innerHTML = '<button type="button" disabled style="color:#94a3b8">ไม่พบชื่อนี้ในห้อง</button>'; box.classList.add('on'); return; }
+    box.innerHTML = list.map((p, i) => `<button type="button" data-i="${i}" class="${i ? '' : 'sel'}">${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}<small>แท็ก</small></button>`).join(''); box.classList.add('on');
+}
+function mentionPick(i) {
+    const p = mList[i], tk = atToken(); if (!p || !tk) return; const el = $('msg');
+    el.value = el.value.slice(0, tk.start) + '@' + p.name + ' ' + el.value.slice(tk.end); const c = tk.start + p.name.length + 2;
+    el.focus(); el.setSelectionRange(c, c); $('mention').classList.remove('on'); mList = [];
+}
+function insertMention(name) { const el = $('msg'); const v = el.value; el.value = (v && !/\s$/.test(v) ? v + ' ' : v) + '@' + name + ' '; openChat(); el.focus(); }
+$('msg').addEventListener('input', mentionUpdate);
+$('msg').addEventListener('click', mentionUpdate);
+$('msg').addEventListener('keydown', e => {
+    if (!$('mention').classList.contains('on') || !mList.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); mSel = (mSel + (e.key === 'ArrowDown' ? 1 : mList.length - 1)) % mList.length; [...$('mention').children].forEach((b, i) => b.classList.toggle('sel', i === mSel)); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); mentionPick(mSel); }
+    else if (e.key === 'Escape') $('mention').classList.remove('on');
+});
+$('mention').addEventListener('pointerdown', e => { const b = e.target.closest('button[data-i]'); if (b) { e.preventDefault(); mentionPick(+b.dataset.i); } });
+$('msg').addEventListener('blur', () => setTimeout(() => $('mention').classList.remove('on'), 150));
+function mentionsOf(text) { return Object.keys(peersCache).filter(k => k !== NET.uid && peersCache[k] && peersCache[k].name && text.indexOf('@' + peersCache[k].name) >= 0); }
 function sysMsg(t) { const d = document.createElement('div'); d.className = 'm sys'; d.textContent = t; $('msgs').appendChild(d); $('msgs').scrollTop = $('msgs').scrollHeight; }
 let lastSend = 0;
-window.sendChat = e => { e.preventDefault(); const v = $('msg').value.trim(); if (!v || !NET.me) return false; if (Date.now() - lastSend < 1200) { toast('พิมพ์ช้าลงหน่อยนะ 🙂'); return false; } lastSend = Date.now(); NET.chat(v.slice(0, 200)); $('msg').value = ''; return false; };
+window.sendChat = e => { e.preventDefault(); const v = $('msg').value.trim(); if (!v || !NET.me) return false; if (Date.now() - lastSend < 1200) { toast('พิมพ์ช้าลงหน่อยนะ 🙂'); return false; } lastSend = Date.now(); const tx = v.slice(0, 200); NET.chat(tx, mentionsOf(tx)); $('msg').value = ''; $('mention').classList.remove('on'); return false; };
 $('emo').innerHTML = EMO.map(x => `<button type="button" data-e="${x}">${x}</button>`).join('');
 $('emo').onclick = e => { const b = e.target.closest('button'); if (!b || !NET.me) return; if (Date.now() - lastSend < 900) return; lastSend = Date.now(); NET.chat(b.dataset.e); };
 window.toggleChat = () => { $('chat').classList.toggle('min'); layoutChat(); };
@@ -585,8 +633,13 @@ window.enterRoom = () => {
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
 renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY, Date.now()]; });
 renderer.domElement.addEventListener('pointerup', e => {
-    if (!downAt || TYPE !== 'loy' || !NET.me) return; const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]); if (moved > 8 || Date.now() - downAt[2] > 400) return;
+    if (!downAt || !NET.me) return; const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]); if (moved > 8 || Date.now() - downAt[2] > 400) return;
     const r = renderer.domElement.getBoundingClientRect(); ptr.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ray.setFromCamera(ptr, camera);
+    // แตะตัวละครเพื่อน = แท็ก @ชื่อ ในช่องแชท
+    const objs = []; avatars.forEach((a, uid) => { if (uid !== NET.uid) objs.push(a); });
+    const hitA = ray.intersectObjects(objs, true)[0];
+    if (hitA) { let o = hitA.object; while (o && !o.userData.uid) o = o.parent; const p = o && peersCache[o.userData.uid]; if (p) { insertMention(p.name); return; } }
+    if (TYPE !== 'loy') return;
     const hit = new THREE.Vector3(); if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.18), hit)) return;
     const B = WORLD.bounds; NET.set({ x: +THREE.MathUtils.clamp(hit.x, B.x0, B.x1).toFixed(2), z: +THREE.MathUtils.clamp(hit.z, B.z0, B.z1).toFixed(2) });
     marker.position.set(THREE.MathUtils.clamp(hit.x, B.x0, B.x1), 0.2, THREE.MathUtils.clamp(hit.z, B.z0, B.z1)); marker.userData.t = 1;
