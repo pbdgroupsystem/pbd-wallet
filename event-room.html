@@ -25,6 +25,15 @@
         #title h1 { margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         #title p { margin: 0; font-size: 11px; color: var(--mut); }
         #snd { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--bd); background: var(--gl); color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 15px; flex-shrink: 0; }
+        #shot { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--bd); background: var(--gl); color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 15px; flex-shrink: 0; }
+        #fmenu { position: fixed; z-index: 15; display: none; min-width: 180px; padding: 6px; background: rgba(15, 23, 42, .9); }
+        #fmenu.on { display: block; }
+        #fmenu h3 { margin: 4px 10px 6px; font-size: 14px; font-weight: 600; color: var(--acc); }
+        #fmenu button { display: flex; gap: 10px; align-items: center; width: 100%; border: 0; background: none; color: #fff; text-align: left; padding: 9px 10px; border-radius: 10px; font-size: 14px; }
+        #fmenu button:hover, #fmenu button:active { background: rgba(255, 255, 255, .1); }
+        #fmenu button i { width: 18px; text-align: center; color: #fde68a; }
+        #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 50; transition: opacity .35s; }
+        #shotImg { width: 100%; border-radius: 12px; display: block; margin-bottom: 12px; }
         #snd.off { color: #94a3b8; }
         #online { margin-left: auto; padding: 8px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid var(--bd); }
         #online i { color: #34d399; font-size: 9px; vertical-align: middle; margin-right: 4px; }
@@ -110,6 +119,7 @@
         <button id="back" onclick="goBack()" aria-label="กลับ"><i class="fa-solid fa-chevron-left"></i></button>
         <div id="title" class="glass"><h1 id="roomTitle">ห้องกิจกรรม</h1><p id="roomSub">PBD Wallet</p></div>
         <button id="online" class="glass" onclick="togglePeople()"><i class="fa-solid fa-circle"></i><span id="onlineN">0</span> คน</button>
+        <button id="shot" onclick="snapshot()" aria-label="ถ่ายภาพ"><i class="fa-solid fa-camera"></i></button>
         <button id="snd" onclick="toggleSound()" aria-label="เปิด/ปิดเสียง"><i class="fa-solid fa-volume-high"></i></button>
     </div>
     <div id="stat" class="glass"></div>
@@ -155,6 +165,19 @@
         </div>
     </div>
     <div id="toast" class="glass"></div>
+    <div id="fmenu" class="glass"></div>
+    <div id="flash"></div>
+    <div id="shotBox" class="modal" onclick="if(event.target===this)closeModal('shotBox')">
+        <div class="card glass">
+            <h2>📷 ภาพบรรยากาศ</h2>
+            <p class="sub" id="shotHint">กดบันทึก หรือกดค้างที่รูปเพื่อบันทึกลงเครื่อง</p>
+            <img id="shotImg" alt="ภาพบรรยากาศ">
+            <div style="display:flex;gap:8px">
+                <button class="opt" style="flex:1" onclick="closeModal('shotBox')">ปิด</button>
+                <button class="go" style="flex:2" id="shotSave" onclick="saveShot()"><i class="fa-solid fa-download"></i> บันทึก / แชร์</button>
+            </div>
+        </div>
+    </div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -428,10 +451,10 @@ function syncPeers(map) {
     if ($('people').classList.contains('on')) renderPeople();
 }
 const leaving = [];
-function ringAngle0(uid) { return (hash(uid) % 3600) / 3600 * Math.PI * 2; }
+function ringAngle0(uid, p) { if (p && typeof p.ang === 'number') return p.ang; return (hash(uid) % 3600) / 3600 * Math.PI * 2; }
 function wianState(p, now) { if (!p || !p.wian) return null; const el = now - p.wian; return el >= 0 && el < ROUND_MS * ROUNDS ? el : null; }
 function ringPos(uid, p, now) {
-    const el = wianState(p, now), a = ringAngle0(uid) + (el == null ? 0 : el / ROUND_MS * Math.PI * 2), r = WORLD.r + ((hash(uid) >> 4) % 5 - 2) * 0.18;
+    const el = wianState(p, now), a = ringAngle0(uid, p) + (el == null ? 0 : el / ROUND_MS * Math.PI * 2), r = WORLD.r + ((hash(uid) >> 4) % 5 - 2) * 0.18;
     return [Math.cos(a) * r, Math.sin(a) * r, a, el != null];
 }
 function animateAvatars(t, dt) {
@@ -440,8 +463,12 @@ function animateAvatars(t, dt) {
         const u = a.userData, p = u.p || {}; let moving = false;
         if (u.pop < 1) { u.pop = Math.min(1, u.pop + dt * 3); a.scale.setScalar(easeBack(u.pop)); }
         if (TYPE === 'wian') {
-            const [x, z, ang, walking] = ringPos(uid, p, now); a.position.x += (x - a.position.x) * Math.min(1, dt * 8); a.position.z += (z - a.position.z) * Math.min(1, dt * 8);
-            a.rotation.y = walking ? -ang + Math.PI : Math.atan2(-a.position.x, -a.position.z); moving = walking;   // เดินตามเข็ม (องค์เจดีย์อยู่ทางขวา)
+            const [, , ang, walking] = ringPos(uid, p, now), r = WORLD.r + ((hash(uid) >> 4) % 5 - 2) * 0.18;
+            if (u.ang == null) u.ang = ang;
+            let d = 0; if (walking) u.ang = ang; else { d = ((ang - u.ang) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI; const st = Math.sign(d) * Math.min(Math.abs(d), dt * 2.4 / r); u.ang += st; }   // เดินตามแนววงกลม ไม่ทะลุองค์เจดีย์
+            a.position.x = Math.cos(u.ang) * r; a.position.z = Math.sin(u.ang) * r;
+            const going = !walking && Math.abs(d) > 0.01;
+            a.rotation.y = walking || (going && d > 0) ? -u.ang + Math.PI : going ? -u.ang : Math.atan2(-a.position.x, -a.position.z); moving = walking || going;   // เดินตามเข็ม (องค์เจดีย์อยู่ทางขวา)
         } else {
             const tx = p.x == null ? a.position.x : p.x, tz = p.z == null ? a.position.z : p.z, dx = tx - a.position.x, dz = tz - a.position.z, d = Math.hypot(dx, dz);
             if (d > 0.05) { const st = Math.min(d, dt * 2.4); a.position.x += dx / d * st; a.position.z += dz / d * st; a.rotation.y = lerpAng(a.rotation.y, Math.atan2(dx, dz), dt * 10); moving = true; }
@@ -450,6 +477,8 @@ function animateAvatars(t, dt) {
         u.legs[0].rotation.x = moving ? Math.sin(ph) * 0.6 : 0; u.legs[1].rotation.x = moving ? -Math.sin(ph) * 0.6 : 0;
         if (u.holdMesh) { u.arms.forEach((ar, i) => { ar.rotation.x = -1.15; ar.rotation.z = (i ? -1 : 1) * 0.15; }); u.holdMesh.position.y = 0.66 + (moving ? Math.abs(Math.sin(ph)) * 0.03 : 0); u.holdMesh.userData.glow.material.opacity = 0.75 + Math.sin(t * 9 + u.phase) * 0.25; }
         else if (TYPE !== 'wian') { u.arms[0].rotation.x = moving ? -Math.sin(ph) * 0.5 : Math.sin(ph) * 0.06; u.arms[1].rotation.x = moving ? Math.sin(ph) * 0.5 : -Math.sin(ph) * 0.06; }
+        if (p.wave && !u.holdMesh && now - p.wave < 2200) { const w = u.arms[1]; w.rotation.x = 0; w.rotation.z = 2.5 + Math.sin(t * 14) * 0.35; }   // โบกมือ
+        else if (p.wave && !u.holdMesh && TYPE !== 'wian' && !moving) u.arms[1].rotation.z = 0.35;
         u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
         u.head.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.05;
         if (u.flame) u.flame.scale.y = 1 + Math.sin(t * 13 + u.phase) * 0.18;
@@ -733,13 +762,65 @@ renderer.domElement.addEventListener('pointerup', e => {
     // แตะตัวละครเพื่อน = แท็ก @ชื่อ ในช่องแชท
     const objs = []; avatars.forEach((a, uid) => { if (uid !== NET.uid) objs.push(a); });
     const hitA = ray.intersectObjects(objs, true)[0];
-    if (hitA) { let o = hitA.object; while (o && !o.userData.uid) o = o.parent; const p = o && peersCache[o.userData.uid]; if (p) { insertMention(p.name); return; } }
+    if (hitA) { let o = hitA.object; while (o && !o.userData.uid) o = o.parent; const p = o && peersCache[o.userData.uid]; if (p) { friendMenu(o.userData.uid, e.clientX, e.clientY); return; } }
+    closeFriendMenu();
     if (TYPE !== 'loy') return;
     const hit = new THREE.Vector3(); if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.18), hit)) return;
     const B = WORLD.bounds; NET.set({ x: +THREE.MathUtils.clamp(hit.x, B.x0, B.x1).toFixed(2), z: +THREE.MathUtils.clamp(hit.z, B.z0, B.z1).toFixed(2) });
     marker.position.set(THREE.MathUtils.clamp(hit.x, B.x0, B.x1), 0.2, THREE.MathUtils.clamp(hit.z, B.z0, B.z1)); marker.userData.t = 1;
 });
 const marker = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.3, 24), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0, depthWrite: false })); marker.rotation.x = -Math.PI / 2; marker.userData.t = 0; scene.add(marker);
+
+
+// ===================== แตะตัวละครเพื่อน → เมนู =====================
+let fmUid = '';
+function friendMenu(uid, cx, cy) {
+    const p = peersCache[uid]; if (!p) return; fmUid = uid; const m = $('fmenu');
+    m.innerHTML = `<h3>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</h3>
+        <button onclick="fmGo()"><i class="fa-solid fa-person-walking"></i>เดินไปหา</button>
+        <button onclick="fmWave()"><i class="fa-solid fa-hand"></i>โบกมือทักทาย</button>
+        <button onclick="fmTag()"><i class="fa-solid fa-at"></i>แท็กในแชท</button>`;
+    m.classList.add('on'); const w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.max(8, Math.min(innerWidth - w - 8, cx - w / 2)) + 'px'; m.style.top = Math.max(60, Math.min(innerHeight - h - 8, cy - h - 16)) + 'px';
+}
+function closeFriendMenu() { $('fmenu').classList.remove('on'); fmUid = ''; }
+window.fmTag = () => { const p = peersCache[fmUid]; closeFriendMenu(); if (p) insertMention(p.name); };
+window.fmWave = () => { const p = peersCache[fmUid]; closeFriendMenu(); if (!p) return; if (Date.now() - lastSend < 900) return; lastSend = Date.now(); const tx = '👋 สวัสดี @' + p.name; NET.chat(tx, mentionsOf(tx)); NET.set({ wave: NET.now() }); };
+window.fmGo = () => {
+    const uid = fmUid, f = avatars.get(uid), me = avatars.get(NET.uid); closeFriendMenu(); if (!f || !me) return;
+    if (TYPE === 'wian') {
+        if (wianState(NET.me, NET.now()) != null) { toast('รอเวียนเทียนครบ 3 รอบก่อนนะ'); return; }
+        const fa = Math.atan2(f.position.z, f.position.x); NET.set({ ang: +(fa - 0.16).toFixed(3) });   // ไปยืนข้างเพื่อนบนทางเดินรอบเจดีย์
+    } else {
+        const dx = me.position.x - f.position.x, dz = me.position.z - f.position.z, d = Math.hypot(dx, dz) || 1, B = WORLD.bounds;
+        NET.set({ x: +THREE.MathUtils.clamp(f.position.x + dx / d * 0.85, B.x0, B.x1).toFixed(2), z: +THREE.MathUtils.clamp(f.position.z + dz / d * 0.85, B.z0, B.z1).toFixed(2) });
+    }
+    toast('กำลังเดินไปหา ' + (peersCache[uid] ? peersCache[uid].name : 'เพื่อน'));
+};
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#fmenu') && e.target !== renderer.domElement) closeFriendMenu(); });
+
+// ===================== ถ่ายภาพบรรยากาศ =====================
+let shotBlob = null, shotUrl = '';
+window.snapshot = () => {
+    closeFriendMenu(); controls.update(); renderer.render(scene, camera);   // วาดใหม่ก่อนอ่านภาพ (ไม่ต้องเปิด preserveDrawingBuffer)
+    const src = renderer.domElement, W = src.width, H = src.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const g = cv.getContext('2d'); g.drawImage(src, 0, 0);
+    const k = W / 1000, pad = 22 * k, d = new Date(NET.now()), date = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    const gr = g.createLinearGradient(0, H - 150 * k, 0, H); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.6)'); g.fillStyle = gr; g.fillRect(0, H - 150 * k, W, 150 * k);
+    g.fillStyle = '#fff'; g.textBaseline = 'alphabetic'; g.font = `600 ${Math.round(34 * k)}px Kanit, sans-serif`; g.fillText(TITLE, pad, H - pad - 34 * k);
+    g.font = `400 ${Math.round(22 * k)}px Kanit, sans-serif`; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(date + ' · ' + Object.keys(peersCache).length + ' คนร่วมกิจกรรม', pad, H - pad);
+    g.textAlign = 'right'; g.font = `700 ${Math.round(24 * k)}px Kanit, sans-serif`; g.fillStyle = '#fbbf24'; g.fillText('PBD Wallet', W - pad, H - pad);
+    const fl = $('flash'); fl.style.transition = 'none'; fl.style.opacity = '0.85'; requestAnimationFrame(() => { fl.style.transition = 'opacity .45s'; fl.style.opacity = '0'; });
+    shutter();
+    cv.toBlob(b => { shotBlob = b; if (shotUrl) URL.revokeObjectURL(shotUrl); shotUrl = URL.createObjectURL(b); $('shotImg').src = shotUrl; setTimeout(() => $('shotBox').classList.add('on'), 350); }, 'image/jpeg', 0.92);
+};
+function shutter() { try { const c = MUSIC.ctx || new (window.AudioContext || window.webkitAudioContext)(); if (!MUSIC.on) return; const b = c.createBuffer(1, c.sampleRate * 0.12, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 4); const s = c.createBufferSource(), gn = c.createGain(); gn.gain.value = 0.5; s.buffer = b; s.connect(gn); gn.connect(c.destination); s.start(); } catch (e) { } }
+window.saveShot = async () => {
+    if (!shotBlob) return; const name = 'PBD-' + TYPE + '-' + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '') + '.jpg';
+    try { const f = new File([shotBlob], name, { type: 'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: TITLE }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    if (/\bLine\//i.test(navigator.userAgent)) { $('shotHint').textContent = 'ในแอป LINE: กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"'; toast('กดค้างที่รูปเพื่อบันทึก'); return; }
+    const a = document.createElement('a'); a.href = shotUrl; a.download = name; document.body.appendChild(a); a.click(); a.remove(); toast('บันทึกรูปแล้ว 📷');
+};
 
 // ===================== เริ่ม =====================
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); layoutChat(); }
