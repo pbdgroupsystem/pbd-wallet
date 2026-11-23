@@ -140,14 +140,14 @@
 
     <div id="kt" class="modal">
         <div class="card glass">
-            <h2>🪷 ลอยกระทง</h2>
-            <p class="sub">เลือกกระทงและอธิษฐาน — ทุกคนในห้องจะเห็นกระทงของคุณลอยไป</p>
+            <h2>🪷 เลือกกระทง</h2>
+            <p class="sub">เลือกกระทงและอธิษฐาน — ตัวละครจะถือกระทงไว้ เดินไปเลือกที่ริมน้ำ แล้วกด "ลอยกระทง"</p>
             <div class="opts" id="ktOpts"></div>
             <div class="lbl">คำอธิษฐาน (ไม่เกิน 60 ตัวอักษร)</div>
             <textarea id="wish" rows="2" maxlength="60" placeholder="ขอให้ยอดขายปังทุกพีเรียด 🙏"></textarea>
             <div style="display:flex;gap:8px;margin-top:12px">
                 <button class="opt" style="flex:1" onclick="closeModal('kt')">ยกเลิก</button>
-                <button class="go" style="flex:2" onclick="floatKrathong()">ลอยเลย</button>
+                <button class="go" style="flex:2" onclick="holdKrathong()">🪷 ถือกระทง</button>
             </div>
         </div>
     </div>
@@ -418,7 +418,7 @@ function syncPeers(map) {
             scene.add(a); avatars.set(uid, a);
             if (chatReady && uid !== NET.uid) sysMsg(p.name + ' เข้ามาในห้อง');
         }
-        a.userData.p = p;
+        a.userData.p = p; setHold(a, TYPE === 'loy' ? p.hold || '' : '');
     });
     avatars.forEach((a, uid) => { if (!peersCache[uid]) { if (chatReady && uid !== NET.uid) sysMsg((a.userData.p && a.userData.p.name || 'มีคน') + ' ออกจากห้อง'); a.userData.leaving = 1; avatars.delete(uid); leaving.push(a); } });
     $('onlineN').textContent = Object.keys(peersCache).length;
@@ -445,13 +445,20 @@ function animateAvatars(t, dt) {
         }
         const ph = t * (moving ? 9 : 2) + u.phase;
         u.legs[0].rotation.x = moving ? Math.sin(ph) * 0.6 : 0; u.legs[1].rotation.x = moving ? -Math.sin(ph) * 0.6 : 0;
-        if (TYPE !== 'wian') { u.arms[0].rotation.x = moving ? -Math.sin(ph) * 0.5 : Math.sin(ph) * 0.06; u.arms[1].rotation.x = moving ? Math.sin(ph) * 0.5 : -Math.sin(ph) * 0.06; }
+        if (u.holdMesh) { u.arms.forEach((ar, i) => { ar.rotation.x = -1.15; ar.rotation.z = (i ? -1 : 1) * 0.15; }); u.holdMesh.position.y = 0.66 + (moving ? Math.abs(Math.sin(ph)) * 0.03 : 0); u.holdMesh.userData.glow.material.opacity = 0.75 + Math.sin(t * 9 + u.phase) * 0.25; }
+        else if (TYPE !== 'wian') { u.arms[0].rotation.x = moving ? -Math.sin(ph) * 0.5 : Math.sin(ph) * 0.06; u.arms[1].rotation.x = moving ? Math.sin(ph) * 0.5 : -Math.sin(ph) * 0.06; }
         u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
         u.head.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.05;
         if (u.flame) u.flame.scale.y = 1 + Math.sin(t * 13 + u.phase) * 0.18;
         if (u.bubble) { u.bubbleT -= dt; u.bubble.material.opacity = Math.min(1, u.bubbleT); if (u.bubbleT <= 0) { a.remove(u.bubble); u.bubble.material.map.dispose(); u.bubble = null; } }
     });
     for (let i = leaving.length - 1; i >= 0; i--) { const a = leaving[i]; a.scale.multiplyScalar(Math.max(0, 1 - dt * 5)); if (a.scale.x < 0.03) { scene.remove(a); leaving.splice(i, 1); } }
+}
+// ถือกระทงไว้ในมือ (ซิงก์ให้ทุกคนเห็นผ่านค่า hold = แบบกระทง)
+function setHold(a, style) {
+    const u = a.userData; if ((u.holdStyle || '') === style) return; u.holdStyle = style;
+    if (u.holdMesh) { u.body.remove(u.holdMesh); u.holdMesh = null; u.arms.forEach((ar, i) => { ar.rotation.x = 0; ar.rotation.z = (i ? 1 : -1) * 0.35; }); }
+    if (style) { const k = makeKrathong(style); k.scale.setScalar(0.62); k.position.set(0, 0.68, 0.46); u.body.add(k); u.holdMesh = k; }
 }
 const easeBack = x => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);
 const lerpAng = (a, b, k) => { let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI; if (d < -Math.PI) d += Math.PI * 2; return a + d * Math.min(1, k); };
@@ -577,7 +584,9 @@ function onStats(s) { ktTotal = s.krathong || 0; $('stat').innerHTML = TYPE === 
 // ===================== ปุ่มกิจกรรม =====================
 let myWianDoneAt = 0;
 function renderActions() {
-    if (TYPE === 'loy') $('actions').innerHTML = `<button class="act" onclick="openKt()">🪷 ลอยกระทง</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`;
+    if (TYPE === 'loy') $('actions').innerHTML = NET.me && NET.me.hold
+        ? `<button class="act" id="floatBtn" onclick="floatKrathong()">🪷 ลอยกระทง</button><button class="act alt" onclick="openKt()" aria-label="เปลี่ยนกระทง"><i class="fa-solid fa-pen"></i></button><button class="act alt" onclick="dropKrathong()" aria-label="วางกระทงลง"><i class="fa-solid fa-xmark"></i></button>`
+        : `<button class="act" onclick="openKt()">🪷 เลือกกระทง</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`;
     else {
         const el = wianState(NET.me, NET.now()), r = el == null ? 0 : Math.floor(el / ROUND_MS) + 1;
         $('actions').innerHTML = el == null ? `<button class="act" onclick="startWian()">🕯️ เริ่มเวียนเทียน</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`
@@ -591,14 +600,25 @@ $('ktOpts').innerHTML = KT.map(k => `<button class="opt" data-k="${k.id}"><span>
 $('ktOpts').onclick = e => { const b = e.target.closest('button'); if (!b) return; ktStyle = b.dataset.k; [...$('ktOpts').children].forEach(x => x.classList.toggle('on', x === b)); };
 window.openKt = () => { [...$('ktOpts').children].forEach(x => x.classList.toggle('on', x.dataset.k === ktStyle)); $('kt').classList.add('on'); };
 window.closeModal = id => $(id).classList.remove('on');
-let lastKt = 0;
+let lastKt = 0, myWish = '';
+window.holdKrathong = () => {
+    myWish = $('wish').value.trim().slice(0, 60); closeModal('kt');
+    NET.set({ hold: ktStyle }); renderActions();
+    toast('ถือกระทงแล้ว เดินไปที่ริมน้ำ แล้วกด "ลอยกระทง" 🪷');
+};
+window.dropKrathong = () => { NET.set({ hold: '' }); myWish = ''; renderActions(); };
 window.floatKrathong = () => {
+    if (!NET.me || !NET.me.hold) return;
     if (Date.now() - lastKt < 15000) { toast('รอสักครู่ แล้วค่อยลอยกระทงใบต่อไปนะ'); return; }
-    lastKt = Date.now(); closeModal('kt');
-    const me = avatars.get(NET.uid), x = me ? THREE.MathUtils.clamp(me.position.x, -10, 10) : 0;
-    NET.set({ x, z: 2.5 });   // เดินไปริมท่าน้ำก่อน
-    const wish = $('wish').value.trim().slice(0, 60); $('wish').value = '';
-    setTimeout(() => { NET.krathong({ style: ktStyle, wish, x }); if (wish) NET.chat('🪷 ' + wish); toast('ลอยกระทงแล้ว ขอให้สมหวัง 🪷'); }, 1600);
+    lastKt = Date.now(); const style = NET.me.hold, wish = myWish;
+    const me = avatars.get(NET.uid), x = me ? THREE.MathUtils.clamp(me.position.x, -10, 10) : 0, dist = me ? Math.hypot(me.position.x - x, me.position.z - 2.5) : 0;
+    NET.set({ x, z: 2.5 });   // เดินไปที่ท่าน้ำก่อน แล้ววางกระทงลงน้ำ
+    const b = $('floatBtn'); if (b) { b.disabled = true; b.textContent = '🪷 กำลังเดินไปริมน้ำ…'; }
+    setTimeout(() => {
+        NET.set({ hold: '' }); myWish = ''; $('wish').value = '';
+        NET.krathong({ style, wish, x }); if (wish) NET.chat('🪷 ' + wish);
+        toast('ลอยกระทงแล้ว ขอให้สมหวัง 🪷'); renderActions();
+    }, Math.max(700, dist / 2.4 * 1000 + 400));
 };
 
 // ===================== เลือกตัวละคร (ดูตัวอย่าง 3D) =====================
@@ -624,7 +644,7 @@ window.pickSex = s => { LOOK.sex = s; drawPick(); };
 window.enterRoom = () => {
     lsSet('PBD_EV_LOOK', JSON.stringify(LOOK)); $('pick').classList.remove('on');
     if (!NET.me) {
-        const s = NET.spawn(); NET.join({ name: ME.name, emp: ME.emp || '', sex: LOOK.sex, color: LOOK.color, x: s[0], z: s[1], wian: 0 });
+        const s = NET.spawn(); NET.join({ name: ME.name, emp: ME.emp || '', sex: LOOK.sex, color: LOOK.color, x: s[0], z: s[1], wian: 0, hold: '' });
         renderActions(); setTimeout(() => { chatReady = true; sysMsg('คุณเข้าร่วม "' + TITLE + '" แล้ว · พิมพ์ทักทายเพื่อนๆ ได้เลย'); }, 1500);
     } else NET.set({ sex: LOOK.sex, color: LOOK.color });
 };
