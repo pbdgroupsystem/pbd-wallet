@@ -24,6 +24,8 @@
         #title { padding: 6px 14px; min-width: 0; }
         #title h1 { margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         #title p { margin: 0; font-size: 11px; color: var(--mut); }
+        #snd { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--bd); background: var(--gl); color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 15px; flex-shrink: 0; }
+        #snd.off { color: #94a3b8; }
         #online { margin-left: auto; padding: 8px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid var(--bd); }
         #online i { color: #34d399; font-size: 9px; vertical-align: middle; margin-right: 4px; }
         #actions { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--chat-h, 0px)); display: flex; gap: 8px; z-index: 5; }
@@ -108,6 +110,7 @@
         <button id="back" onclick="goBack()" aria-label="กลับ"><i class="fa-solid fa-chevron-left"></i></button>
         <div id="title" class="glass"><h1 id="roomTitle">ห้องกิจกรรม</h1><p id="roomSub">PBD Wallet</p></div>
         <button id="online" class="glass" onclick="togglePeople()"><i class="fa-solid fa-circle"></i><span id="onlineN">0</span> คน</button>
+        <button id="snd" onclick="toggleSound()" aria-label="เปิด/ปิดเสียง"><i class="fa-solid fa-volume-high"></i></button>
     </div>
     <div id="stat" class="glass"></div>
     <div id="demo" class="glass">โหมดทดลอง · ยังไม่เชื่อมต่อเรียลไทม์</div>
@@ -641,7 +644,79 @@ function drawPick() {
     if (pv.ch) pv.s.remove(pv.ch); pv.ch = makeChar({ name: ME.name, sex: LOOK.sex, color: LOOK.color, self: true }); pv.ch.userData.tag.visible = false; pv.s.add(pv.ch);
 }
 window.pickSex = s => { LOOK.sex = s; drawPick(); };
+
+// ===================== เพลงประกอบ =====================
+// มีไฟล์ sounds/loy.mp3 หรือ sounds/wian.mp3 (เพลงที่มีสิทธิ์ใช้) = เล่นไฟล์นั้นวนไป · ไม่มี = เล่นเพลงบรรเลงที่สร้างสดในเครื่อง (แต่งใหม่ ไม่มีลิขสิทธิ์)
+//   ลอยกระทง: ระนาด/ฉิ่ง จังหวะสบายๆ บันไดเสียงเพนทาโทนิก + เสียงน้ำไหล · เวียนเทียน: ขิมช้าๆ + เสียงโดรน + ระฆังวัดเป็นระยะ
+const MUSIC = {
+    on: lsGet('PBD_EV_SOUND') !== '0', started: false, ctx: null, master: null, audio: null, timer: null,
+    async start() {
+        if (this.started) return; this.started = true; this.ui();
+        try {
+            const url = 'sounds/' + TYPE + '.mp3', r = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+            if (r.ok && /audio|mpeg|octet/.test(r.headers.get('content-type') || '')) { this.audio = new Audio(url); this.audio.loop = true; this.audio.volume = 0.45; if (this.on) this.audio.play().catch(() => { }); return; }
+        } catch (e) { }
+        this.synth();
+    },
+    synth() {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        const c = this.ctx = new AC(), m = this.master = c.createGain(); m.gain.value = this.on ? 0.55 : 0; m.connect(c.destination);
+        // ห้องเสียงก้อง
+        const rv = c.createConvolver(), len = c.sampleRate * 2.6, ir = c.createBuffer(2, len, c.sampleRate);
+        for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+        rv.buffer = ir; const wet = c.createGain(); wet.gain.value = TYPE === 'wian' ? 0.55 : 0.3; rv.connect(wet); wet.connect(m); this.rv = rv;
+        const noise = (sec) => { const b = c.createBuffer(1, c.sampleRate * sec, c.sampleRate), d = b.getChannelData(0); let last = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } return b; };
+        if (TYPE === 'loy') {   // เสียงน้ำ
+            const src = c.createBufferSource(); src.buffer = noise(4); src.loop = true; const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 520; const g = c.createGain(); g.gain.value = 0.22;
+            src.connect(f); f.connect(g); g.connect(m); src.start();
+        } else {   // โดรนต่ำๆ
+            [65.4, 98, 130.8].forEach((fq, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = fq; o.detune.value = i * 3; g.gain.value = 0.045; o.connect(g); g.connect(m); g.connect(rv); o.start(); });
+        }
+        const SC = [0, 2, 4, 7, 9], BASE = TYPE === 'loy' ? 392 : 261.6;   // G / C เพนทาโทนิก
+        const freq = n => BASE * Math.pow(2, (SC[((n % 5) + 5) % 5] + 12 * Math.floor(n / 5)) / 12);
+        const note = (t, f, dur, vol, type) => {
+            const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(); o.type = type || 'triangle'; o2.type = 'sine';
+            o.frequency.value = f; o2.frequency.value = f * (TYPE === 'loy' ? 3.98 : 2.0); const g2 = c.createGain(); g2.gain.value = TYPE === 'loy' ? 0.18 : 0.25;
+            g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            o.connect(g); o2.connect(g2); g2.connect(g); g.connect(m); g.connect(this.rv); o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+        };
+        const ching = (t, open) => { const s2 = c.createBufferSource(); s2.buffer = this.nb || (this.nb = (() => { const b = c.createBuffer(1, c.sampleRate * 0.6, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })());
+            const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = open ? 6800 : 4200; f.Q.value = 6; const g = c.createGain();
+            g.gain.setValueAtTime(open ? 0.32 : 0.22, t); g.gain.exponentialRampToValueAtTime(0.0001, t + (open ? 0.5 : 0.07)); s2.connect(f); f.connect(g); g.connect(m); s2.start(t); s2.stop(t + 0.6); };
+        const bell = t => { [1, 2.76, 5.4, 8.93].forEach((k, i) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 174.6 * k; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12 / (i + 1), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 7 - i); o.connect(g); g.connect(m); g.connect(this.rv); o.start(t); o.stop(t + 7.1); }); };
+        // ทำนอง: สุ่มเดินบนบันไดเสียงเป็นวลี 2 ห้อง เล่นซ้ำ 2 รอบแล้วแต่งวลีใหม่
+        const step = TYPE === 'loy' ? 60 / 92 / 2 : 60 / 56 / 2; let phrase = [], rep = 0, idx = 0, beat = 0, next = c.currentTime + 0.3, cur = 5;
+        const mk = () => { const out = []; for (let i = 0; i < 16; i++) { if (TYPE === 'wian' && i % 2 && Math.random() < 0.7) { out.push(null); continue; } if (Math.random() < 0.18 && i % 4) { out.push(null); continue; } cur = Math.max(2, Math.min(11, cur + [-2, -1, -1, 1, 1, 2, 0][Math.floor(Math.random() * 7)])); out.push(cur); } out[15] = null; out[14] = 5; return out; };
+        let lastBell = 0;
+        this.timer = setInterval(() => {
+            if (c.state !== 'running') return;
+            while (next < c.currentTime + 0.25) {
+                if (idx === 0) { if (!phrase.length || rep >= 2) { phrase = mk(); rep = 0; } rep++; }
+                const n = phrase[idx]; if (n != null) note(next, freq(n), TYPE === 'loy' ? 0.55 : 1.6, TYPE === 'loy' ? 0.16 : 0.13, TYPE === 'loy' ? 'triangle' : 'sine');
+                if (TYPE === 'loy' && idx % 2 === 0 && Math.random() < 0.35) note(next, freq(n == null ? 0 : n - 5), 0.4, 0.07);
+                if (TYPE === 'loy') { if (beat % 4 === 1) ching(next, true); else if (beat % 4 === 3) ching(next, false); }
+                else if (beat % 8 === 0) ching(next, true);
+                if (TYPE === 'wian' && next - lastBell > 14) { bell(next); lastBell = next; }
+                next += step; idx = (idx + 1) % 16; beat++;
+            }
+        }, 90);
+    },
+    set(on) {
+        this.on = on; lsSet('PBD_EV_SOUND', on ? '1' : '0'); this.ui();
+        if (this.audio) { on ? this.audio.play().catch(() => { }) : this.audio.pause(); }
+        if (this.ctx) { if (on && this.ctx.state !== 'running') this.ctx.resume(); this.master.gain.setTargetAtTime(on ? 0.55 : 0, this.ctx.currentTime, 0.15); }
+        if (on && !this.started) this.start();
+    },
+    ui() { const b = $('snd'); b.classList.toggle('off', !this.on); b.innerHTML = this.on ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>'; }
+};
+MUSIC.ui();
+window.toggleSound = () => MUSIC.set(!MUSIC.on);
+document.addEventListener('visibilitychange', () => {
+    if (MUSIC.ctx) document.hidden ? MUSIC.ctx.suspend() : (MUSIC.on && MUSIC.ctx.resume());
+    if (MUSIC.audio && MUSIC.on) document.hidden ? MUSIC.audio.pause() : MUSIC.audio.play().catch(() => { });
+});
 window.enterRoom = () => {
+    if (MUSIC.on) MUSIC.start();   // เบราว์เซอร์อนุญาตให้เล่นเสียงหลังผู้ใช้แตะปุ่มเท่านั้น
     lsSet('PBD_EV_LOOK', JSON.stringify(LOOK)); $('pick').classList.remove('on');
     if (!NET.me) {
         const s = NET.spawn(); NET.join({ name: ME.name, emp: ME.emp || '', sex: LOOK.sex, color: LOOK.color, x: s[0], z: s[1], wian: 0, hold: '' });
