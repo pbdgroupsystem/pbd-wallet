@@ -323,6 +323,7 @@
                 <div class="flex items-center gap-1.5">
                     <span class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider uppercase shadow-sm">PBD Smart</span>
                     <span id="festChip" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm"></span>
+                    <button id="festJoin" onclick="openFestRoom()" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm bg-white text-gray-900 border border-amber-300 whitespace-nowrap"></button>
                     <button onclick="configureLiffIdPrompt()" id="ConfigBtn" class="hidden text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
                         ตั้งค่า LIFF ID
                     </button>
@@ -1628,6 +1629,7 @@
                     <p class="text-[10px] text-gray-400 mt-2">ข้อมูลจากระบบสแกนหน้า · อัปเดตทุก 10 นาที</p>` });
         }
         function renderAll() {
+            try { if (appState.loaded && appState.name && appState.empId !== '–') localStorage.setItem('PBD_EV_ME', JSON.stringify({ name: String(appState.nick || appState.name).trim().split(/\s+/)[0], emp: appState.empId })); } catch (e) { }   // ชื่อที่ใช้ในห้องกิจกรรม
             setProfilePic(); renderMode(); renderEvents(); updateDashboardUI(); renderActivityList(); renderCouponsAndCatalog(); renderAccountView(); updateProfileView(); renderQuickItems(); renderMenus();
         }
         function showRegister(lineUserId) {
@@ -2557,7 +2559,7 @@
     function fxApply(f) {
         const T = f && FX_THEMES[f.theme], bg = document.getElementById('fxBg'), chip = document.getElementById('festChip');
         document.body.classList.toggle('fx-on', !!T);
-        if (!T) { bg.innerHTML = ''; chip.classList.add('hidden'); return; }
+        if (!T) { bg.innerHTML = ''; chip.classList.add('hidden'); document.getElementById('festJoin').classList.add('hidden'); FEST_ROOM = null; return; }
         const rnd = (a, b) => a + Math.random() * (b - a), out = [];
         T.parts.forEach(([ch, kind, n, s1, s2, extra]) => {
             for (let i = 0; i < n; i++) {
@@ -2588,7 +2590,13 @@
         chip.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm ' + T.chip;
         chip.textContent = T.emoji + ' ' + (f.title || FX_DEFAULT[f.theme] || '') + (today ? ' · วันนี้' : '');
         chip.title = f.title || '';
+        // ห้องกิจกรรมออนไลน์: ลอยกระทง → ลอยกระทงออนไลน์ · วันพระใหญ่ → เวียนเทียนออนไลน์ ("room" ใน festivals.json: loy | wian | none)
+        const room = f.room || (f.theme === 'loy' ? 'loy' : f.theme === 'buddha' ? 'wian' : ''), jb = document.getElementById('festJoin');
+        FEST_ROOM = room && room !== 'none' ? { type: room, id: f.id || (f.theme + '-' + fxToday()), title: room === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์ · ' + (f.title || '') } : null;
+        jb.classList.toggle('hidden', !FEST_ROOM); if (FEST_ROOM) jb.textContent = (room === 'loy' ? '🪷 ลอยกระทงออนไลน์' : '🕯️ เวียนเทียนออนไลน์') + ' ›';
     }
+    let FEST_ROOM = null;
+    function openFestRoom() { if (!FEST_ROOM) return; location.href = 'event-room.html?type=' + FEST_ROOM.type + '&room=' + encodeURIComponent(FEST_ROOM.id) + '&title=' + encodeURIComponent(FEST_ROOM.title); }
     async function loadFestival() {
         let f = null;
         try {

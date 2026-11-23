@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#0b1026">
+    <title>PBD ห้องกิจกรรม</title>
+    <link rel="icon" href="icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="firebase-config.js"></script>
+    <style>
+        :root { --gl: rgba(15, 23, 42, .55); --bd: rgba(255, 255, 255, .16); --tx: #f8fafc; --mut: #cbd5e1; --acc: #fbbf24; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1026; color: var(--tx); font-family: 'Kanit', sans-serif; }
+        #stage { position: fixed; inset: 0; }
+        #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+        .glass { background: var(--gl); border: 1px solid var(--bd); backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3); border-radius: 18px; }
+        button { font-family: inherit; cursor: pointer; }
+        #top { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 8px; align-items: center; z-index: 5; pointer-events: none; }
+        #top > * { pointer-events: auto; }
+        #back { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--bd); background: var(--gl); color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        #title { padding: 6px 14px; min-width: 0; }
+        #title h1 { margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #title p { margin: 0; font-size: 11px; color: var(--mut); }
+        #online { margin-left: auto; padding: 8px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid var(--bd); }
+        #online i { color: #34d399; font-size: 9px; vertical-align: middle; margin-right: 4px; }
+        #actions { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--chat-h, 0px)); display: flex; gap: 8px; z-index: 5; }
+        .act { border: 0; border-radius: 999px; padding: 11px 18px; font-size: 15px; font-weight: 600; color: #1f2937; background: linear-gradient(135deg, #fde68a, #f59e0b); box-shadow: 0 6px 20px rgba(245, 158, 11, .45); white-space: nowrap; }
+        .act.alt { background: var(--gl); color: #fff; border: 1px solid var(--bd); box-shadow: none; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .act:disabled { opacity: .55; }
+        #stat { position: fixed; top: calc(max(10px, env(safe-area-inset-top)) + 54px); left: 10px; padding: 6px 12px; font-size: 12px; z-index: 4; color: var(--mut); }
+        #stat b { color: var(--acc); font-size: 14px; }
+        /* แชท: จอกว้าง = แถบด้านขวา · มือถือ = แผงล่าง (ย่อ/ขยายได้) */
+        #chat { position: fixed; z-index: 6; display: flex; flex-direction: column; overflow: hidden; }
+        #chatHead { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--bd); font-weight: 600; font-size: 14px; }
+        #chatHead .live { background: #ef4444; color: #fff; font-size: 10px; padding: 1px 7px; border-radius: 6px; letter-spacing: .5px; }
+        #chatToggle { margin-left: auto; background: none; border: 0; color: var(--mut); font-size: 15px; }
+        #msgs { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; }
+        .m { font-size: 13.5px; line-height: 1.35; word-wrap: break-word; }
+        .m b { font-weight: 600; margin-right: 4px; }
+        .m.sys { color: var(--mut); font-size: 12px; font-style: italic; }
+        .m.me b { color: var(--acc); }
+        #send { display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--bd); }
+        #send input { flex: 1; min-width: 0; border: 1px solid var(--bd); border-radius: 999px; background: rgba(255, 255, 255, .1); color: #fff; padding: 9px 14px; font: inherit; font-size: 14px; outline: none; }
+        #send input::placeholder { color: #94a3b8; }
+        #send button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--acc); color: #1f2937; }
+        #emo { display: flex; gap: 4px; padding: 0 10px 8px; overflow-x: auto; scrollbar-width: none; }
+        #emo button { border: 1px solid var(--bd); background: rgba(255, 255, 255, .08); border-radius: 999px; font-size: 16px; padding: 3px 9px; }
+        @media (min-width: 820px) {
+            #chat { top: 10px; right: 10px; bottom: 10px; width: 330px; }
+            #chatToggle { display: none; }
+            #top { right: 350px; }
+            #actions { left: calc(50% - 170px); bottom: 18px !important; }
+        }
+        @media (max-width: 819px) {
+            #chat { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); height: 36vh; border-radius: 18px; transition: height .25s; }
+            #chat.min { height: 118px; }
+            #chat.min #msgs { overflow: hidden; justify-content: flex-end; }
+            #chatHead { padding: 7px 12px; }
+        }
+        /* หน้าต่างเลือกตัวละคร/ลอยกระทง */
+        .modal { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; background: rgba(2, 6, 23, .55); padding: 16px; }
+        .modal.on { display: flex; }
+        .card { width: 100%; max-width: 400px; padding: 18px; background: rgba(15, 23, 42, .82); }
+        .card h2 { margin: 0 0 4px; font-size: 19px; }
+        .card p.sub { margin: 0 0 12px; color: var(--mut); font-size: 13px; }
+        #pv { width: 100%; height: 210px; border-radius: 14px; background: radial-gradient(circle at 50% 40%, #334155, #0f172a); display: block; }
+        .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+        .seg button, .opt { border: 1px solid var(--bd); background: rgba(255, 255, 255, .06); color: #fff; border-radius: 12px; padding: 10px; font-size: 15px; }
+        .seg button.on, .opt.on { border-color: var(--acc); background: rgba(251, 191, 36, .18); color: var(--acc); font-weight: 600; }
+        .sw { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .sw button { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; }
+        .sw button.on { border-color: #fff; box-shadow: 0 0 0 2px var(--acc); }
+        .go { width: 100%; border: 0; border-radius: 14px; padding: 13px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #fde68a, #f59e0b); color: #1f2937; }
+        .lbl { font-size: 12px; color: var(--mut); margin: 4px 0 6px; }
+        textarea { width: 100%; border: 1px solid var(--bd); background: rgba(255, 255, 255, .08); color: #fff; border-radius: 12px; padding: 10px; font: inherit; font-size: 14px; resize: none; outline: none; }
+        .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .opt { font-size: 13px; padding: 10px 4px; }
+        .opt span { display: block; font-size: 24px; margin-bottom: 2px; }
+        #toast { position: fixed; top: 74px; left: 50%; transform: translateX(-50%); z-index: 30; padding: 8px 16px; font-size: 14px; display: none; white-space: nowrap; }
+        #demo { position: fixed; top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: 10px; z-index: 4; font-size: 11px; padding: 4px 10px; color: #fde68a; display: none; }
+        @media (min-width: 820px) { #demo { right: 350px; } }
+        #loading { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #0b1026; font-size: 15px; color: var(--mut); }
+        #loading .sp { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .15); border-top-color: var(--acc); animation: sp 1s linear infinite; }
+        @keyframes sp { to { transform: rotate(360deg); } }
+        #people { position: fixed; z-index: 21; top: 60px; right: 10px; width: 230px; max-height: 60vh; overflow-y: auto; padding: 10px 12px; display: none; font-size: 13px; }
+        #people.on { display: block; }
+        #people div { padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+        @media (min-width: 820px) { #people { right: 350px; } }
+    </style>
+    <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+</head>
+<body>
+    <div id="stage"></div>
+    <div id="loading"><div class="sp"></div><div id="loadTxt">กำลังเตรียมห้องกิจกรรม…</div></div>
+
+    <div id="top">
+        <button id="back" onclick="goBack()" aria-label="กลับ"><i class="fa-solid fa-chevron-left"></i></button>
+        <div id="title" class="glass"><h1 id="roomTitle">ห้องกิจกรรม</h1><p id="roomSub">PBD Wallet</p></div>
+        <button id="online" class="glass" onclick="togglePeople()"><i class="fa-solid fa-circle"></i><span id="onlineN">0</span> คน</button>
+    </div>
+    <div id="stat" class="glass"></div>
+    <div id="demo" class="glass">โหมดทดลอง · ยังไม่เชื่อมต่อเรียลไทม์</div>
+    <div id="people" class="glass"></div>
+
+    <div id="actions"></div>
+
+    <section id="chat" class="glass min">
+        <div id="chatHead"><span class="live">LIVE</span> แชทในกิจกรรม <button id="chatToggle" onclick="toggleChat()" aria-label="ขยายแชท"><i class="fa-solid fa-chevron-up"></i></button></div>
+        <div id="msgs"></div>
+        <div id="emo"></div>
+        <form id="send" onsubmit="return sendChat(event)">
+            <input id="msg" maxlength="200" placeholder="พิมพ์ข้อความ…" autocomplete="off" onfocus="openChat()">
+            <button aria-label="ส่ง"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+    </section>
+
+    <div id="pick" class="modal">
+        <div class="card glass">
+            <h2>เลือกตัวละครของคุณ</h2>
+            <p class="sub" id="pickName">ชื่อที่แสดงในห้อง</p>
+            <canvas id="pv"></canvas>
+            <div class="seg"><button id="sexM" onclick="pickSex('m')">👦 ผู้ชาย</button><button id="sexF" onclick="pickSex('f')">👧 ผู้หญิง</button></div>
+            <div class="lbl">สีชุด</div>
+            <div class="sw" id="swatch"></div>
+            <button class="go" onclick="enterRoom()">เข้าร่วมกิจกรรม</button>
+        </div>
+    </div>
+
+    <div id="kt" class="modal">
+        <div class="card glass">
+            <h2>🪷 ลอยกระทง</h2>
+            <p class="sub">เลือกกระทงและอธิษฐาน — ทุกคนในห้องจะเห็นกระทงของคุณลอยไป</p>
+            <div class="opts" id="ktOpts"></div>
+            <div class="lbl">คำอธิษฐาน (ไม่เกิน 60 ตัวอักษร)</div>
+            <textarea id="wish" rows="2" maxlength="60" placeholder="ขอให้ยอดขายปังทุกพีเรียด 🙏"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="opt" style="flex:1" onclick="closeModal('kt')">ยกเลิก</button>
+                <button class="go" style="flex:2" onclick="floatKrathong()">ลอยเลย</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="glass"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===================== ตั้งค่าห้อง =====================
+// เปิดจาก Wallet: event-room.html?room=<id เทศกาล>&type=loy|wian&title=...  · ทดลอง: ?type=loy&demo=1
+const Q = new URLSearchParams(location.search);
+const TYPE = Q.get('type') === 'wian' ? 'wian' : 'loy';
+const ROOM = (Q.get('room') || (TYPE + '-demo')).replace(/[^\w-]/g, '').slice(0, 40);
+const TITLE = Q.get('title') || (TYPE === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์');
+const ROUND_MS = 36000, ROUNDS = 3, KT_LIFE = 170000, KT_SPEED = 0.17;
+const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f8fafc'];
+const KT = [{ id: 'leaf', icon: '🌿', label: 'ใบตอง' }, { id: 'lotus', icon: '🪷', label: 'ดอกบัว' }, { id: 'bread', icon: '🍞', label: 'ขนมปัง' }];
+const EMO = ['🙏', '🪷', '🕯️', '❤️', '😊', '👏', '✨', '🎉'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } };
+const hash = s => { let x = 0; for (let i = 0; i < s.length; i++) x = (x * 31 + s.charCodeAt(i)) | 0; return Math.abs(x); };
+
+// ตัวตน: Wallet เก็บชื่อไว้ในเครื่อง (PBD_EV_ME) ตอนเปิดหน้า Wallet
+let ME = null; try { ME = JSON.parse(lsGet('PBD_EV_ME') || 'null'); } catch (e) { }
+if (!ME || !ME.name) ME = Q.get('demo') ? { name: 'ทดลอง', emp: '' } : null;
+const LOOK = (() => { try { return JSON.parse(lsGet('PBD_EV_LOOK') || 'null'); } catch (e) { return null; } })() || { sex: 'f', color: COLORS[7] };
+
+document.title = 'PBD · ' + TITLE;
+$('roomTitle').textContent = (TYPE === 'loy' ? '🪷 ' : '🕯️ ') + TITLE;
+$('roomSub').textContent = TYPE === 'loy' ? 'แตะพื้นเพื่อเดิน · กดปุ่มลอยกระทงที่ริมน้ำ' : 'เดินเวียนรอบพระเจดีย์ 3 รอบ (เวียนขวา)';
+window.goBack = () => { if (history.length > 1) history.back(); else location.href = './'; };
+
+// ===================== ฉาก 3 มิติ =====================
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 400);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 7; controls.maxDistance = 32;
+controls.maxPolarAngle = Math.PI * 0.46; controls.minPolarAngle = Math.PI * 0.12;
+
+function glowTex(c1 = 'rgba(255,220,140,1)', c2 = 'rgba(255,160,40,0)') {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, c1); gr.addColorStop(0.35, c1.replace(/[\d.]+\)$/, '0.55)')); gr.addColorStop(1, c2);
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const GLOW = glowTex();
+const glowSprite = (s = 0.6, tex = GLOW) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); m.scale.set(s, s, s); return m; };
+const toon = c => new THREE.MeshToonMaterial({ color: c });
+const std = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8 }, o));
+
+function skyDome(top, mid, bottom) {
+    const cv = document.createElement('canvas'); cv.width = 4; cv.height = 256; const g = cv.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, top); gr.addColorStop(0.55, mid); gr.addColorStop(1, bottom);
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 256); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.SphereGeometry(180, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, fog: false }));
+    scene.add(m);
+}
+function stars(n, minY = 20) {
+    const p = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const th = Math.random() * Math.PI * 2, ph = Math.random() * Math.PI * 0.42, r = 160; p[i * 3] = r * Math.sin(ph) * Math.cos(th); p[i * 3 + 1] = Math.max(minY, r * Math.cos(ph)); p[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 0.9, sizeAttenuation: true, fog: false, transparent: true, opacity: 0.85 })));
+}
+
+const WORLD = { ground: null, bounds: null, update: [] };
+let water = null;
+
+function buildLoy() {
+    scene.fog = new THREE.Fog(0x0b1530, 30, 120);
+    skyDome('#050a1f', '#14204a', '#2a2350'); stars(700);
+    scene.add(new THREE.HemisphereLight(0x8fa8ff, 0x1a1030, 0.75));
+    const moonL = new THREE.DirectionalLight(0xcdd8ff, 0.9); moonL.position.set(-20, 30, -30); scene.add(moonL);
+    // พระจันทร์เต็มดวง
+    const moon = new THREE.Mesh(new THREE.SphereGeometry(6, 32, 16), new THREE.MeshBasicMaterial({ color: 0xfff6d5, fog: false }));
+    moon.position.set(-30, 38, -110); scene.add(moon);
+    const mg = glowSprite(40, glowTex('rgba(255,245,210,0.9)', 'rgba(255,240,200,0)')); mg.position.copy(moon.position); mg.material.fog = false; scene.add(mg);
+    // แม่น้ำ (z < 1.5) — คลื่นด้วยการขยับจุด
+    const wg = new THREE.PlaneGeometry(200, 120, 80, 40); wg.rotateX(-Math.PI / 2); wg.translate(0, 0, -58.5);
+    water = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: 0x1b3a7a, roughness: 0.18, metalness: 0.55, flatShading: true }));
+    scene.add(water); const base = wg.attributes.position.array.slice();
+    WORLD.update.push(t => { const a = wg.attributes.position.array; for (let i = 0; i < a.length; i += 3) a[i + 1] = Math.sin(base[i] * 0.35 + t * 1.1) * 0.06 + Math.cos(base[i + 2] * 0.5 + t * 0.8) * 0.06; wg.attributes.position.needsUpdate = true; });
+    // แสงจันทร์บนน้ำ
+    const path = new THREE.Mesh(new THREE.PlaneGeometry(6, 90), new THREE.MeshBasicMaterial({ color: 0xfff2c4, transparent: true, opacity: 0.12, depthWrite: false }));
+    path.rotation.x = -Math.PI / 2; path.position.set(-8, 0.08, -50); path.rotation.z = 0.12; scene.add(path);
+    // ฝั่งแม่น้ำ (หญ้า + ท่าน้ำไม้)
+    const bank = new THREE.Mesh(new THREE.BoxGeometry(60, 1, 14), toon(0x2f6b3a)); bank.position.set(0, -0.32, 8.5); scene.add(bank);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(60, 0.5, 0.6), toon(0x8a6a4a)); edge.position.set(0, -0.05, 1.7); scene.add(edge);
+    for (let x = -12; x <= 12; x += 1.1) { const plank = new THREE.Mesh(new THREE.BoxGeometry(1, 0.12, 2.2), toon(x % 2 ? 0xa47b55 : 0x936c48)); plank.position.set(x, 0.12, 2.6); scene.add(plank); }
+    WORLD.ground = bank; WORLD.bounds = { x0: -11, x1: 11, z0: 2.2, z1: 10 }; WORLD.spawn = () => [THREE.MathUtils.randFloat(-8, 8), THREE.MathUtils.randFloat(4, 8.5)];
+    // ต้นไม้ + โคมไฟริมน้ำ
+    for (let i = 0; i < 14; i++) { const x = (i % 2 ? -1 : 1) * THREE.MathUtils.randFloat(13, 26), z = THREE.MathUtils.randFloat(3, 14); tree(x, z, 0x1f4d2b); }
+    for (let x = -12; x <= 12; x += 4) lamp(x, 1.9);
+    // สายไฟประดับ
+    const bulbs = []; for (let x = -14; x <= 14; x += 0.7) { const y = 3.6 - Math.cos((x % 4) / 4 * Math.PI * 2) * 0.25; const b = glowSprite(0.45, glowTex(['rgba(255,214,120,1)', 'rgba(255,140,190,1)', 'rgba(140,220,255,1)'][Math.abs(Math.round(x / 0.7)) % 3], 'rgba(0,0,0,0)')); b.position.set(x, y, 11.5); scene.add(b); bulbs.push(b); }
+    WORLD.update.push(t => bulbs.forEach((b, i) => b.material.opacity = 0.65 + Math.sin(t * 2 + i) * 0.35));
+    // โคมลอยขึ้นฟ้า
+    const lanterns = []; for (let i = 0; i < 26; i++) { const l = glowSprite(THREE.MathUtils.randFloat(0.7, 1.4), glowTex('rgba(255,190,90,1)', 'rgba(255,120,40,0)')); l.userData = { x: THREE.MathUtils.randFloat(-50, 50), z: THREE.MathUtils.randFloat(-90, -20), y0: Math.random() * 60, sp: THREE.MathUtils.randFloat(0.5, 1.1) }; scene.add(l); lanterns.push(l); }
+    WORLD.update.push(t => lanterns.forEach(l => { const u = l.userData, y = (u.y0 + t * u.sp) % 60; l.position.set(u.x + Math.sin(t * 0.3 + u.y0) * 2, y + 2, u.z); l.material.opacity = y > 50 ? (60 - y) / 10 : 1; }));
+    // พลุเป็นระยะ
+    fireworks();
+}
+function buildWian() {
+    scene.fog = new THREE.Fog(0x2b1d3a, 34, 120);
+    skyDome('#1b1238', '#4b2a57', '#d9825b'); stars(300, 40);
+    scene.add(new THREE.HemisphereLight(0xffd6b0, 0x2a1d3a, 0.8));
+    const sun = new THREE.DirectionalLight(0xffc28a, 0.9); sun.position.set(20, 18, -30); scene.add(sun);
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 48), toon(0x3e6b3a)); ground.rotation.x = -Math.PI / 2; scene.add(ground);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(5.6, 7.6, 64), toon(0xd8cbb5)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; scene.add(ring);
+    WORLD.ground = ground; WORLD.r = 6.6;
+    // พระเจดีย์ทรงระฆัง (ฐานขาว + องค์ระฆังทอง + ปล้องไฉน)
+    const gold = std(0xf2b93b, { metalness: 0.75, roughness: 0.3, emissive: 0x3a2200 }), white = toon(0xf4efe6);
+    [[4.4, 0.5], [3.7, 0.5], [3.0, 0.5]].reduce((y, [w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), white); b.position.y = y + h / 2; scene.add(b); return y + h; }, 0);
+    const pts = [[0, 1.5], [1.35, 1.5], [1.45, 1.75], [1.3, 2.0], [1.75, 2.35], [1.95, 2.9], [1.9, 3.5], [1.6, 4.1], [1.0, 4.55], [0.55, 4.75], [0.5, 5.0], [0.62, 5.15], [0.42, 5.3], [0.36, 5.7], [0.3, 5.9], [0.26, 6.1], [0.2, 6.35], [0.14, 6.9], [0.08, 7.5], [0.03, 8.1], [0, 8.4]].map(([x, y]) => new THREE.Vector2(x, y));
+    const chedi = new THREE.Mesh(new THREE.LatheGeometry(pts, 40), gold); scene.add(chedi);
+    const top = glowSprite(1.6, glowTex('rgba(255,236,170,1)', 'rgba(255,200,80,0)')); top.position.y = 8.45; scene.add(top);
+    const halo = glowSprite(14, glowTex('rgba(255,210,120,0.35)', 'rgba(255,180,80,0)')); halo.position.y = 4.5; scene.add(halo);
+    // เสาโคมรอบทางเดิน + ต้นไม้
+    for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; lamp(Math.cos(a) * 8.3, Math.sin(a) * 8.3); }
+    for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, r = THREE.MathUtils.randFloat(14, 30); tree(Math.cos(a) * r, Math.sin(a) * r, 0x295d33); }
+    // ธงทิว
+    WORLD.spawn = () => [0, 0];
+}
+function tree(x, z, c) {
+    const g = new THREE.Group(); const t = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 1.4, 6), toon(0x5b3b24)); t.position.y = 0.7; g.add(t);
+    for (let i = 0; i < 3; i++) { const l = new THREE.Mesh(new THREE.ConeGeometry(1.3 - i * 0.3, 1.5, 7), toon(c)); l.position.y = 1.6 + i * 0.7; g.add(l); }
+    const s = THREE.MathUtils.randFloat(0.9, 1.6); g.scale.set(s, s, s); g.position.set(x, 0, z); scene.add(g);
+}
+function lamp(x, z) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.3, 6), toon(0x3b2a1e)); p.position.set(x, 0.65, z); scene.add(p);
+    const h = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.28), std(0xffe2a0, { emissive: 0xffb347, emissiveIntensity: 1.2 })); h.position.set(x, 1.45, z); scene.add(h);
+    const g = glowSprite(1.4); g.position.set(x, 1.45, z); scene.add(g);
+}
+function fireworks() {
+    const bursts = [];
+    const fire = () => {
+        const n = 90, p = new Float32Array(n * 3), v = [], col = new THREE.Color().setHSL(Math.random(), 0.9, 0.65);
+        const c = new THREE.Vector3(THREE.MathUtils.randFloat(-30, 30), THREE.MathUtils.randFloat(22, 34), THREE.MathUtils.randFloat(-80, -50));
+        for (let i = 0; i < n; i++) { p.set([c.x, c.y, c.z], i * 3); v.push(new THREE.Vector3().randomDirection().multiplyScalar(THREE.MathUtils.randFloat(5, 9))); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+        const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: 0.7, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        scene.add(pts); bursts.push({ pts, v, c, age: 0 });
+    };
+    setInterval(() => { if (!document.hidden && Math.random() < 0.6) fire(); }, 4200);
+    WORLD.update.push((t, dt) => {
+        for (let k = bursts.length - 1; k >= 0; k--) {
+            const b = bursts[k]; b.age += dt; const a = b.pts.geometry.attributes.position.array;
+            for (let i = 0; i < b.v.length; i++) { a[i * 3] = b.c.x + b.v[i].x * b.age; a[i * 3 + 1] = b.c.y + b.v[i].y * b.age - 3 * b.age * b.age; a[i * 3 + 2] = b.c.z + b.v[i].z * b.age; }
+            b.pts.geometry.attributes.position.needsUpdate = true; b.pts.material.opacity = Math.max(0, 1 - b.age / 2.2);
+            if (b.age > 2.2) { scene.remove(b.pts); b.pts.geometry.dispose(); b.pts.material.dispose(); bursts.splice(k, 1); }
+        }
+    });
+}
+
+// ===================== ตัวละครจิบิ 3D (สร้างจากรูปทรงพื้นฐาน) =====================
+const SKIN = 0xffd8b5, HAIR = 0x3b2618;
+const G = { head: new THREE.SphereGeometry(0.5, 28, 20), eye: new THREE.SphereGeometry(0.075, 12, 10), spark: new THREE.SphereGeometry(0.025, 6, 6), blush: new THREE.CircleGeometry(0.075, 14),
+    body: new THREE.CapsuleGeometry(0.27, 0.32, 6, 14), limb: new THREE.CapsuleGeometry(0.075, 0.26, 4, 8), leg: new THREE.CapsuleGeometry(0.09, 0.22, 4, 8),
+    hairCap: new THREE.SphereGeometry(0.535, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), bun: new THREE.SphereGeometry(0.17, 14, 10), skirt: new THREE.ConeGeometry(0.46, 0.42, 20, 1, true),
+    candle: new THREE.CylinderGeometry(0.035, 0.035, 0.32, 8), flame: new THREE.ConeGeometry(0.035, 0.1, 8), mouth: new THREE.TorusGeometry(0.06, 0.016, 6, 12, Math.PI) };
+const M = { skin: toon(SKIN), hair: toon(HAIR), eye: new THREE.MeshBasicMaterial({ color: 0x1a1a1a }), white: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    blush: new THREE.MeshBasicMaterial({ color: 0xff8fa3, transparent: true, opacity: 0.7 }), mouth: new THREE.MeshBasicMaterial({ color: 0x7a2e2e }), shoe: toon(0x3a2a20), pants: toon(0x334155),
+    candle: toon(0xfff5d6), flame: new THREE.MeshBasicMaterial({ color: 0xffc94a }) };
+const outfitMat = {}; const outfit = c => outfitMat[c] || (outfitMat[c] = toon(new THREE.Color(c)));
+
+function makeChar(o) {
+    const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+    const mat = outfit(o.color || COLORS[0]);
+    const torso = new THREE.Mesh(G.body, mat); torso.position.y = 0.72; body.add(torso);
+    const legs = [-1, 1].map(s => { const pivot = new THREE.Group(); pivot.position.set(0.12 * s, 0.42, 0); const l = new THREE.Mesh(G.leg, o.sex === 'f' ? M.skin : M.pants); l.position.y = -0.2; pivot.add(l); const sh = new THREE.Mesh(G.bun, M.shoe); sh.scale.set(0.7, 0.45, 1); sh.position.set(0, -0.36, 0.04); pivot.add(sh); body.add(pivot); return pivot; });
+    if (o.sex === 'f') { const sk = new THREE.Mesh(G.skirt, mat); sk.position.y = 0.58; body.add(sk); }
+    const arms = [-1, 1].map(s => { const pivot = new THREE.Group(); pivot.position.set(0.3 * s, 0.92, 0); const a = new THREE.Mesh(G.limb, mat); a.position.y = -0.17; pivot.add(a); const hand = new THREE.Mesh(G.bun, M.skin); hand.scale.setScalar(0.45); hand.position.y = -0.36; pivot.add(hand); pivot.rotation.z = 0.35 * s; body.add(pivot); return pivot; });
+    const head = new THREE.Group(); head.position.y = 1.47; body.add(head);
+    head.add(new THREE.Mesh(G.head, M.skin));
+    const hair = new THREE.Mesh(G.hairCap, M.hair); hair.rotation.x = -0.32; hair.position.set(0, 0.03, -0.03); head.add(hair);
+    if (o.sex === 'f') {
+        const back = new THREE.Mesh(new THREE.SphereGeometry(0.52, 20, 14, 0, Math.PI * 2, Math.PI * 0.35, Math.PI * 0.45), M.hair); back.rotation.x = 0.5; back.position.set(0, -0.05, -0.06); head.add(back);
+        [-1, 1].forEach(s => { const b = new THREE.Mesh(G.bun, M.hair); b.position.set(0.43 * s, 0.22, -0.12); head.add(b); const bw = new THREE.Mesh(G.bun, outfit(o.color)); bw.scale.setScalar(0.5); bw.position.set(0.47 * s, 0.33, -0.05); head.add(bw); });
+    } else {
+        const fr = new THREE.Mesh(G.bun, M.hair); fr.scale.set(1.5, 0.6, 0.8); fr.position.set(0.12, 0.38, 0.33); fr.rotation.z = -0.3; head.add(fr);
+    }
+    [-1, 1].forEach(s => {
+        const e = new THREE.Mesh(G.eye, M.eye); e.scale.set(1, 1.25, 0.6); e.position.set(0.17 * s, -0.02, 0.46); head.add(e);
+        const sp = new THREE.Mesh(G.spark, M.white); sp.position.set(0.17 * s + 0.025, 0.02, 0.51); head.add(sp);
+        const bl = new THREE.Mesh(G.blush, M.blush); bl.position.set(0.29 * s, -0.13, 0.41); bl.rotation.y = 0.55 * s; head.add(bl);
+    });
+    const mo = new THREE.Mesh(G.mouth, M.mouth); mo.rotation.z = Math.PI; mo.position.set(0, -0.15, 0.48); head.add(mo);
+    // เทียน (ห้องเวียนเทียน)
+    let flame = null;
+    if (TYPE === 'wian') {
+        const c = new THREE.Group(); const cd = new THREE.Mesh(G.candle, M.candle); c.add(cd); flame = new THREE.Mesh(G.flame, M.flame); flame.position.y = 0.21; c.add(flame);
+        const gl = glowSprite(0.7); gl.position.y = 0.22; c.add(gl); c.position.set(0, 0.86, 0.36); body.add(c);
+        arms.forEach((a, i) => { a.rotation.x = -1.0; a.rotation.z = (i ? -1 : 1) * 0.25; });
+    }
+    const tag = label(o.name, o.self); tag.position.y = 2.35; g.add(tag);
+    g.userData = { body, legs, arms, head, tag, flame, bubble: null, bubbleT: 0, phase: Math.random() * 6 };
+    return g;
+}
+function canvasSprite(draw, w, h, scale) {
+    const cv = document.createElement('canvas'), k = 2; cv.width = w * k; cv.height = h * k; const g = cv.getContext('2d'); g.scale(k, k); draw(g);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false })); s.scale.set(w / h * scale, scale, 1); s.renderOrder = 10; return s;
+}
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function label(text, self) {
+    text = String(text || '').slice(0, 16); const font = '600 26px Kanit, sans-serif';
+    const m = document.createElement('canvas').getContext('2d'); m.font = font; const w = Math.ceil(m.measureText(text).width) + 30;
+    return canvasSprite(g => { g.font = font; rr(g, 1, 1, w - 2, 38, 19); g.fillStyle = self ? 'rgba(251,191,36,.95)' : 'rgba(15,23,42,.72)'; g.fill(); g.fillStyle = self ? '#1f2937' : '#fff'; g.textBaseline = 'middle'; g.textAlign = 'center'; g.fillText(text, w / 2, 21); }, w, 40, 0.42);
+}
+function bubble(text) {
+    const font = '500 24px Kanit, sans-serif', m = document.createElement('canvas').getContext('2d'); m.font = font;
+    const words = Array.from(String(text).slice(0, 80)), lines = []; let cur = '';
+    words.forEach(ch => { if (m.measureText(cur + ch).width > 250) { lines.push(cur); cur = ch; } else cur += ch; }); if (cur) lines.push(cur);
+    const ls = lines.slice(0, 3), w = Math.max(...ls.map(l => m.measureText(l).width)) + 32, h = ls.length * 32 + 28;
+    return canvasSprite(g => { g.font = font; rr(g, 2, 2, w - 4, h - 16, 16); g.fillStyle = 'rgba(255,255,255,.96)'; g.fill(); g.beginPath(); g.moveTo(w / 2 - 9, h - 15); g.lineTo(w / 2, h - 3); g.lineTo(w / 2 + 9, h - 15); g.fill();
+        g.fillStyle = '#111827'; g.textBaseline = 'top'; g.textAlign = 'center'; ls.forEach((l, i) => g.fillText(l, w / 2, 12 + i * 32)); }, w, h, h / 40 * 0.42);
+}
+
+// ===================== กระทง =====================
+function makeKrathong(style) {
+    const g = new THREE.Group();
+    if (style === 'bread') { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.3, 0.16, 18), toon(0xd9a35b)); g.add(b); }
+    else { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.28, 0.14, 18), toon(0x4a8a3c)); g.add(b); }
+    const petal = style === 'lotus' ? toon(0xf9a8d4) : style === 'bread' ? toon(0xb7793a) : toon(0x3f7d33);
+    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; const p = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 4), petal); p.position.set(Math.cos(a) * 0.3, 0.13, Math.sin(a) * 0.3); p.rotation.set(Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35); g.add(p); }
+    const fl = [0xfbbf24, 0xf97316, 0xfde68a, 0xffffff]; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const f = new THREE.Mesh(G.bun, toon(style === 'lotus' ? 0xfbcfe8 : fl[i % 4])); f.scale.setScalar(0.45); f.position.set(Math.cos(a) * 0.17, 0.14, Math.sin(a) * 0.17); g.add(f); }
+    const c = new THREE.Mesh(G.candle, M.candle); c.position.y = 0.26; g.add(c);
+    const fm = new THREE.Mesh(G.flame, M.flame); fm.position.y = 0.46; g.add(fm);
+    [-1, 1].forEach(s => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.4, 4), toon(0x9a3412)); st.position.set(0.07 * s, 0.3, 0.05); st.rotation.z = 0.12 * s; g.add(st); });
+    const gl = glowSprite(1.3); gl.position.y = 0.48; g.add(gl);
+    g.userData.glow = gl; return g;
+}
+const krathongs = new Map(); let ktTotal = 0;
+function addKrathong(id, k) {
+    if (krathongs.has(id) || NET.now() - k.t > KT_LIFE) return;
+    const m = makeKrathong(k.style); const lab = label((k.name || '') + (k.wish ? ' · ' + k.wish : ''), k.uid === NET.uid); lab.position.y = 1.0; lab.scale.multiplyScalar(0.9); m.add(lab);
+    m.userData.k = k; m.userData.lab = lab; scene.add(m); krathongs.set(id, m);
+}
+function updKrathongs(t) {
+    const now = NET.now();
+    krathongs.forEach((m, id) => {
+        const k = m.userData.k, age = (now - k.t) / 1000; if (age * 1000 > KT_LIFE) { scene.remove(m); krathongs.delete(id); return; }
+        const z = 1.0 - Math.max(0, age) * KT_SPEED, x = k.x + Math.sin(age * 0.25 + (hash(id) % 10)) * 1.2 + age * 0.03 * ((hash(id) % 3) - 1);
+        m.position.set(x, 0.06 + Math.sin(t * 2 + hash(id)) * 0.035, z); m.rotation.y = age * 0.15; m.rotation.z = Math.sin(t * 1.6 + hash(id)) * 0.05;
+        m.userData.lab.material.opacity = age < 10 ? 1 : Math.max(0, 1 - (age - 10) / 6);
+        m.userData.glow.material.opacity = 0.75 + Math.sin(t * 9 + hash(id)) * 0.25;
+    });
+}
+
+// ===================== ผู้เข้าร่วม =====================
+const avatars = new Map(); let peersCache = {};
+function syncPeers(map) {
+    peersCache = map || {};
+    Object.keys(peersCache).forEach(uid => {
+        const p = peersCache[uid]; if (!p || !p.name) return;
+        let a = avatars.get(uid);
+        if (a && (a.userData.sex !== p.sex || a.userData.color !== p.color)) { scene.remove(a); avatars.delete(uid); a = null; }
+        if (!a) {
+            a = makeChar({ name: p.name, sex: p.sex, color: p.color, self: uid === NET.uid }); a.userData.sex = p.sex; a.userData.color = p.color; a.userData.uid = uid;
+            const sp = TYPE === 'wian' ? ringPos(uid, p, NET.now()) : [p.x || 0, p.z || 6]; a.position.set(sp[0], 0, sp[1]); a.userData.pop = 0; a.scale.setScalar(0.01);
+            scene.add(a); avatars.set(uid, a);
+            if (chatReady && uid !== NET.uid) sysMsg(p.name + ' เข้ามาในห้อง');
+        }
+        a.userData.p = p;
+    });
+    avatars.forEach((a, uid) => { if (!peersCache[uid]) { if (chatReady && uid !== NET.uid) sysMsg((a.userData.p && a.userData.p.name || 'มีคน') + ' ออกจากห้อง'); a.userData.leaving = 1; avatars.delete(uid); leaving.push(a); } });
+    $('onlineN').textContent = Object.keys(peersCache).length;
+    if ($('people').classList.contains('on')) renderPeople();
+}
+const leaving = [];
+function ringAngle0(uid) { return (hash(uid) % 3600) / 3600 * Math.PI * 2; }
+function wianState(p, now) { if (!p || !p.wian) return null; const el = now - p.wian; return el >= 0 && el < ROUND_MS * ROUNDS ? el : null; }
+function ringPos(uid, p, now) {
+    const el = wianState(p, now), a = ringAngle0(uid) + (el == null ? 0 : el / ROUND_MS * Math.PI * 2), r = WORLD.r + ((hash(uid) >> 4) % 5 - 2) * 0.18;
+    return [Math.cos(a) * r, Math.sin(a) * r, a, el != null];
+}
+function animateAvatars(t, dt) {
+    const now = NET.now();
+    avatars.forEach((a, uid) => {
+        const u = a.userData, p = u.p || {}; let moving = false;
+        if (u.pop < 1) { u.pop = Math.min(1, u.pop + dt * 3); a.scale.setScalar(easeBack(u.pop)); }
+        if (TYPE === 'wian') {
+            const [x, z, ang, walking] = ringPos(uid, p, now); a.position.x += (x - a.position.x) * Math.min(1, dt * 8); a.position.z += (z - a.position.z) * Math.min(1, dt * 8);
+            a.rotation.y = walking ? -ang + Math.PI : Math.atan2(-a.position.x, -a.position.z); moving = walking;   // เดินตามเข็ม (องค์เจดีย์อยู่ทางขวา)
+        } else {
+            const tx = p.x == null ? a.position.x : p.x, tz = p.z == null ? a.position.z : p.z, dx = tx - a.position.x, dz = tz - a.position.z, d = Math.hypot(dx, dz);
+            if (d > 0.05) { const st = Math.min(d, dt * 2.4); a.position.x += dx / d * st; a.position.z += dz / d * st; a.rotation.y = lerpAng(a.rotation.y, Math.atan2(dx, dz), dt * 10); moving = true; }
+        }
+        const ph = t * (moving ? 9 : 2) + u.phase;
+        u.legs[0].rotation.x = moving ? Math.sin(ph) * 0.6 : 0; u.legs[1].rotation.x = moving ? -Math.sin(ph) * 0.6 : 0;
+        if (TYPE !== 'wian') { u.arms[0].rotation.x = moving ? -Math.sin(ph) * 0.5 : Math.sin(ph) * 0.06; u.arms[1].rotation.x = moving ? Math.sin(ph) * 0.5 : -Math.sin(ph) * 0.06; }
+        u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
+        u.head.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.05;
+        if (u.flame) u.flame.scale.y = 1 + Math.sin(t * 13 + u.phase) * 0.18;
+        if (u.bubble) { u.bubbleT -= dt; u.bubble.material.opacity = Math.min(1, u.bubbleT); if (u.bubbleT <= 0) { a.remove(u.bubble); u.bubble.material.map.dispose(); u.bubble = null; } }
+    });
+    for (let i = leaving.length - 1; i >= 0; i--) { const a = leaving[i]; a.scale.multiplyScalar(Math.max(0, 1 - dt * 5)); if (a.scale.x < 0.03) { scene.remove(a); leaving.splice(i, 1); } }
+}
+const easeBack = x => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);
+const lerpAng = (a, b, k) => { let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI; if (d < -Math.PI) d += Math.PI * 2; return a + d * Math.min(1, k); };
+function showBubble(uid, text) {
+    const a = avatars.get(uid); if (!a) return; const u = a.userData;
+    if (u.bubble) { a.remove(u.bubble); u.bubble.material.map.dispose(); }
+    u.bubble = bubble(text); u.bubble.position.y = 2.75 + u.bubble.scale.y / 2 - 0.2; a.add(u.bubble); u.bubbleT = 6;
+}
+
+// ===================== เครือข่าย (Firebase Realtime Database · ไม่มี = โหมดทดลอง) =====================
+const NET = {
+    uid: '', off: 0, demo: false, now() { return Date.now() + this.off; },
+    async start() {
+        const F = window.PBD_FIREBASE, cfg = F && F.config;
+        if (!cfg || Q.get('demo')) return this.startDemo();
+        try {
+            await loadScripts(['firebase-app-compat.js', 'firebase-auth-compat.js', 'firebase-database-compat.js'].map(f => 'https://www.gstatic.com/firebasejs/10.12.2/' + f));
+            const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
+            const url = F.rtdbUrl || cfg.databaseURL || ('https://' + cfg.projectId + '-default-rtdb.asia-southeast1.firebasedatabase.app');
+            await withTimeout(firebase.auth(app).signInAnonymously(), 8000);
+            this.uid = firebase.auth(app).currentUser.uid; this.db = firebase.app().database(url); this.base = this.db.ref('rooms/' + ROOM);
+            this.db.ref('.info/serverTimeOffset').on('value', s => { this.off = s.val() || 0; });
+            await withTimeout(this.base.child('stats').once('value'), 8000);   // ทดสอบสิทธิ์อ่าน/เชื่อมต่อ
+            return true;
+        } catch (e) { console.warn('realtime off', e); return this.startDemo(); }
+    },
+    join(me) {
+        this.me = me; if (this.demo) return this.demoJoin(me);
+        this.pref = this.base.child('presence/' + this.uid);
+        this.db.ref('.info/connected').on('value', s => { if (s.val()) { this.pref.onDisconnect().remove(); this.pref.set(Object.assign({}, this.me, { t: firebase.database.ServerValue.TIMESTAMP })); } });
+        this.base.child('presence').on('value', s => syncPeers(s.val() || {}));
+        this.base.child('chat').limitToLast(60).on('child_added', s => onChat(s.val()));
+        this.base.child('krathong').orderByChild('t').startAt(this.now() - KT_LIFE).on('child_added', s => addKrathong(s.key, s.val()));
+        this.base.child('stats').on('value', s => onStats(s.val() || {}));
+    },
+    set(patch) { Object.assign(this.me, patch); if (this.demo) return this.demoSet(); this.pref && this.pref.update(patch); },
+    chat(text) { const m = { uid: this.uid, name: this.me.name, text, t: this.demo ? this.now() : firebase.database.ServerValue.TIMESTAMP }; if (this.demo) return onChat(Object.assign(m, { t: this.now() })); this.base.child('chat').push(m); },
+    krathong(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addKrathong('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); return; }
+        this.base.child('krathong').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/krathong').transaction(n => (n || 0) + 1); },
+    wianDone() { if (this.demo) { onStats({ krathong: this.ds.krathong, wian: ++this.ds.wian }); return; } this.base.child('stats/wian').transaction(n => (n || 0) + 1); },
+    // ---------- โหมดทดลอง: มีเพื่อนจำลองเดินไปมา/พิมพ์แชท ----------
+    startDemo() { this.demo = true; this.uid = 'me-' + Math.random().toString(36).slice(2, 8); $('demo').style.display = 'block'; return false; },
+    demoJoin(me) {
+        this.ds = { krathong: 37, wian: 12 }; onStats(this.ds); const P = {}; P[this.uid] = me; this.P = P;
+        const names = ['ปาล์ม', 'อู๋', 'แวว', 'หนึ่ง', 'มอส', 'ตอง', 'เอก', 'นก', 'โอม'], lines = ['สุขสันต์วันลอยกระทงครับ 🪷', 'ขอให้ยอดขายปังๆ', 'สวยมากเลย ✨', 'สาธุ 🙏', 'ปีนี้ขอให้สุขภาพแข็งแรง', 'ลอยแล้วววว', 'ทีม SD มาครบ!'];
+        names.forEach((n, i) => { const id = 'bot' + i, s = this.spawn(); P[id] = { name: n, sex: i % 2 ? 'm' : 'f', color: COLORS[i % COLORS.length], x: s[0], z: s[1], wian: TYPE === 'wian' && i % 3 === 0 ? this.now() - i * 7000 : 0 }; });
+        syncPeers(Object.assign({}, P));
+        setInterval(() => { const ids = Object.keys(P).filter(x => x.startsWith('bot')), id = ids[Math.floor(Math.random() * ids.length)]; const s = this.spawn();
+            if (TYPE === 'wian') { if (Math.random() < 0.3) P[id].wian = this.now(); } else { P[id].x = s[0]; P[id].z = s[1]; }
+            syncPeers(Object.assign({}, P)); }, 2200);
+        setInterval(() => { const i = Math.floor(Math.random() * names.length); onChat({ uid: 'bot' + i, name: names[i], text: lines[Math.floor(Math.random() * lines.length)], t: this.now() }); }, 6500);
+        if (TYPE === 'loy') { const ktb = () => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; addKrathong('b' + Math.random(), { uid: 'bot' + i, name: names[i], style: KT[i % 3].id, wish: '', x: p.x, t: this.now() }); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); };
+            for (let i = 0; i < 4; i++) setTimeout(ktb, i * 300); setInterval(ktb, 9000); }
+    },
+    spawn() { return TYPE === 'loy' ? WORLD.spawn() : [0, 0]; },
+    demoSet() { this.P[this.uid] = Object.assign({}, this.me); syncPeers(Object.assign({}, this.P)); }
+};
+function loadScripts(list) { return list.reduce((p, src) => p.then(() => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); })), Promise.resolve()); }
+function withTimeout(p, ms) { return Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]); }
+
+// ===================== แชท =====================
+let chatReady = false; const seen = new Set();
+function onChat(m) {
+    if (!m || !m.text) return; const key = (m.uid || '') + (m.t || '') + m.text; if (seen.has(key)) return; seen.add(key);
+    const d = document.createElement('div'); d.className = 'm' + (m.uid === NET.uid ? ' me' : '');
+    d.innerHTML = `<b>${esc(m.name)}</b>${esc(m.text)}`; const box = $('msgs'), stick = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    box.appendChild(d); while (box.children.length > 120) box.removeChild(box.firstChild); if (stick || m.uid === NET.uid) box.scrollTop = box.scrollHeight;
+    if (chatReady || NET.now() - (m.t || 0) < 8000) showBubble(m.uid, m.text);
+}
+function sysMsg(t) { const d = document.createElement('div'); d.className = 'm sys'; d.textContent = t; $('msgs').appendChild(d); $('msgs').scrollTop = $('msgs').scrollHeight; }
+let lastSend = 0;
+window.sendChat = e => { e.preventDefault(); const v = $('msg').value.trim(); if (!v || !NET.me) return false; if (Date.now() - lastSend < 1200) { toast('พิมพ์ช้าลงหน่อยนะ 🙂'); return false; } lastSend = Date.now(); NET.chat(v.slice(0, 200)); $('msg').value = ''; return false; };
+$('emo').innerHTML = EMO.map(x => `<button type="button" data-e="${x}">${x}</button>`).join('');
+$('emo').onclick = e => { const b = e.target.closest('button'); if (!b || !NET.me) return; if (Date.now() - lastSend < 900) return; lastSend = Date.now(); NET.chat(b.dataset.e); };
+window.toggleChat = () => { $('chat').classList.toggle('min'); layoutChat(); };
+window.openChat = () => { $('chat').classList.remove('min'); layoutChat(); };
+function layoutChat() { const mob = innerWidth < 820; document.documentElement.style.setProperty('--chat-h', mob ? ($('chat').getBoundingClientRect().height + 8) + 'px' : '0px'); $('chatToggle').innerHTML = $('chat').classList.contains('min') ? '<i class="fa-solid fa-chevron-up"></i>' : '<i class="fa-solid fa-chevron-down"></i>'; }
+$('chat').addEventListener('transitionend', layoutChat);
+window.togglePeople = () => { $('people').classList.toggle('on'); renderPeople(); };
+function renderPeople() { const list = Object.keys(peersCache).map(k => peersCache[k]).filter(p => p && p.name); $('people').innerHTML = `<b>ผู้เข้าร่วม ${list.length} คน</b>` + list.map(p => `<div>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</div>`).join(''); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 2200); }
+function onStats(s) { ktTotal = s.krathong || 0; $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
+
+// ===================== ปุ่มกิจกรรม =====================
+let myWianDoneAt = 0;
+function renderActions() {
+    if (TYPE === 'loy') $('actions').innerHTML = `<button class="act" onclick="openKt()">🪷 ลอยกระทง</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`;
+    else {
+        const el = wianState(NET.me, NET.now()), r = el == null ? 0 : Math.floor(el / ROUND_MS) + 1;
+        $('actions').innerHTML = el == null ? `<button class="act" onclick="startWian()">🕯️ เริ่มเวียนเทียน</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`
+            : `<button class="act" disabled>🕯️ กำลังเวียน รอบที่ ${r}/${ROUNDS}</button>`;
+    }
+}
+window.startWian = () => { NET.set({ wian: NET.now() }); myWianDoneAt = NET.now() + ROUND_MS * ROUNDS; renderActions(); toast('ตั้งจิตอธิษฐาน แล้วเดินเวียนขวา 3 รอบ 🙏'); };
+setInterval(() => { if (TYPE !== 'wian' || !NET.me) return; renderActions(); if (myWianDoneAt && NET.now() >= myWianDoneAt) { myWianDoneAt = 0; NET.wianDone(); toast('เวียนเทียนครบ 3 รอบแล้ว สาธุ 🙏'); NET.chat('เวียนเทียนครบ 3 รอบแล้ว 🙏'); } }, 1000);
+let ktStyle = KT[1].id;
+$('ktOpts').innerHTML = KT.map(k => `<button class="opt" data-k="${k.id}"><span>${k.icon}</span>${k.label}</button>`).join('');
+$('ktOpts').onclick = e => { const b = e.target.closest('button'); if (!b) return; ktStyle = b.dataset.k; [...$('ktOpts').children].forEach(x => x.classList.toggle('on', x === b)); };
+window.openKt = () => { [...$('ktOpts').children].forEach(x => x.classList.toggle('on', x.dataset.k === ktStyle)); $('kt').classList.add('on'); };
+window.closeModal = id => $(id).classList.remove('on');
+let lastKt = 0;
+window.floatKrathong = () => {
+    if (Date.now() - lastKt < 15000) { toast('รอสักครู่ แล้วค่อยลอยกระทงใบต่อไปนะ'); return; }
+    lastKt = Date.now(); closeModal('kt');
+    const me = avatars.get(NET.uid), x = me ? THREE.MathUtils.clamp(me.position.x, -10, 10) : 0;
+    NET.set({ x, z: 2.5 });   // เดินไปริมท่าน้ำก่อน
+    const wish = $('wish').value.trim().slice(0, 60); $('wish').value = '';
+    setTimeout(() => { NET.krathong({ style: ktStyle, wish, x }); if (wish) NET.chat('🪷 ' + wish); toast('ลอยกระทงแล้ว ขอให้สมหวัง 🪷'); }, 1600);
+};
+
+// ===================== เลือกตัวละคร (ดูตัวอย่าง 3D) =====================
+let pv = null;
+window.openPick = () => {
+    $('pick').classList.add('on'); $('pickName').textContent = 'ชื่อที่แสดงในห้อง: ' + ME.name;
+    $('swatch').innerHTML = COLORS.map(c => `<button style="background:${c}" data-c="${c}" aria-label="สี"></button>`).join('');
+    $('swatch').onclick = e => { const b = e.target.closest('button'); if (b) { LOOK.color = b.dataset.c; drawPick(); } };
+    if (!pv) {
+        const cv = $('pv'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); r.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); r.outputColorSpace = THREE.SRGBColorSpace;
+        const s = new THREE.Scene(); s.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.4)); const dl = new THREE.DirectionalLight(0xffffff, 1.2); dl.position.set(2, 3, 4); s.add(dl);
+        const c = new THREE.PerspectiveCamera(30, 2, 0.1, 50); c.position.set(0, 1.4, 5.2); c.lookAt(0, 1.05, 0);
+        pv = { r, s, c, ch: null };
+    }
+    drawPick();
+};
+function drawPick() {
+    $('sexM').classList.toggle('on', LOOK.sex === 'm'); $('sexF').classList.toggle('on', LOOK.sex === 'f');
+    [...$('swatch').children].forEach(b => b.classList.toggle('on', b.dataset.c === LOOK.color));
+    if (pv.ch) pv.s.remove(pv.ch); pv.ch = makeChar({ name: ME.name, sex: LOOK.sex, color: LOOK.color, self: true }); pv.ch.userData.tag.visible = false; pv.s.add(pv.ch);
+}
+window.pickSex = s => { LOOK.sex = s; drawPick(); };
+window.enterRoom = () => {
+    lsSet('PBD_EV_LOOK', JSON.stringify(LOOK)); $('pick').classList.remove('on');
+    if (!NET.me) {
+        const s = NET.spawn(); NET.join({ name: ME.name, emp: ME.emp || '', sex: LOOK.sex, color: LOOK.color, x: s[0], z: s[1], wian: 0 });
+        renderActions(); setTimeout(() => { chatReady = true; sysMsg('คุณเข้าร่วม "' + TITLE + '" แล้ว · พิมพ์ทักทายเพื่อนๆ ได้เลย'); }, 1500);
+    } else NET.set({ sex: LOOK.sex, color: LOOK.color });
+};
+
+// ===================== แตะพื้นเพื่อเดิน (ลอยกระทง) =====================
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY, Date.now()]; });
+renderer.domElement.addEventListener('pointerup', e => {
+    if (!downAt || TYPE !== 'loy' || !NET.me) return; const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]); if (moved > 8 || Date.now() - downAt[2] > 400) return;
+    const r = renderer.domElement.getBoundingClientRect(); ptr.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ray.setFromCamera(ptr, camera);
+    const hit = new THREE.Vector3(); if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.18), hit)) return;
+    const B = WORLD.bounds; NET.set({ x: +THREE.MathUtils.clamp(hit.x, B.x0, B.x1).toFixed(2), z: +THREE.MathUtils.clamp(hit.z, B.z0, B.z1).toFixed(2) });
+    marker.position.set(THREE.MathUtils.clamp(hit.x, B.x0, B.x1), 0.2, THREE.MathUtils.clamp(hit.z, B.z0, B.z1)); marker.userData.t = 1;
+});
+const marker = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.3, 24), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0, depthWrite: false })); marker.rotation.x = -Math.PI / 2; marker.userData.t = 0; scene.add(marker);
+
+// ===================== เริ่ม =====================
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); layoutChat(); }
+addEventListener('resize', resize);
+if (TYPE === 'loy') { buildLoy(); camera.position.set(0, 7.5, 17); controls.target.set(0, 0.6, 1); }
+else { buildWian(); camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); }
+resize();
+const clock = new THREE.Clock(); let T = 0;
+function loop() {
+    const dt = Math.min(clock.getDelta(), 0.05); T += dt;
+    WORLD.update.forEach(f => f(T, dt)); if (TYPE === 'loy') updKrathongs(T); animateAvatars(T, dt);
+    if (marker.userData.t > 0) { marker.userData.t -= dt * 1.4; marker.material.opacity = Math.max(0, marker.userData.t); marker.scale.setScalar(1 + (1 - marker.userData.t)); }
+    if (pv && $('pick').classList.contains('on')) { pv.ch.rotation.y = Math.sin(T * 0.8) * 0.6; const u = pv.ch.userData; u.body.position.y = Math.abs(Math.sin(T * 3)) * 0.04; const w = pv.r.domElement; if (w.width !== w.clientWidth * pv.r.getPixelRatio()) { pv.r.setSize(w.clientWidth, w.clientHeight, false); pv.c.aspect = w.clientWidth / w.clientHeight; pv.c.updateProjectionMatrix(); } pv.r.render(pv.s, pv.c); }
+    controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop);
+}
+loop();
+(async () => {
+    if (!ME) { $('loadTxt').innerHTML = 'เปิดห้องกิจกรรมจากหน้า <b>PBD Wallet</b> ก่อนนะ<br><a href="./" style="color:#fbbf24">ไปที่ PBD Wallet</a>'; document.querySelector('#loading .sp').style.display = 'none'; return; }
+    $('loadTxt').textContent = 'กำลังเชื่อมต่อห้อง…';
+    await NET.start();
+    $('loading').style.display = 'none'; openPick();
+})();
+</script>
+</body>
+</html>
