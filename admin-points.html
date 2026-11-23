@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#78350f">
+    <title>PBD พ้อย Award</title>
+    <link rel="icon" href="icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'] } } } };</script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f3f4f6; }
+        .hero { background: linear-gradient(135deg, #111827 0%, #78350f 55%, #d97706 100%); }
+        .swal2-popup { font-family: 'Kanit', sans-serif; }
+        th, td { white-space: nowrap; }
+        .chip.on { background: #111827; color: #fff; border-color: #111827; }
+        input.pt { width: 5.5rem; text-align: right; }
+        input.pt.dirty { border-color: #d97706; background: #fffbeb; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-gray-900">
+    <header class="hero text-white px-4 pt-6 pb-16 rounded-b-[2rem] shadow-lg">
+        <div class="flex items-center justify-between max-w-md lg:max-w-5xl mx-auto gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-trophy"></i></div>
+                <div class="min-w-0">
+                    <p class="text-[11px] text-amber-100">PBD Smart · ผู้ดูแลระบบ</p>
+                    <h1 class="text-xl font-bold leading-tight">พ้อย Award · พีเรียดปัจจุบัน</h1>
+                    <p id="who" class="text-xs text-amber-100 truncate">กำลังเชื่อมต่อ…</p>
+                </div>
+            </div>
+            <button onclick="load()" class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0" aria-label="รีเฟรช"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md lg:max-w-5xl mx-auto px-4 -mt-12 space-y-4">
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <div id="sum" class="grid grid-cols-3 gap-2 text-center mb-3"></div>
+            <p id="note" class="text-xs text-gray-500 mb-3"></p>
+            <input id="q" oninput="render()" placeholder="ค้นหาชื่อ / ชื่อเล่น" class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm mb-2">
+            <div id="groups" class="flex flex-wrap gap-2 mb-2"></div>
+            <div id="branches" class="flex flex-wrap gap-2"></div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-md p-4">
+            <div class="overflow-x-auto -mx-4 px-4">
+                <table class="w-full text-sm">
+                    <thead><tr class="text-left text-xs text-gray-500 border-b">
+                        <th class="py-2 pr-2">ชื่อ</th><th class="pr-2">สาขา</th><th class="pr-2 text-right">อัตโนมัติ</th><th class="pr-2 text-right">พ้อยที่ใช้</th><th class="pr-2 text-right">รวมครึ่งปี</th><th></th>
+                    </tr></thead>
+                    <tbody id="rows"><tr><td colspan="6" class="text-center text-gray-400 py-6">กำลังโหลด…</td></tr></tbody>
+                </table>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-3">อัตโนมัติ = จากยอดขายสด (Loyverse + ใบแจ้งยอด) · พนักงานขาย = พ้อยตัวเอง · หัวหน้าทีม = พ้อยรวมของทีมที่ดูแล · ผู้จัดการ = ใส่เอง ·
+                แก้ตัวเลขแล้วกด <i class="fa-solid fa-floppy-disk"></i> · ลบตัวเลขให้ว่างแล้วบันทึก = กลับไปใช้ค่าอัตโนมัติ · ถ้าคอลัมน์พีเรียดในแท็บ Award มีตัวเลขนำเข้าแล้ว ระบบใช้ตัวเลขนั้น (ล็อก)</p>
+        </section>
+    </main>
+
+<script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1_a4EXwbMK2RoZ1-6GZ6QUXLTdFshQASP7EcdXAPnGOgmcZmJbbIHNh6SNtkK9k588Q/exec';
+    const LIFF_ID = '2012225566-hFrR9T1Q';
+    const IN_LINE = /\bLine\//i.test(navigator.userAgent);
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const num = n => n == null || n === '' ? '–' : Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    let AUTH = null, D = null, G = 'ทั้งหมด', B = 'ทั้งหมด';
+
+    const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    async function auth() {
+        const dt = lsGet('PBD_DT'); let useLine = ''; try { useLine = sessionStorage.getItem('PBD_USE_LINE') || ''; } catch (e) { }
+        if (!IN_LINE && dt && !useLine) { AUTH = { dt: dt }; return true; }
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return false; }
+        let at = ''; try { at = liff.getAccessToken() || ''; } catch (e) { }
+        AUTH = { idToken: liff.getIDToken() || '', accessToken: at };
+        return true;
+    }
+    async function api(body) {
+        const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, AUTH, body)) });
+        const j = await r.json();
+        if (!j.ok && (j.authFail || j.devFail)) {
+            await Swal.fire({ icon: 'warning', title: 'ต้องเข้าสู่ระบบใหม่', text: 'กดตกลงเพื่อเข้าสู่ระบบด้วย LINE', confirmButtonColor: '#d97706' });
+            try { sessionStorage.setItem('PBD_USE_LINE', '1'); if (window.liff && liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch (e) { }
+            location.reload(); throw new Error('relogin');
+        }
+        return j;
+    }
+    const fail = e => { if (!e || e.message !== 'relogin') Swal.fire('เชื่อมต่อระบบไม่ได้', 'ตรวจอินเทอร์เน็ต แล้วลองใหม่', 'error'); };
+
+    async function load() {
+        $('rows').innerHTML = '<tr><td colspan="6" class="text-center text-gray-400 py-6">กำลังคำนวณพ้อยสด…</td></tr>';
+        try {
+            const j = await api({ wl: 'ap_list' });
+            if (!j.ok) { $('who').innerText = 'ไม่มีสิทธิ์ใช้งาน'; $('rows').innerHTML = `<tr><td colspan="6" class="text-center text-red-600 py-6">${esc(j.error)}</td></tr>`; return; }
+            D = j; $('who').innerText = j.admin.name + ' · พีเรียด ' + (j.period || '–') + ' · อัปเดต ' + j.at;
+            $('note').innerHTML = j.hasColumn ? 'ตัวเลขชุดนี้แสดงในหน้า Award ของพนักงานทันที (แคชไม่เกิน 5 นาที)'
+                : `<span class="text-red-600">ไม่พบคอลัมน์ "${esc(j.period)}" ในแท็บ Award — เพิ่มหัวคอลัมน์นี้ก่อน ตัวเลขจึงจะขึ้นในหน้า Award</span>`;
+            chips(); render();
+        } catch (e) { fail(e); }
+    }
+    function chips() {
+        const gs = ['ทั้งหมด', 'พนักงานขาย', 'หัวหน้าทีม', 'ผู้จัดการ'];
+        const bs = ['ทั้งหมด'].concat([...new Set(D.rows.map(r => r.branch).filter(Boolean))].sort());
+        const mk = (arr, cur, fn) => arr.map(x => `<button onclick="${fn}('${esc(x)}')" class="chip ${x === cur ? 'on' : ''} text-xs border border-gray-300 rounded-full px-3 py-1">${esc(x)}</button>`).join('');
+        $('groups').innerHTML = mk(gs, G, 'setG'); $('branches').innerHTML = mk(bs, B, 'setB');
+    }
+    function setG(x) { G = x; chips(); render(); }
+    function setB(x) { B = x; chips(); render(); }
+    function src(r) { return r.official != null ? 'lock' : r.ov != null ? 'ov' : r.live != null ? 'live' : 'none'; }
+    function render() {
+        if (!D) return;
+        const q = $('q').value.trim().toLowerCase();
+        const list = D.rows.filter(r => (G === 'ทั้งหมด' || r.group === G) && (B === 'ทั้งหมด' || r.branch === B) && (!q || (r.name + ' ' + r.nick).toLowerCase().includes(q)))
+            .sort((a, b) => (b.final || 0) - (a.final || 0));
+        const all = D.rows.filter(r => G === 'ทั้งหมด' || r.group === G);
+        const n = all.filter(r => r.final != null).length, nov = all.filter(r => r.ov != null && r.official == null).length;
+        $('sum').innerHTML = [['มีพ้อยแล้ว', n + '/' + all.length], ['แอดมินแก้', nov], ['ยังว่าง', all.length - n]]
+            .map(([l, v]) => `<div class="rounded-xl bg-gray-50 border border-gray-200 py-2"><p class="text-[11px] text-gray-500">${l}</p><p class="text-lg font-bold">${v}</p></div>`).join('');
+        $('rows').innerHTML = list.length ? list.map(r => {
+            const s = src(r), i = D.rows.indexOf(r);
+            const badge = { lock: '<span class="text-[10px] rounded-full bg-gray-800 text-white px-2">นำเข้าแล้ว</span>', ov: '<span class="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2">แก้เอง</span>', live: '<span class="text-[10px] rounded-full bg-emerald-100 text-emerald-800 px-2">สด</span>', none: '<span class="text-[10px] rounded-full bg-red-50 text-red-600 px-2">ว่าง</span>' }[s];
+            const cell = s === 'lock' ? `<b>${num(r.official)}</b>`
+                : `<input id="p${i}" class="pt rounded-lg border border-gray-300 px-2 py-1 text-sm" inputmode="decimal" value="${r.ov != null ? r.ov : ''}" placeholder="${r.live != null ? r.live : '–'}" oninput="this.classList.add('dirty')" onkeydown="if(event.key==='Enter')save(${i})">`;
+            return `<tr class="border-b last:border-0">
+                <td class="py-2 pr-2"><p class="font-semibold">${esc(r.nick || r.name)} ${badge}</p><p class="text-[11px] text-gray-500">${esc(r.name)} · ${esc(r.group)}</p></td>
+                <td class="pr-2 text-xs">${esc(r.branch)}</td>
+                <td class="pr-2 text-right text-gray-500">${num(r.live)}</td>
+                <td class="pr-2 text-right">${cell}</td>
+                <td class="pr-2 text-right font-semibold">${num(r.halfYear)}</td>
+                <td>${s === 'lock' ? '' : `<button onclick="save(${i})" class="w-8 h-8 rounded-full bg-amber-600 text-white" aria-label="บันทึก"><i class="fa-solid fa-floppy-disk text-xs"></i></button>`}</td></tr>`;
+        }).join('') : '<tr><td colspan="6" class="text-center text-gray-400 py-6">ไม่พบรายชื่อ</td></tr>';
+    }
+    async function save(i) {
+        const r = D.rows[i], el = $('p' + i); if (!r || !el) return;
+        const raw = el.value.trim();
+        if (raw !== '' && !(parseFloat(raw) >= 0)) { Swal.fire('ตัวเลขไม่ถูกต้อง', 'ใส่พ้อยเป็นตัวเลข 0 ขึ้นไป', 'warning'); return; }
+        el.disabled = true;
+        try {
+            const j = await api({ wl: 'ap_set', key: r.key, points: raw });
+            if (!j.ok) { Swal.fire('บันทึกไม่ได้', esc(j.error), 'error'); el.disabled = false; return; }
+            const prevFinal = r.final || 0;
+            r.ov = j.ov; r.final = r.official != null ? r.official : r.ov != null ? r.ov : r.live;
+            r.halfYear = Math.round(((r.halfYear || 0) - prevFinal + (r.final || 0)) * 100) / 100;
+            render();
+            Swal.fire({ toast: true, position: 'top', icon: 'success', title: j.ov == null ? 'กลับไปใช้ค่าอัตโนมัติแล้ว' : 'บันทึก ' + num(j.ov) + ' พ้อย', timer: 1500, showConfirmButton: false });
+        } catch (e) { el.disabled = false; fail(e); }
+    }
+    (async () => { try { if (await auth()) load(); } catch (e) { fail(e); } })();
+</script>
+</body>
+</html>
