@@ -356,13 +356,13 @@
             <div class="flex items-start gap-3">
                 <div id="frEmoji" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 fest-ico">🪷</div>
                 <div class="min-w-0 flex-1">
-                    <p class="text-[10px] font-bold tracking-wider text-red-600 uppercase">กิจกรรมออนไลน์ · LIVE</p>
+                    <p id="frKicker" class="text-[10px] font-bold tracking-wider text-red-600 uppercase">กิจกรรมออนไลน์ · LIVE</p>
                     <h2 id="frTitle" class="text-base font-bold text-gray-900 leading-tight">ลอยกระทงออนไลน์</h2>
                     <p id="frDesc" class="text-xs text-gray-600 mt-0.5"></p>
                     <p id="frDate" class="text-[11px] text-gray-500 mt-1"><i class="fa-regular fa-calendar"></i> <span></span></p>
                 </div>
             </div>
-            <button onclick="openFestRoom()" class="fest-btn mt-3 w-full rounded-xl py-3 font-bold text-white shadow flex items-center justify-center gap-2"><i class="fa-solid fa-person-walking-arrow-right"></i> เข้าร่วมกิจกรรม</button>
+            <button onclick="openFestRoom()" class="fest-btn mt-3 w-full rounded-xl py-3 font-bold text-white shadow flex items-center justify-center gap-2"><i class="fa-solid fa-person-walking-arrow-right"></i> <span id="frBtn">เข้าร่วมกิจกรรม</span></button>
         </section>
 
         <!-- ===== กิจกรรม / ประชุม (แบนเนอร์ + ตอบรับ) ===== -->
@@ -2069,6 +2069,7 @@
             { id: 'baadmin', label: 'บันทึกรายการหัก', icon: 'fa-file-invoice-dollar', run: "openAdminPage('admin-branch.html')", show: R => R.baAdmin },
             { id: 'aaadmin', label: 'จัดการคูปอง', icon: 'fa-ticket', run: "openAdminPage('admin-activity.html')", show: R => R.aaAdmin },
             { id: 'pdxadmin', label: 'หักพ้อยคืน', icon: 'fa-rotate-left', run: "openAdminPage('admin-deduct.html')", show: R => R.allAdmin },
+            { id: 'lounge', label: 'ห้องพูดคุย', icon: 'fa-comments', run: "openLounge()", show: R => true },
             { id: 'ptadmin', label: 'พ้อย Award', icon: 'fa-trophy', run: "openAdminPage('admin-points.html')", show: R => R.allAdmin },
             { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
@@ -2632,10 +2633,18 @@
         placeFestCard();
     }
     function fxThDate(d) { if (!d) return ''; const m = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], p = String(d).split('-'); return +p[2] + ' ' + m[+p[1] - 1] + ' ' + (+p[0] + 543); }
-    // การ์ดกิจกรรมออนไลน์ (การ์ดบนสุดของหน้าหลัก): แสดงเฉพาะช่วงเทศกาลที่มีห้องกิจกรรม
+    // การ์ดกิจกรรมออนไลน์ (การ์ดบนสุดของหน้าหลัก): ช่วงเทศกาลที่มีห้องกิจกรรม = ห้องเทศกาล · ช่วงปกติ = ห้องพูดคุย PBD
     function placeFestCard() {
         const c = document.getElementById('festRoomCard'); if (!c) return;
-        c.classList.toggle('hidden', !FEST_ROOM); if (!FEST_ROOM) return;
+        c.classList.remove('hidden');
+        document.getElementById('frKicker').textContent = FEST_ROOM ? 'กิจกรรมออนไลน์ · LIVE' : 'ห้องพูดคุย · LIVE';
+        document.getElementById('frBtn').textContent = FEST_ROOM ? 'เข้าร่วมกิจกรรม' : 'เข้าห้องพูดคุย';
+        if (!FEST_ROOM) {
+            document.getElementById('frEmoji').textContent = '💬';
+            document.getElementById('frTitle').textContent = 'ห้องพูดคุย PBD';
+            document.getElementById('frDesc').textContent = 'แวะมาทักทาย คุยเล่นกับเพื่อนๆ ทุกสาขา ด้วยตัวละคร 3D';
+            document.getElementById('frDate').classList.add('hidden'); return;
+        }
         const loy = FEST_ROOM.type === 'loy';
         document.getElementById('frEmoji').textContent = loy ? '🪷' : '🕯️';
         document.getElementById('frTitle').textContent = loy ? 'ลอยกระทงออนไลน์' : FEST_ROOM.title;
@@ -2644,7 +2653,8 @@
         document.getElementById('frDate').classList.toggle('hidden', !dt); document.querySelector('#frDate span').textContent = dt;
     }
     let FEST_ROOM = null;
-    function openFestRoom() { if (!FEST_ROOM) return; location.href = 'event-room.html?type=' + FEST_ROOM.type + '&room=' + encodeURIComponent(FEST_ROOM.id) + '&title=' + encodeURIComponent(FEST_ROOM.title); }
+    function openLounge() { location.href = 'event-room.html?type=lounge&room=lounge&title=' + encodeURIComponent('ห้องพูดคุย PBD'); }
+    function openFestRoom() { if (!FEST_ROOM) return openLounge(); location.href = 'event-room.html?type=' + FEST_ROOM.type + '&room=' + encodeURIComponent(FEST_ROOM.id) + '&title=' + encodeURIComponent(FEST_ROOM.title); }
     async function loadFestival() {
         let f = null;
         try {

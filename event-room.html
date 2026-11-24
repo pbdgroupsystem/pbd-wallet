@@ -203,15 +203,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // ===================== ตั้งค่าห้อง =====================
-// เปิดจาก Wallet: event-room.html?room=<id เทศกาล>&type=loy|wian&title=...  · ทดลอง: ?type=loy&demo=1
+// เปิดจาก Wallet: event-room.html?room=<id เทศกาล>&type=loy|wian|lounge&title=...  · ทดลอง: ?type=loy&demo=1
+// lounge = ห้องพูดคุยช่วงเวลาปกติ (เปิดตลอด ห้องเดียวรวมทุกสาขา)
 const Q = new URLSearchParams(location.search);
-const TYPE = Q.get('type') === 'wian' ? 'wian' : 'loy';
-const ROOM = (Q.get('room') || (TYPE + '-demo')).replace(/[^\w-]/g, '').slice(0, 40);
-const TITLE = Q.get('title') || (TYPE === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์');
+const TYPE = ['wian', 'lounge'].indexOf(Q.get('type')) >= 0 ? Q.get('type') : 'loy', WALK = TYPE !== 'wian', LOUNGE = TYPE === 'lounge';
+const ROOM = (Q.get('room') || (LOUNGE ? 'lounge' : TYPE + '-demo')).replace(/[^\w-]/g, '').slice(0, 40);
+const TITLE = Q.get('title') || (LOUNGE ? 'ห้องพูดคุย PBD' : TYPE === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์');
 const ROUND_MS = 36000, ROUNDS = 3, KT_LIFE = 170000, KT_SPEED = 0.17;
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f8fafc'];
 const KT = [{ id: 'leaf', icon: '🌿', label: 'ใบตอง' }, { id: 'lotus', icon: '🪷', label: 'ดอกบัว' }, { id: 'bread', icon: '🍞', label: 'ขนมปัง' }];
-const EMO = ['🙏', '🪷', '🕯️', '❤️', '😊', '👏', '✨', '🎉'];
+const EMO = LOUNGE ? ['👋', '😊', '😂', '❤️', '👍', '👏', '🔥', '🎉'] : ['🙏', '🪷', '🕯️', '❤️', '😊', '👏', '✨', '🎉'];
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
@@ -224,8 +225,8 @@ if (!ME || !ME.name) ME = Q.get('demo') ? { name: 'ทดลอง', emp: '' } :
 const LOOK = (() => { try { return JSON.parse(lsGet('PBD_EV_LOOK') || 'null'); } catch (e) { return null; } })() || { sex: 'f', color: COLORS[7] };
 
 document.title = 'PBD · ' + TITLE;
-$('roomTitle').textContent = (TYPE === 'loy' ? '🪷 ' : '🕯️ ') + TITLE;
-$('roomSub').textContent = TYPE === 'loy' ? 'แตะพื้นเพื่อเดิน · กดปุ่มลอยกระทงที่ริมน้ำ' : 'เดินเวียนรอบพระเจดีย์ 3 รอบ (เวียนขวา)';
+$('roomTitle').textContent = (LOUNGE ? '💬 ' : TYPE === 'loy' ? '🪷 ' : '🕯️ ') + TITLE;
+$('roomSub').textContent = LOUNGE ? 'แตะพื้นเพื่อเดิน · แตะเพื่อนเพื่อทักทาย' : TYPE === 'loy' ? 'แตะพื้นเพื่อเดิน · กดปุ่มลอยกระทงที่ริมน้ำ' : 'เดินเวียนรอบพระเจดีย์ 3 รอบ (เวียนขวา)';
 window.goBack = () => { if (history.length > 1) history.back(); else location.href = './'; };
 
 // ===================== ฉาก 3 มิติ =====================
@@ -371,6 +372,60 @@ function boats() {
         b.ch.userData.arms.forEach(a => { a.rotation.x = -0.9 - r * 0.35; });
         b.ch.userData.body.rotation.x = r * 0.08;
     }));
+}
+// ===================== ห้องพูดคุย (ลานกลางสวนตอนบ่าย: น้ำพุ ม้านั่ง ต้นไม้ ลูกโป่ง ป้าย PBD) =====================
+function buildLounge() {
+    scene.fog = new THREE.Fog(0xd8ecf7, 45, 150);
+    skyDome('#5fb4ef', '#a9dcf7', '#fff1d6');
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x7fa86a, 1.25));
+    const sun = new THREE.DirectionalLight(0xfff0d0, 1.3); sun.position.set(14, 22, 10); scene.add(sun);
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(80, 48), toon(0x86cf6c)); ground.rotation.x = -Math.PI / 2; scene.add(ground);
+    // ลานหินลายวง
+    [[10, 0xf3e6cc], [8.4, 0xe9d6b2], [6.6, 0xf3e6cc], [4.8, 0xe9d6b2], [3, 0xf3e6cc]].forEach(([r, c], i) => { const d = new THREE.Mesh(new THREE.CircleGeometry(r, 48), toon(c)); d.rotation.x = -Math.PI / 2; d.position.y = 0.01 + i * 0.002; scene.add(d); });
+    // น้ำพุกลางลาน
+    const stone = toon(0xd9d2c5), waterM = new THREE.MeshStandardMaterial({ color: 0x5ec3f0, emissive: 0x1d6b9a, emissiveIntensity: 0.35, roughness: 0.2, transparent: true, opacity: 0.9 });
+    const b1 = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.0, 0.55, 32), stone); b1.position.y = 0.27; scene.add(b1);
+    const w1 = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 0.05, 32), waterM); w1.position.y = 0.53; scene.add(w1);
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 1.4, 12), stone); col.position.y = 1.2; scene.add(col);
+    const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.5, 0.3, 24), stone); b2.position.y = 1.95; scene.add(b2);
+    const w2 = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.04, 24), waterM); w2.position.y = 2.09; scene.add(w2);
+    const drops = []; for (let i = 0; i < 40; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), waterM); d.userData = { a: Math.random() * Math.PI * 2, ph: Math.random() }; scene.add(d); drops.push(d); }
+    WORLD.update.push(t => drops.forEach(d => { const f = (t * 0.7 + d.userData.ph) % 1, r = 0.15 + f * 1.3; d.position.set(Math.cos(d.userData.a) * r, 2.2 + f * 1.6 - f * f * 2.3, Math.sin(d.userData.a) * r); }));
+    // ม้านั่งรอบลาน (หันเข้าหาน้ำพุ)
+    const wood = toon(0xb07a48), iron = toon(0x3d3d3d);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + Math.PI / 6, g = new THREE.Group();
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.1, 0.5), wood); seat.position.y = 0.45; g.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.08), wood); back.position.set(0, 0.75, -0.24); g.add(back);
+        [-0.75, 0.75].forEach(x => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.45, 0.45), iron); l.position.set(x, 0.22, 0); g.add(l); });
+        g.position.set(Math.cos(a) * 9.6, 0, Math.sin(a) * 9.6); g.lookAt(0, 0, 0); scene.add(g); }
+    // ต้นไม้พุ่มกลม + แปลงดอกไม้
+    const leaf = [0x4caf50, 0x66bb6a, 0x43a047, 0x7cb342];
+    for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2 + Math.random() * 0.2, r = THREE.MathUtils.randFloat(13, 24), g = new THREE.Group();
+        const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 1.6, 6), toon(0x7a5232)); tr.position.y = 0.8; g.add(tr);
+        [[0, 2.2, 0, 1.3], [0.6, 1.9, 0.2, 0.9], [-0.6, 1.95, -0.1, 0.95], [0, 2.9, 0, 0.9]].forEach(([x, y, z, rr]) => { const c = new THREE.Mesh(new THREE.SphereGeometry(rr, 14, 10), toon(leaf[(i + Math.round(x * 3)) & 3])); c.position.set(x, y, z); g.add(c); });
+        const sc = THREE.MathUtils.randFloat(0.9, 1.5); g.scale.setScalar(sc); g.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(g); }
+    const fl = [0xff6b9a, 0xffd23f, 0xff8c42, 0xffffff, 0xb388ff, 0xff5252];
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, cx = Math.cos(a) * 11.4, cz = Math.sin(a) * 11.4;
+        for (let i = 0; i < 9; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), toon(fl[(k + i) % fl.length])); f.position.set(cx + THREE.MathUtils.randFloat(-0.8, 0.8), 0.2, cz + THREE.MathUtils.randFloat(-0.8, 0.8)); scene.add(f); }
+        const bush = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8), toon(0x3f9a47)); bush.scale.y = 0.5; bush.position.set(cx, 0.1, cz); scene.add(bush); }
+    // ป้าย PBD Lounge
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 160; const g2 = cv.getContext('2d');
+    g2.fillStyle = '#dc2626'; g2.fillRect(0, 0, 512, 160); g2.fillStyle = '#fff'; g2.font = '700 74px Kanit, sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('PBD Lounge', 256, 70);
+    g2.font = '400 30px Kanit, sans-serif'; g2.fillText('ห้องพูดคุยของพวกเรา', 256, 128);
+    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(5, 1.56), new THREE.MeshBasicMaterial({ map: tx })); board.position.set(0, 3.1, -12.5); scene.add(board);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(5.3, 1.8, 0.12), toon(0x7a4a2a)); frame.position.set(0, 3.1, -12.58); scene.add(frame);
+    [-2.3, 2.3].forEach(x => { const po = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 3.2, 8), toon(0x7a4a2a)); po.position.set(x, 1.6, -12.6); scene.add(po); });
+    // ลูกโป่ง + ก้อนเมฆ
+    const bal = []; for (let i = 0; i < 9; i++) { const g = new THREE.Group(), c = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), std(new THREE.Color().setHSL(i / 9, 0.75, 0.6), { roughness: 0.35 })); c.scale.y = 1.15; g.add(c);
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1.4, 4), toon(0xffffff)); st.position.y = -1.15; g.add(st);
+        const a = i / 9 * Math.PI * 2; g.userData = { x: Math.cos(a) * THREE.MathUtils.randFloat(10, 12.5), z: Math.sin(a) * THREE.MathUtils.randFloat(10, 12.5), y: THREE.MathUtils.randFloat(3.6, 5), ph: Math.random() * 6 }; scene.add(g); bal.push(g); }
+    WORLD.update.push(t => bal.forEach(b => { const u = b.userData; b.position.set(u.x + Math.sin(t * 0.6 + u.ph) * 0.2, u.y + Math.sin(t * 1.1 + u.ph) * 0.18, u.z); b.rotation.z = Math.sin(t * 0.8 + u.ph) * 0.08; }));
+    const clouds = []; for (let i = 0; i < 8; i++) { const g = new THREE.Group(); for (let k = 0; k < 4; k++) { const c = new THREE.Mesh(new THREE.SphereGeometry(THREE.MathUtils.randFloat(2.2, 3.6), 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false })); c.position.set(k * 2.6 - 4, Math.random() * 1.2, Math.random() * 1.5); g.add(c); }
+        g.position.set(THREE.MathUtils.randFloat(-90, 90), THREE.MathUtils.randFloat(26, 40), THREE.MathUtils.randFloat(-110, -60)); g.userData.sp = THREE.MathUtils.randFloat(0.6, 1.4); scene.add(g); clouds.push(g); }
+    WORLD.update.push((t, dt) => clouds.forEach(c => { c.position.x += c.userData.sp * dt; if (c.position.x > 110) c.position.x = -110; }));
+    WORLD.ground = ground; WORLD.bounds = { x0: -10.5, x1: 10.5, z0: -9.5, z1: 10.5 };
+    WORLD.spawn = () => { const a = Math.random() * Math.PI * 2, r = THREE.MathUtils.randFloat(3.2, 8); return [Math.cos(a) * r, Math.sin(a) * r]; };
 }
 function buildWian() {
     scene.fog = new THREE.Fog(0x2b1d3a, 34, 120);
@@ -587,9 +642,12 @@ function animateAvatars(t, dt) {
         u.legs[0].rotation.x = moving ? Math.sin(ph) * 0.6 : 0; u.legs[1].rotation.x = moving ? -Math.sin(ph) * 0.6 : 0;
         if (u.holdMesh) { u.arms.forEach((ar, i) => { ar.rotation.x = -1.15; ar.rotation.z = (i ? -1 : 1) * 0.15; }); u.holdMesh.position.y = 0.66 + (moving ? Math.abs(Math.sin(ph)) * 0.03 : 0); u.holdMesh.userData.glow.material.opacity = 0.75 + Math.sin(t * 9 + u.phase) * 0.25; }
         else if (TYPE !== 'wian') { u.arms[0].rotation.x = moving ? -Math.sin(ph) * 0.5 : Math.sin(ph) * 0.06; u.arms[1].rotation.x = moving ? Math.sin(ph) * 0.5 : -Math.sin(ph) * 0.06; }
+        const dn = p.dance && now - p.dance < 6000 ? (now - p.dance) / 1000 : -1;   // เต้น 6 วินาที (ห้องพูดคุย)
+        if (dn >= 0 && !moving) { u.body.rotation.y = Math.sin(dn * 5) * 0.5; u.body.position.y = Math.abs(Math.sin(dn * 8)) * 0.18; u.arms.forEach((ar, i) => { ar.rotation.x = 0; ar.rotation.z = (i ? -1 : 1) * (2.2 + Math.sin(dn * 8 + i * Math.PI) * 0.5); }); u.dancing = 1; }
+        else if (u.dancing) { u.dancing = 0; u.body.rotation.y = 0; u.arms.forEach((ar, i) => { ar.rotation.z = (i ? 1 : -1) * 0.35; }); }
         if (p.wave && !u.holdMesh && now - p.wave < 2200) { const w = u.arms[1]; w.rotation.x = 0; w.rotation.z = 2.5 + Math.sin(t * 14) * 0.35; u.waving = 1; }   // โบกมือ
         else if (u.waving) { u.waving = 0; const w = u.arms[1]; if (TYPE === 'wian') { w.rotation.x = -1.0; w.rotation.z = -0.25; } else { w.rotation.x = 0; w.rotation.z = 0.35; } }
-        u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
+        if (!u.dancing) u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
         u.head.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.05;
         if (u.flame) u.flame.scale.y = 1 + Math.sin(t * 13 + u.phase) * 0.18;
         if (u.bubble) { u.bubbleT -= dt; u.bubble.material.opacity = Math.min(1, u.bubbleT); if (u.bubbleT <= 0) { a.remove(u.bubble); u.bubble.material.map.dispose(); u.bubble = null; } }
@@ -645,17 +703,18 @@ const NET = {
     startDemo() { this.demo = true; this.uid = 'me-' + Math.random().toString(36).slice(2, 8); $('demo').style.display = 'block'; return false; },
     demoJoin(me) {
         this.ds = { krathong: 37, wian: 12 }; onStats(this.ds); const P = {}; P[this.uid] = me; this.P = P;
-        const names = ['ปาล์ม', 'อู๋', 'แวว', 'หนึ่ง', 'มอส', 'ตอง', 'เอก', 'นก', 'โอม'], lines = ['สุขสันต์วันลอยกระทงครับ 🪷', 'ขอให้ยอดขายปังๆ', 'สวยมากเลย ✨', 'สาธุ 🙏', 'ปีนี้ขอให้สุขภาพแข็งแรง', 'ลอยแล้วววว', 'ทีม SD มาครบ!'];
+        const names = ['ปาล์ม', 'อู๋', 'แวว', 'หนึ่ง', 'มอส', 'ตอง', 'เอก', 'นก', 'โอม'], lines = LOUNGE ? ['สวัสดีครับทุกคน 👋', 'วันนี้ยอดเป็นไงบ้าง', 'กินข้าวยังจ้า', 'สู้ๆ นะทีม 💪', 'ใครอยู่สาขาไหนบ้าง', 'เย็นนี้ฝนตกไหมนะ', '555 น่ารักมาก'] : ['สุขสันต์วันลอยกระทงครับ 🪷', 'ขอให้ยอดขายปังๆ', 'สวยมากเลย ✨', 'สาธุ 🙏', 'ปีนี้ขอให้สุขภาพแข็งแรง', 'ลอยแล้วววว', 'ทีม SD มาครบ!'];
         names.forEach((n, i) => { const id = 'bot' + i, s = this.spawn(); P[id] = { name: n, sex: i % 2 ? 'm' : 'f', color: COLORS[i % COLORS.length], x: s[0], z: s[1], wian: TYPE === 'wian' && i % 3 === 0 ? this.now() - i * 7000 : 0 }; });
         syncPeers(Object.assign({}, P));
         setInterval(() => { const ids = Object.keys(P).filter(x => x.startsWith('bot')), id = ids[Math.floor(Math.random() * ids.length)]; const s = this.spawn();
             if (TYPE === 'wian') { if (Math.random() < 0.3) P[id].wian = this.now(); } else { P[id].x = s[0]; P[id].z = s[1]; }
+            if (LOUNGE && Math.random() < 0.15) P[id].dance = this.now();
             syncPeers(Object.assign({}, P)); }, 2200);
         setInterval(() => { const i = Math.floor(Math.random() * names.length); onChat({ uid: 'bot' + i, name: names[i], text: lines[Math.floor(Math.random() * lines.length)], t: this.now() }); }, 6500);
         if (TYPE === 'loy') { const ktb = () => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; addKrathong('b' + Math.random(), { uid: 'bot' + i, name: names[i], style: KT[i % 3].id, wish: '', x: p.x, t: this.now() }); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); };
             for (let i = 0; i < 4; i++) setTimeout(ktb, i * 300); setInterval(ktb, 9000); }
     },
-    spawn() { return TYPE === 'loy' ? WORLD.spawn() : [0, 0]; },
+    spawn() { return WALK ? WORLD.spawn() : [0, 0]; },
     demoSet() { this.P[this.uid] = Object.assign({}, this.me); syncPeers(Object.assign({}, this.P)); }
 };
 function loadScripts(list) { return list.reduce((p, src) => p.then(() => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); })), Promise.resolve()); }
@@ -721,11 +780,12 @@ $('chat').addEventListener('transitionend', layoutChat);
 window.togglePeople = () => { $('people').classList.toggle('on'); renderPeople(); };
 function renderPeople() { const list = Object.keys(peersCache).map(k => peersCache[k]).filter(p => p && p.name); $('people').innerHTML = `<b>ผู้เข้าร่วม ${list.length} คน</b>` + list.map(p => `<div>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</div>`).join(''); }
 function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 2200); }
-function onStats(s) { ktTotal = s.krathong || 0; $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
+function onStats(s) { ktTotal = s.krathong || 0; if (LOUNGE) { $('stat').style.display = 'none'; return; } $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
 
 // ===================== ปุ่มกิจกรรม =====================
 let myWianDoneAt = 0;
 function renderActions() {
+    if (LOUNGE) { $('actions').innerHTML = `<button class="act" onclick="waveAll()">👋 ทักทาย</button><button class="act alt" onclick="dance()">💃 เต้น</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`; return; }
     if (TYPE === 'loy') $('actions').innerHTML = NET.me && NET.me.hold
         ? `<button class="act" id="floatBtn" onclick="floatKrathong()">🪷 ลอยกระทง</button><button class="act alt" onclick="openKt()" aria-label="เปลี่ยนกระทง"><i class="fa-solid fa-pen"></i></button><button class="act alt" onclick="dropKrathong()" aria-label="วางกระทงลง"><i class="fa-solid fa-xmark"></i></button>`
         : `<button class="act" onclick="openKt()">🪷 เลือกกระทง</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`;
@@ -735,6 +795,9 @@ function renderActions() {
             : `<button class="act" disabled>🕯️ กำลังเวียน รอบที่ ${r}/${ROUNDS}</button>`;
     }
 }
+let lastEmote = 0;
+window.waveAll = () => { if (Date.now() - lastEmote < 2500) return; lastEmote = Date.now(); NET.set({ wave: NET.now() }); NET.chat('👋 สวัสดีทุกคน'); };
+window.dance = () => { if (Date.now() - lastEmote < 2500) return; lastEmote = Date.now(); NET.set({ dance: NET.now() }); };
 window.startWian = () => { NET.set({ wian: NET.now() }); myWianDoneAt = NET.now() + ROUND_MS * ROUNDS; renderActions(); toast('ตั้งจิตอธิษฐาน แล้วเดินเวียนขวา 3 รอบ 🙏'); };
 setInterval(() => { if (TYPE !== 'wian' || !NET.me) return; renderActions(); if (myWianDoneAt && NET.now() >= myWianDoneAt) { myWianDoneAt = 0; NET.wianDone(); toast('เวียนเทียนครบ 3 รอบแล้ว สาธุ 🙏'); NET.chat('เวียนเทียนครบ 3 รอบแล้ว 🙏'); } }, 1000);
 let ktStyle = KT[1].id;
@@ -805,13 +868,13 @@ const MUSIC = {
         for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
         rv.buffer = ir; const wet = c.createGain(); wet.gain.value = TYPE === 'wian' ? 0.55 : 0.3; rv.connect(wet); wet.connect(m); this.rv = rv;
         const noise = (sec) => { const b = c.createBuffer(1, c.sampleRate * sec, c.sampleRate), d = b.getChannelData(0); let last = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } return b; };
-        if (TYPE === 'loy') {   // เสียงน้ำ
+        if (TYPE === 'loy') {   // เสียงน้ำ (ห้องพูดคุย = ไม่มีเสียงน้ำ/โดรน)
             const src = c.createBufferSource(); src.buffer = noise(4); src.loop = true; const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 520; const g = c.createGain(); g.gain.value = 0.22;
             src.connect(f); f.connect(g); g.connect(m); src.start();
-        } else {   // โดรนต่ำๆ
+        } else if (TYPE === 'wian') {   // โดรนต่ำๆ
             [65.4, 98, 130.8].forEach((fq, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = fq; o.detune.value = i * 3; g.gain.value = 0.045; o.connect(g); g.connect(m); g.connect(rv); o.start(); });
         }
-        const SC = [0, 2, 4, 7, 9], BASE = TYPE === 'loy' ? 392 : 261.6;   // G / C เพนทาโทนิก
+        const SC = [0, 2, 4, 7, 9], BASE = TYPE === 'loy' ? 392 : LOUNGE ? 329.6 : 261.6;   // G / C เพนทาโทนิก
         const freq = n => BASE * Math.pow(2, (SC[((n % 5) + 5) % 5] + 12 * Math.floor(n / 5)) / 12);
         const note = (t, f, dur, vol, type) => {
             const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(); o.type = type || 'triangle'; o2.type = 'sine';
@@ -822,9 +885,10 @@ const MUSIC = {
         const ching = (t, open) => { const s2 = c.createBufferSource(); s2.buffer = this.nb || (this.nb = (() => { const b = c.createBuffer(1, c.sampleRate * 0.6, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })());
             const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = open ? 6800 : 4200; f.Q.value = 6; const g = c.createGain();
             g.gain.setValueAtTime(open ? 0.32 : 0.22, t); g.gain.exponentialRampToValueAtTime(0.0001, t + (open ? 0.5 : 0.07)); s2.connect(f); f.connect(g); g.connect(m); s2.start(t); s2.stop(t + 0.6); };
+        const bird = t => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; const f0 = 2400 + Math.random() * 900; for (let k = 0; k < 3; k++) { o.frequency.setValueAtTime(f0, t + k * 0.13); o.frequency.exponentialRampToValueAtTime(f0 * 1.45, t + k * 0.13 + 0.08); } g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42); o.connect(g); g.connect(m); o.start(t); o.stop(t + 0.45); };
         const bell = t => { [1, 2.76, 5.4, 8.93].forEach((k, i) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 174.6 * k; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12 / (i + 1), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 7 - i); o.connect(g); g.connect(m); g.connect(this.rv); o.start(t); o.stop(t + 7.1); }); };
         // ทำนอง: สุ่มเดินบนบันไดเสียงเป็นวลี 2 ห้อง เล่นซ้ำ 2 รอบแล้วแต่งวลีใหม่
-        const step = TYPE === 'loy' ? 60 / 92 / 2 : 60 / 56 / 2; let phrase = [], rep = 0, idx = 0, beat = 0, next = c.currentTime + 0.3, cur = 5;
+        const step = LOUNGE ? 60 / 84 / 2 : TYPE === 'loy' ? 60 / 92 / 2 : 60 / 56 / 2; let phrase = [], rep = 0, idx = 0, beat = 0, next = c.currentTime + 0.3, cur = 5;
         const mk = () => { const out = []; for (let i = 0; i < 16; i++) { if (TYPE === 'wian' && i % 2 && Math.random() < 0.7) { out.push(null); continue; } if (Math.random() < 0.18 && i % 4) { out.push(null); continue; } cur = Math.max(2, Math.min(11, cur + [-2, -1, -1, 1, 1, 2, 0][Math.floor(Math.random() * 7)])); out.push(cur); } out[15] = null; out[14] = 5; return out; };
         let lastBell = 0;
         this.timer = setInterval(() => {
@@ -834,6 +898,7 @@ const MUSIC = {
                 const n = phrase[idx]; if (n != null) note(next, freq(n), TYPE === 'loy' ? 0.55 : 1.6, TYPE === 'loy' ? 0.16 : 0.13, TYPE === 'loy' ? 'triangle' : 'sine');
                 if (TYPE === 'loy' && idx % 2 === 0 && Math.random() < 0.35) note(next, freq(n == null ? 0 : n - 5), 0.4, 0.07);
                 if (TYPE === 'loy') { if (beat % 4 === 1) ching(next, true); else if (beat % 4 === 3) ching(next, false); }
+                else if (LOUNGE) { if (beat % 8 === 4) ching(next, false); if (beat % 16 === 0) [0, 4, 7].forEach(k => note(next, BASE / 2 * Math.pow(2, k / 12), 2.4, 0.045, 'sine')); if (Math.random() < 0.012) bird(next); }
                 else if (beat % 8 === 0) ching(next, true);
                 if (TYPE === 'wian' && next - lastBell > 14) { bell(next); lastBell = next; }
                 next += step; idx = (idx + 1) % 16; beat++;
@@ -874,9 +939,10 @@ renderer.domElement.addEventListener('pointerup', e => {
     const hitA = ray.intersectObjects(objs, true)[0];
     if (hitA) { let o = hitA.object; while (o && !o.userData.uid) o = o.parent; const p = o && peersCache[o.userData.uid]; if (p) { friendMenu(o.userData.uid, e.clientX, e.clientY); return; } }
     closeFriendMenu();
-    if (TYPE !== 'loy') return;
+    if (!WALK) return;
     const hit = new THREE.Vector3(); if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.18), hit)) return;
-    const B = WORLD.bounds; NET.set({ x: +THREE.MathUtils.clamp(hit.x, B.x0, B.x1).toFixed(2), z: +THREE.MathUtils.clamp(hit.z, B.z0, B.z1).toFixed(2) });
+    const B = WORLD.bounds; if (LOUNGE) { const r = Math.hypot(hit.x, hit.z); if (r < 2.5) { const k = 2.5 / (r || 1); hit.x = (r ? hit.x : 1) * k; hit.z *= k; } }   // ไม่เดินทะลุน้ำพุ
+    NET.set({ x: +THREE.MathUtils.clamp(hit.x, B.x0, B.x1).toFixed(2), z: +THREE.MathUtils.clamp(hit.z, B.z0, B.z1).toFixed(2) });
     marker.position.set(THREE.MathUtils.clamp(hit.x, B.x0, B.x1), 0.2, THREE.MathUtils.clamp(hit.z, B.z0, B.z1)); marker.userData.t = 1;
 });
 const marker = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.3, 24), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0, depthWrite: false })); marker.rotation.x = -Math.PI / 2; marker.userData.t = 0; scene.add(marker);
@@ -941,6 +1007,7 @@ function frameCamera() {
     if (mode !== camMode) {   // ตั้งมุมเริ่มต้นเมื่อเปลี่ยนแนวจอเท่านั้น (คีย์บอร์ดเด้งไม่รีเซ็ตมุมที่ผู้ใช้หมุนไว้)
         camMode = mode;
         if (TYPE === 'loy') { if (portrait) { camera.fov = 62; camera.position.set(0, 7.2, 21.5); controls.target.set(0, 2.6, 0); } else { camera.fov = 48; camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); } }
+        else if (LOUNGE) { if (portrait) { camera.fov = 62; camera.position.set(0, 9, 21); controls.target.set(0, 2.2, 0); } else { camera.fov = 48; camera.position.set(0, 8.5, 17); controls.target.set(0, 1.2, 0); } }
         else { if (portrait) { camera.fov = 62; camera.position.set(0, 7.5, 21); controls.target.set(0, 3.6, 0); } else { camera.fov = 48; camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); } }
         controls.maxDistance = portrait ? 40 : 32;
     }
@@ -951,6 +1018,7 @@ function frameCamera() {
 }
 addEventListener('resize', resize);
 if (TYPE === 'loy') { buildLoy(); controls.minAzimuthAngle = -1.0; controls.maxAzimuthAngle = 1.0; }   // ลอยกระทง: หมุนได้ไม่เกิน ~57° ไม่ให้มองเลียบท่าน้ำ/โคมไฟจ่อกล้อง
+else if (LOUNGE) buildLounge();
 else buildWian();
 resize();
 const clock = new THREE.Clock(); let T = 0;
