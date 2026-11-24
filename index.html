@@ -351,6 +351,20 @@
     <!-- VIEW 1: หน้าหลัก (HOME VIEW) -->
     <!-- ========================================================================= -->
     <main id="view-home" class="space-y-4">
+        <!-- การ์ดกิจกรรมออนไลน์ช่วงเทศกาล (ลอยกระทง / เวียนเทียน) — การ์ดบนสุดของหน้าหลักทุกโหมด -->
+        <section id="festRoomCard" class="hidden relative z-10 mx-4 mt-1 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 overflow-hidden fest-card">
+            <div class="flex items-start gap-3">
+                <div id="frEmoji" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 fest-ico">🪷</div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-[10px] font-bold tracking-wider text-red-600 uppercase">กิจกรรมออนไลน์ · LIVE</p>
+                    <h2 id="frTitle" class="text-base font-bold text-gray-900 leading-tight">ลอยกระทงออนไลน์</h2>
+                    <p id="frDesc" class="text-xs text-gray-600 mt-0.5"></p>
+                    <p id="frDate" class="text-[11px] text-gray-500 mt-1"><i class="fa-regular fa-calendar"></i> <span></span></p>
+                </div>
+            </div>
+            <button onclick="openFestRoom()" class="fest-btn mt-3 w-full rounded-xl py-3 font-bold text-white shadow flex items-center justify-center gap-2"><i class="fa-solid fa-person-walking-arrow-right"></i> เข้าร่วมกิจกรรม</button>
+        </section>
+
         <!-- ===== กิจกรรม / ประชุม (แบนเนอร์ + ตอบรับ) ===== -->
         <section id="eventsBox" class="hidden relative z-10 mx-4 mt-1 space-y-3"></section>
 
@@ -570,20 +584,6 @@
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- การ์ดกิจกรรมออนไลน์ช่วงเทศกาล (ลอยกระทง / เวียนเทียน) — ย้ายไปวางเหนือการ์ดค่าคอมของแต่ละโหมดด้วย placeFestCard() -->
-        <section id="festRoomCard" class="hidden relative z-10 mx-4 bg-white rounded-2xl shadow-md border border-gray-200/80 p-4 overflow-hidden fest-card">
-            <div class="flex items-start gap-3">
-                <div id="frEmoji" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 fest-ico">🪷</div>
-                <div class="min-w-0 flex-1">
-                    <p class="text-[10px] font-bold tracking-wider text-red-600 uppercase">กิจกรรมออนไลน์ · LIVE</p>
-                    <h2 id="frTitle" class="text-base font-bold text-gray-900 leading-tight">ลอยกระทงออนไลน์</h2>
-                    <p id="frDesc" class="text-xs text-gray-600 mt-0.5"></p>
-                    <p id="frDate" class="text-[11px] text-gray-500 mt-1"><i class="fa-regular fa-calendar"></i> <span></span></p>
-                </div>
-            </div>
-            <button onclick="openFestRoom()" class="fest-btn mt-3 w-full rounded-xl py-3 font-bold text-white shadow flex items-center justify-center gap-2"><i class="fa-solid fa-person-walking-arrow-right"></i> เข้าร่วมกิจกรรม</button>
         </section>
 
         <!-- Commission Status Card -->
@@ -1099,7 +1099,6 @@
             document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('hidden', el.getAttribute('data-mode').split(' ').indexOf(md) < 0));
             if (md !== 'sales') renderWork();
             renderService(md);
-            try { placeFestCard(); } catch (e) { }   // การ์ดกิจกรรมออนไลน์เหนือการ์ดค่าคอม
             const wc = $id('walletCard'), wk = $id('workCard'), showWc = md === 'staff' && !!appState.service;   // ช่าง: การ์ดยอดเงินสุทธิอยู่เหนือการ์ดเวลาทำงาน
             if (showWc) { wc.classList.remove('hidden'); if (wk && wc.nextElementSibling !== wk) wk.parentNode.insertBefore(wc, wk); }
             document.querySelectorAll('.wk-coin').forEach(e => e.classList.toggle('hidden', mg || showWc));   // Admin / ช่าง มี Coin ในการ์ดด้านบนแล้ว
@@ -2623,7 +2622,7 @@
         placeFestCard();
     }
     function fxThDate(d) { if (!d) return ''; const m = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], p = String(d).split('-'); return +p[2] + ' ' + m[+p[1] - 1] + ' ' + (+p[0] + 543); }
-    // การ์ดกิจกรรมออนไลน์: วางเหนือการ์ดค่าคอมของโหมดที่แสดงอยู่ (ฝ่ายขาย = สถานะคอมมิชชั่น · ช่าง = ค่าคอมงานช่าง · บริหาร = กิจกรรม)
+    // การ์ดกิจกรรมออนไลน์ (การ์ดบนสุดของหน้าหลัก): แสดงเฉพาะช่วงเทศกาลที่มีห้องกิจกรรม
     function placeFestCard() {
         const c = document.getElementById('festRoomCard'); if (!c) return;
         c.classList.toggle('hidden', !FEST_ROOM); if (!FEST_ROOM) return;
@@ -2633,10 +2632,6 @@
         document.getElementById('frDesc').textContent = loy ? 'ลอยกระทงพร้อมเพื่อนๆ แชทสด ถ่ายรูปเก็บไว้' : 'เวียนเทียนรอบพระเจดีย์ 3 รอบพร้อมเพื่อนๆ';
         const dt = FEST_ROOM.from ? fxThDate(FEST_ROOM.from) + (FEST_ROOM.to && FEST_ROOM.to !== FEST_ROOM.from ? ' – ' + fxThDate(FEST_ROOM.to) : '') : '';
         document.getElementById('frDate').classList.toggle('hidden', !dt); document.querySelector('#frDate span').textContent = dt;
-        const vis = el => el && !el.classList.contains('hidden');
-        const t = ['commCard', 'svcCard', 'mgEventsBox', 'quickSec'].map(id => document.getElementById(id)).find(vis);
-        if (t && c.nextElementSibling !== t) t.parentNode.insertBefore(c, t);
-        if (t) c.classList.toggle('mx-4', t.classList.contains('mx-4'));
     }
     let FEST_ROOM = null;
     function openFestRoom() { if (!FEST_ROOM) return; location.href = 'event-room.html?type=' + FEST_ROOM.type + '&room=' + encodeURIComponent(FEST_ROOM.id) + '&title=' + encodeURIComponent(FEST_ROOM.title); }
