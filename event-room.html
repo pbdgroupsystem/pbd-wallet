@@ -278,6 +278,7 @@ function buildLoy() {
     const moon = new THREE.Mesh(new THREE.SphereGeometry(4.2, 32, 16), new THREE.MeshBasicMaterial({ color: 0xfff6d5, fog: false }));
     moon.position.set(-14, 16, -100); scene.add(moon);
     const mg = glowSprite(30, glowTex('rgba(255,245,210,0.9)', 'rgba(255,240,200,0)')); mg.position.copy(moon.position); mg.material.fog = false; scene.add(mg);
+    WORLD.moon = moon; WORLD.moonGlow = mg;
     // แม่น้ำ (z < 1.5) — คลื่นด้วยการขยับจุด
     const wg = new THREE.PlaneGeometry(200, 120, 80, 40); wg.rotateX(-Math.PI / 2); wg.translate(0, 0, -58.5);
     water = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: 0x3a6fc4, emissive: 0x102a5c, roughness: 0.35, metalness: 0.1, flatShading: true }));
@@ -291,10 +292,33 @@ function buildLoy() {
     const vg = pg.createLinearGradient(0, 0, 0, 256); vg.addColorStop(0, 'rgba(0,0,0,1)'); vg.addColorStop(1, 'rgba(0,0,0,0)'); pg.fillStyle = vg; pg.fillRect(0, 0, 64, 256);
     const ptx = new THREE.CanvasTexture(pcv); ptx.colorSpace = THREE.SRGBColorSpace;
     const path = new THREE.Mesh(new THREE.PlaneGeometry(9, 80), new THREE.MeshBasicMaterial({ map: ptx, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending }));
-    path.rotation.x = -Math.PI / 2; path.position.set(-7.5, 0.22, -45); path.rotation.z = 0.08; scene.add(path);
-    const spk = []; for (let k = 0; k < 3; k++) { const n = 140, pp = new Float32Array(n * 3); for (let i = 0; i < n; i++) { pp[i * 3] = THREE.MathUtils.randFloat(-40, 30); pp[i * 3 + 1] = 0.2; pp[i * 3 + 2] = THREE.MathUtils.randFloat(-70, 0.5); }
+    path.rotation.x = -Math.PI / 2; path.position.set(-7.5, 0.22, -45); path.rotation.z = 0.08; scene.add(path); WORLD.moonPath = path;
+    // พระจันทร์อยู่มุมบนซ้ายของภาพเสมอ (ทุกขนาดจอ/ทุกมุมกล้อง) + แสงสะท้อนบนน้ำหันตามพระจันทร์
+    const mv = new THREE.Vector3(), mt = new THREE.Vector3(), cam0 = new THREE.Vector3();
+    WORLD.update.push(() => {
+        mv.set(-0.42, 0.74, 0.5).unproject(camera); cam0.copy(camera.position); mv.sub(cam0).normalize();
+        if (mv.y < 0.06) mv.y = 0.06;   // ไม่ให้ต่ำกว่าขอบฟ้า
+        mt.copy(cam0).addScaledVector(mv.normalize(), 115);
+        moon.position.lerp(mt, moon.userData.init ? 0.12 : 1); moon.userData.init = 1; mg.position.copy(moon.position);
+        const dx = moon.position.x - cam0.x, dz = moon.position.z - cam0.z, dl = Math.hypot(dx, dz) || 1;
+        path.position.set(cam0.x + dx / dl * 52, 0.22, Math.min(-8, cam0.z + dz / dl * 52)); path.rotation.z = Math.atan2(-dx / dl, -dz / dl);
+    });
+    // ขอบฟ้า: แนวเนินเขา/ต้นไม้ฝั่งไกล + พระเจดีย์ลิบๆ + แถบแสงเรืองที่ขอบฟ้า
+    const hillM = new THREE.MeshBasicMaterial({ color: 0x121838, fog: false }), far = -108;
+    for (let i = 0; i < 26; i++) { const r = THREE.MathUtils.randFloat(6, 13), hl = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), hillM); hl.scale.y = THREE.MathUtils.randFloat(0.22, 0.42); hl.position.set(-110 + i * 9 + THREE.MathUtils.randFloat(-3, 3), 0, far + THREE.MathUtils.randFloat(-4, 4)); scene.add(hl); }
+    for (let i = 0; i < 40; i++) { const tr = new THREE.Mesh(new THREE.ConeGeometry(THREE.MathUtils.randFloat(0.9, 1.6), THREE.MathUtils.randFloat(3, 5.5), 6), hillM); tr.position.set(THREE.MathUtils.randFloat(-100, 100), 1.8, far + 6 + THREE.MathUtils.randFloat(-2, 2)); scene.add(tr); }
+    const farChedi = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [2.6, 0], [2.6, 1.2], [2.0, 1.4], [2.3, 3.2], [1.6, 5], [0.7, 6], [0.45, 7.5], [0.12, 10], [0, 11]].map(([x, y]) => new THREE.Vector2(x, y)), 20), new THREE.MeshBasicMaterial({ color: 0x1b1f45, fog: false }));
+    farChedi.position.set(22, 2.5, far - 2); scene.add(farChedi);
+    [[22, 13.6], [17, 4], [27, 4], [-30, 3], [-45, 3.5], [48, 3]].forEach(([x, y]) => { const l = glowSprite(1.2, glowTex('rgba(255,200,110,1)', 'rgba(255,150,60,0)')); l.material.fog = false; l.position.set(x, y, far + 1); scene.add(l); });
+    const hcv = document.createElement('canvas'); hcv.width = 4; hcv.height = 64; const hg = hcv.getContext('2d'), hgr = hg.createLinearGradient(0, 0, 0, 64);
+    hgr.addColorStop(0, 'rgba(120,110,190,0)'); hgr.addColorStop(0.75, 'rgba(150,130,210,0.55)'); hgr.addColorStop(1, 'rgba(255,200,170,0.65)'); hg.fillStyle = hgr; hg.fillRect(0, 0, 4, 64);
+    const htx = new THREE.CanvasTexture(hcv); htx.colorSpace = THREE.SRGBColorSpace;
+    const hband = new THREE.Mesh(new THREE.PlaneGeometry(400, 14), new THREE.MeshBasicMaterial({ map: htx, transparent: true, depthWrite: false, fog: false }));
+    hband.position.set(0, 6.5, far - 12); scene.add(hband);
+    scene.fog.far = 170;   // ให้เห็นฝั่งไกล
+    const spk = []; for (let k = 0; k < 3; k++) { const n = 140, pp = new Float32Array(n * 3); for (let i = 0; i < n; i++) { pp[i * 3] = THREE.MathUtils.randFloat(-40, 30); pp[i * 3 + 1] = 0.2; pp[i * 3 + 2] = THREE.MathUtils.randFloat(-48, 0.5); }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pp, 3));
-        const sp = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xfff1c9, size: 0.16, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(sp); spk.push(sp); }
+        const sp = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xfff1c9, size: 0.11, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(sp); spk.push(sp); }
     WORLD.update.push(t => spk.forEach((sp, k) => sp.material.opacity = 0.25 + 0.6 * Math.max(0, Math.sin(t * 2.2 + k * 2.1))));
     // ฝั่งแม่น้ำ (หญ้า + ท่าน้ำไม้)
     const bank = new THREE.Mesh(new THREE.BoxGeometry(60, 1, 14), toon(0x3f8a4a)); bank.position.set(0, -0.32, 8.5); scene.add(bank);
@@ -313,6 +337,40 @@ function buildLoy() {
     WORLD.update.push(t => lanterns.forEach(l => { const u = l.userData, y = (u.y0 + t * u.sp) % 60; l.position.set(u.x + Math.sin(t * 0.3 + u.y0) * 2, y + 2, u.z); l.material.opacity = y > 50 ? (60 - y) / 10 : 1; }));
     // พลุเป็นระยะ
     fireworks();
+    // คนพายเรือในแม่น้ำ
+    boats();
+}
+function boats() {
+    const wood = toon(0x7a4a2a), woodD = toon(0x5a341c), straw = toon(0xe8c77a);
+    const mk = (i) => {
+        const g = new THREE.Group();
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.32, 0.78), wood); hull.position.y = 0.12; g.add(hull);
+        [-1, 1].forEach(s => { const tip = new THREE.Mesh(new THREE.ConeGeometry(0.39, 0.9, 4, 1), wood); tip.rotation.z = -s * Math.PI / 2; tip.rotation.x = Math.PI / 4; tip.scale.set(1, 1, 0.82); tip.position.set(s * 1.72, 0.17, 0); g.add(tip);
+            const up = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.5, 6), woodD); up.position.set(s * 2.05, 0.38, 0); up.rotation.z = s * 0.5; g.add(up); });
+        const rim = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.06, 0.82), woodD); rim.position.y = 0.3; g.add(rim);
+        // คนพาย (ตัวจิบิ + หมวกงอบ)
+        const ch = makeChar({ name: '', sex: i % 2 ? 'f' : 'm', color: COLORS[(i * 3 + 1) % COLORS.length] }); ch.userData.tag.visible = false;
+        ch.scale.setScalar(0.72); ch.position.set(0.35, 0.05, 0); ch.rotation.y = Math.PI / 2; g.add(ch);
+        ch.userData.legs.forEach(l => l.rotation.x = -1.35);
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.32, 18), straw); hat.position.y = 2.03; ch.userData.body.add(hat);
+        const paddle = new THREE.Group(); const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.6, 6), woodD); shaft.position.y = -0.4; paddle.add(shaft);
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.45, 0.04), woodD); blade.position.y = -1.2; paddle.add(blade);
+        paddle.position.set(0.35, 0.95, 0.42); g.add(paddle);
+        const lan = glowSprite(1.3, glowTex('rgba(255,200,110,1)', 'rgba(255,140,50,0)')); lan.position.set(-1.6, 0.75, 0); g.add(lan);
+        const lp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.16), std(0xffe2a0, { emissive: 0xffb347, emissiveIntensity: 1.2 })); lp.position.copy(lan.position); g.add(lp);
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 4), woodD); pole.position.set(-1.6, 0.45, 0); g.add(pole);
+        scene.add(g);
+        return { g, ch, paddle, z: [-5.5, -13, -22][i], sp: [1.1, 0.8, 0.65][i] * (i % 2 ? -1 : 1), x0: THREE.MathUtils.randFloat(-30, 30), ph: Math.random() * 6 };
+    };
+    const list = [0, 1, 2].map(mk);
+    WORLD.update.push(t => list.forEach(b => {
+        const span = 70, x = ((b.x0 + t * b.sp) % span + span * 1.5) % span - span / 2;
+        b.g.position.set(x, 0.02 + Math.sin(t * 1.8 + b.ph) * 0.05, b.z); b.g.rotation.y = b.sp > 0 ? 0 : Math.PI; b.g.rotation.z = Math.sin(t * 1.4 + b.ph) * 0.03;
+        const r = Math.sin(t * 2.6 + b.ph);   // จังหวะพาย
+        b.paddle.rotation.z = r * 0.7; b.paddle.rotation.x = -0.25 - Math.max(0, r) * 0.25;
+        b.ch.userData.arms.forEach(a => { a.rotation.x = -0.9 - r * 0.35; });
+        b.ch.userData.body.rotation.x = r * 0.08;
+    }));
 }
 function buildWian() {
     scene.fog = new THREE.Fog(0x2b1d3a, 34, 120);
@@ -346,22 +404,43 @@ function lamp(x, z) {
     const g = glowSprite(1.4); g.position.set(x, 1.45, z); scene.add(g);
 }
 function fireworks() {
-    const bursts = [];
-    const fire = () => {
-        const n = 90, p = new Float32Array(n * 3), v = [], col = new THREE.Color().setHSL(Math.random(), 0.9, 0.65);
-        const c = new THREE.Vector3(THREE.MathUtils.randFloat(-30, 30), THREE.MathUtils.randFloat(22, 34), THREE.MathUtils.randFloat(-80, -50));
-        for (let i = 0; i < n; i++) { p.set([c.x, c.y, c.z], i * 3); v.push(new THREE.Vector3().randomDirection().multiplyScalar(THREE.MathUtils.randFloat(5, 9))); }
-        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
-        const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: 0.7, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
-        scene.add(pts); bursts.push({ pts, v, c, age: 0 });
+    const bursts = [], rockets = [], v3 = new THREE.Vector3(), FLASH = glowTex('rgba(255,255,255,0.9)', 'rgba(255,255,255,0)'), ROCKET = glowTex('rgba(255,230,170,1)', 'rgba(255,160,60,0)');
+    // จุดแตกอยู่ในท้องฟ้าที่มองเห็นเสมอ: สุ่มตำแหน่งบนจอ (ส่วนบน) แล้วยิงออกไปไกล ~85 หน่วยเหนือฝั่งตรงข้าม
+    const spot = () => {
+        for (let k = 0; k < 6; k++) {
+            v3.set(THREE.MathUtils.randFloat(-0.75, 0.75), THREE.MathUtils.randFloat(0.32, 0.78), 0.5).unproject(camera).sub(camera.position).normalize();
+            if (v3.y > 0.05) break;
+        }
+        const d = 85, c = camera.position.clone().addScaledVector(v3, d); c.y = Math.max(c.y, 9); return c;
     };
-    setInterval(() => { if (!document.hidden && Math.random() < 0.6) fire(); }, 4200);
+    const burst = (c) => {
+        const n = 130, p = new Float32Array(n * 3), v = [], col = new THREE.Color().setHSL(Math.random(), 0.95, 0.66), col2 = new THREE.Color().setHSL(Math.random(), 0.9, 0.75);
+        const sp = THREE.MathUtils.randFloat(7, 11);
+        for (let i = 0; i < n; i++) { p.set([c.x, c.y, c.z], i * 3); v.push(new THREE.Vector3().randomDirection().multiplyScalar(sp * THREE.MathUtils.randFloat(0.75, 1))); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+        const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: Math.random() < 0.5 ? col : col2, size: 1.5, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        const flash = glowSprite(14, FLASH); flash.material.fog = false; flash.material.color = col; flash.position.copy(c);
+        scene.add(pts); scene.add(flash); bursts.push({ pts, v, c, age: 0, flash });
+    };
+    const launch = () => {
+        const c = spot(), s = glowSprite(1.4, ROCKET); s.material.fog = false;
+        const from = new THREE.Vector3(c.x + THREE.MathUtils.randFloat(-3, 3), Math.max(0, c.y - 26), c.z); s.position.copy(from); scene.add(s);
+        rockets.push({ s, from, c, age: 0, dur: THREE.MathUtils.randFloat(0.8, 1.1) });
+    };
+    setInterval(() => { if (document.hidden) return; launch(); if (Math.random() < 0.3) setTimeout(launch, 350); }, 3000);
+    setTimeout(launch, 800);
     WORLD.update.push((t, dt) => {
+        for (let k = rockets.length - 1; k >= 0; k--) {
+            const r = rockets[k]; r.age += dt; const f = Math.min(1, r.age / r.dur), e = 1 - Math.pow(1 - f, 2);
+            r.s.position.lerpVectors(r.from, r.c, e); r.s.material.opacity = 0.6 + Math.random() * 0.4;
+            if (f >= 1) { scene.remove(r.s); r.s.material.dispose(); rockets.splice(k, 1); burst(r.c); }
+        }
         for (let k = bursts.length - 1; k >= 0; k--) {
             const b = bursts[k]; b.age += dt; const a = b.pts.geometry.attributes.position.array;
-            for (let i = 0; i < b.v.length; i++) { a[i * 3] = b.c.x + b.v[i].x * b.age; a[i * 3 + 1] = b.c.y + b.v[i].y * b.age - 3 * b.age * b.age; a[i * 3 + 2] = b.c.z + b.v[i].z * b.age; }
-            b.pts.geometry.attributes.position.needsUpdate = true; b.pts.material.opacity = Math.max(0, 1 - b.age / 2.2);
-            if (b.age > 2.2) { scene.remove(b.pts); b.pts.geometry.dispose(); b.pts.material.dispose(); bursts.splice(k, 1); }
+            for (let i = 0; i < b.v.length; i++) { a[i * 3] = b.c.x + b.v[i].x * b.age; a[i * 3 + 1] = b.c.y + b.v[i].y * b.age - 3.2 * b.age * b.age; a[i * 3 + 2] = b.c.z + b.v[i].z * b.age; }
+            b.pts.geometry.attributes.position.needsUpdate = true; b.pts.material.opacity = Math.max(0, 1 - b.age / 2.4);
+            b.flash.material.opacity = Math.max(0, 0.9 - b.age * 3);
+            if (b.age > 2.4) { scene.remove(b.pts); scene.remove(b.flash); b.pts.geometry.dispose(); b.pts.material.dispose(); b.flash.material.dispose(); bursts.splice(k, 1); }
         }
     });
 }
@@ -861,7 +940,7 @@ function frameCamera() {
     const w = innerWidth, h = innerHeight, mob = w < 820, portrait = w / h < 0.8, mode = portrait ? 'p' : 'l';
     if (mode !== camMode) {   // ตั้งมุมเริ่มต้นเมื่อเปลี่ยนแนวจอเท่านั้น (คีย์บอร์ดเด้งไม่รีเซ็ตมุมที่ผู้ใช้หมุนไว้)
         camMode = mode;
-        if (TYPE === 'loy') { if (portrait) { camera.fov = 60; camera.position.set(0, 10, 22); controls.target.set(0, 0.8, 0); } else { camera.fov = 48; camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); } }
+        if (TYPE === 'loy') { if (portrait) { camera.fov = 62; camera.position.set(0, 7.2, 21.5); controls.target.set(0, 2.6, 0); } else { camera.fov = 48; camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); } }
         else { if (portrait) { camera.fov = 60; camera.position.set(0, 14, 24); controls.target.set(0, 2, 0); } else { camera.fov = 48; camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); } }
         controls.maxDistance = portrait ? 40 : 32;
     }
