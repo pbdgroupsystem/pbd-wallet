@@ -35,7 +35,7 @@
         #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 50; transition: opacity .35s; }
         #shotImg { width: 100%; border-radius: 12px; display: block; margin-bottom: 12px; }
         #snd.off { color: #94a3b8; }
-        #online { margin-left: auto; padding: 8px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid var(--bd); }
+        #online { color: #fff; margin-left: auto; padding: 8px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid var(--bd); }
         #online i { color: #34d399; font-size: 9px; vertical-align: middle; margin-right: 4px; }
         #actions { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--chat-h, 0px)); display: flex; gap: 8px; z-index: 5; }
         .act { border: 0; border-radius: 999px; padding: 11px 18px; font-size: 15px; font-weight: 600; color: #1f2937; background: linear-gradient(135deg, #fde68a, #f59e0b); box-shadow: 0 6px 20px rgba(245, 158, 11, .45); white-space: nowrap; }
@@ -74,11 +74,30 @@
             #actions { left: calc(50% - 170px); bottom: 18px !important; }
         }
         @media (max-width: 819px) {
-            #chat { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); height: 36vh; border-radius: 18px; transition: height .25s; }
-            #chat.min { height: 118px; }
-            #chat.min #msgs { overflow: hidden; justify-content: flex-end; }
-            #chatHead { padding: 7px 12px; }
+            /* มือถือ: แชทไม่มีพื้นหลัง ข้อความลอยบนฉาก · แตะที่ว่างในแชท = แตะพื้นฉาก (เดินได้) */
+            #chat { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); height: 34vh; transition: height .25s;
+                background: none !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; pointer-events: none; }
+            #chat.min { height: 170px; }
+            #chat > *, #chat button, #chat input { pointer-events: auto; }
+            #msgs { pointer-events: none !important; padding: 4px 2px; gap: 4px; justify-content: flex-end;
+                -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 40%); mask-image: linear-gradient(to bottom, transparent 0, #000 40%); }
+            .m { pointer-events: auto; align-self: flex-start; max-width: 92%; background: rgba(0, 0, 0, .35); padding: 3px 10px; border-radius: 12px; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+            .m.sys { background: rgba(0, 0, 0, .25); color: #e2e8f0; }
+            #chat.min #msgs { overflow: hidden; }
+            #chatHead { padding: 2px 4px; border: 0; font-size: 13px; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); align-self: flex-start; gap: 6px; }
+            #chatToggle { color: #fff; margin-left: 4px; }
+            #send { border: 0; padding: 6px 0 0; }
+            #send input { background: rgba(15, 23, 42, .55); border-color: rgba(255, 255, 255, .25); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+            #emo { padding: 4px 0 0; }
+            #emo button { background: rgba(0, 0, 0, .3); border-color: rgba(255, 255, 255, .18); }
+            #top { gap: 6px; left: 8px; right: 8px; }
+            #title { flex: 1 1 auto; padding: 5px 10px; }
+            #title h1 { font-size: 14px; }
+            #online { padding: 8px 10px; }
+            #stat { top: calc(max(10px, env(safe-area-inset-top)) + 58px); left: 8px; }
         }
+        #title p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        @media (max-width: 419px) { #title p { display: none; } #title { padding: 9px 10px; } #online { margin-left: 0; } }
         /* หน้าต่างเลือกตัวละคร/ลอยกระทง */
         .modal { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; background: rgba(2, 6, 23, .55); padding: 16px; }
         .modal.on { display: flex; }
@@ -618,7 +637,7 @@ $('emo').innerHTML = EMO.map(x => `<button type="button" data-e="${x}">${x}</but
 $('emo').onclick = e => { const b = e.target.closest('button'); if (!b || !NET.me) return; if (Date.now() - lastSend < 900) return; lastSend = Date.now(); NET.chat(b.dataset.e); };
 window.toggleChat = () => { $('chat').classList.toggle('min'); layoutChat(); };
 window.openChat = () => { $('chat').classList.remove('min'); layoutChat(); };
-function layoutChat() { const mob = innerWidth < 820; document.documentElement.style.setProperty('--chat-h', mob ? ($('chat').getBoundingClientRect().height + 8) + 'px' : '0px'); $('chatToggle').innerHTML = $('chat').classList.contains('min') ? '<i class="fa-solid fa-chevron-up"></i>' : '<i class="fa-solid fa-chevron-down"></i>'; }
+function layoutChat() { try { frameCamera(); } catch (e) { } const mob = innerWidth < 820; document.documentElement.style.setProperty('--chat-h', mob ? ($('chat').getBoundingClientRect().height + 8) + 'px' : '0px'); $('chatToggle').innerHTML = $('chat').classList.contains('min') ? '<i class="fa-solid fa-chevron-up"></i>' : '<i class="fa-solid fa-chevron-down"></i>'; }
 $('chat').addEventListener('transitionend', layoutChat);
 window.togglePeople = () => { $('people').classList.toggle('on'); renderPeople(); };
 function renderPeople() { const list = Object.keys(peersCache).map(k => peersCache[k]).filter(p => p && p.name); $('people').innerHTML = `<b>ผู้เข้าร่วม ${list.length} คน</b>` + list.map(p => `<div>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</div>`).join(''); }
@@ -835,10 +854,25 @@ window.saveShot = async () => {
 };
 
 // ===================== เริ่ม =====================
-function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); layoutChat(); }
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); layoutChat(); }
+// กล้องปรับตามรูปจอ: แนวตั้ง = ถอยหลัง+ยกสูง+มุมกว้าง · เลื่อนจุดกึ่งกลางภาพให้อยู่เหนือแชท (มือถือ) / ซ้ายของแชท (จอกว้าง)
+let camMode = '';
+function frameCamera() {
+    const w = innerWidth, h = innerHeight, mob = w < 820, portrait = w / h < 0.8, mode = portrait ? 'p' : 'l';
+    if (mode !== camMode) {   // ตั้งมุมเริ่มต้นเมื่อเปลี่ยนแนวจอเท่านั้น (คีย์บอร์ดเด้งไม่รีเซ็ตมุมที่ผู้ใช้หมุนไว้)
+        camMode = mode;
+        if (TYPE === 'loy') { if (portrait) { camera.fov = 60; camera.position.set(0, 10, 22); controls.target.set(0, 0.8, 0); } else { camera.fov = 48; camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); } }
+        else { if (portrait) { camera.fov = 60; camera.position.set(0, 14, 24); controls.target.set(0, 2, 0); } else { camera.fov = 48; camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); } }
+        controls.maxDistance = portrait ? 40 : 32;
+    }
+    const ch = mob ? Math.min($('chat').getBoundingClientRect().height + 8, h * 0.4) : 0, cw = mob ? 0 : 350;
+    camera.aspect = (w + cw) / (h + ch);
+    if (ch || cw) camera.setViewOffset(w + cw, h + ch, cw, ch, w, h); else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
+}
 addEventListener('resize', resize);
-if (TYPE === 'loy') { buildLoy(); camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); }
-else { buildWian(); camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); }
+if (TYPE === 'loy') { buildLoy(); controls.minAzimuthAngle = -1.0; controls.maxAzimuthAngle = 1.0; }   // ลอยกระทง: หมุนได้ไม่เกิน ~57° ไม่ให้มองเลียบท่าน้ำ/โคมไฟจ่อกล้อง
+else buildWian();
 resize();
 const clock = new THREE.Clock(); let T = 0;
 function loop() {
