@@ -562,6 +562,7 @@
                             <span id="teamGoalPct" class="text-sm font-extrabold text-gray-800">–</span>
                         </div>
                         <p id="teamGoalNeed" class="text-[11px] text-gray-500 mt-1"></p>
+                        <div id="teamGoalExtra"></div>
                     </div>
                 </div>
             </div>
@@ -1058,7 +1059,7 @@
         let appState = {
             loaded: false, lineUserId: '', pictureUrl: '', empId: '–', name: 'กำลังโหลด…', branch: '', role: '',
             netBalance: 0, pendingDeduct: 0, pbdCoins: 0, commission: 0, cashBonus: 0, deductedPeriod: 0,
-            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100, fines: null, fineTotal: 0, teamGoal: null,
+            points: 0, rate: 0, nextRate: null, pointsNeeded: 0, period: null, needUnit: 'Points', needLabel: '', commissionLines: [], position: '', dashUrl: '', mode: 'sales', overview: null, events: [], eventsAdmin: [], coinPerPoint: 100, fines: null, fineTotal: 0, teamGoal: null, teamGoals: null, positions: null,
             sales: null, salesNote: '', soldProducts: [], activities: [], coupons: [], catalog: [], scanItems: [],
             history: [], leader: null, isAdmin: false, adminLogs: { usage: [], redeem: [] }, currentAdminTab: 'usage'
         };
@@ -1382,7 +1383,7 @@
         // ---------- หน้าหลัก ----------
         function updateDashboardUI() {
             $id('userName').innerText = appState.name;
-            $id('userRole').innerText = appState.role || '';
+            $id('userRole').innerText = appState.positions && appState.positions.length > 1 ? appState.positions.join(' · ') : (appState.role || '');   // 2 ตำแหน่ง เช่น ผู้จัดการสาขา NT · หัวหน้าทีม NT1
             const svcNet = appState.mode === 'staff' && appState.service;   // ช่าง: ค่าคอมงานช่าง − รอหัก − หักแล้ว − ค่าปรับสแกนหน้าเดือนนี้
             $id('netBalance').innerText = baht(svcNet ? Math.round(((appState.netBalance || 0) + (appState.service.comm || 0) - ((appState.work && appState.work.fine) || 0)) * 100) / 100 : appState.netBalance);
             $id('fineTotalPill').innerText = num(svcNet ? ((appState.work && appState.work.fine) || 0) : (appState.fineTotal || 0));
@@ -1424,8 +1425,15 @@
                         </div></div>`;
                 }).join('');
             }
-            const tg = appState.teamGoal;
+            const tg = appState.teamGoal || (appState.teamGoals || [])[0];
             $id('teamGoalBox').classList.toggle('hidden', !tg);
+            $id('teamGoalExtra').innerHTML = (appState.teamGoal ? appState.teamGoals || [] : (appState.teamGoals || []).slice(1)).map(g => {   // เป้าทีมที่ดูแลเอง (ผู้จัดการที่เป็นหัวหน้าทีมด้วย)
+                const left = Math.max(0, (g.target || 0) - (g.sold || 0));
+                return `<div class="mt-3 pt-3 border-t border-dashed border-gray-200"><p class="text-xs text-gray-700 font-medium"><i class="fa-solid fa-user-group text-red-600"></i> ${esc(g.label)}:
+                    <strong class="font-extrabold text-gray-900 text-base">${num(g.sold)} / ${num(g.target)}</strong> ตัว</p>
+                    <div class="flex items-center gap-2 mt-1.5"><div class="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden shadow-inner"><div class="h-full bg-gradient-to-r from-red-700 to-red-500 rounded-full" style="width:${Math.min(100, g.pct || 0)}%"></div></div><span class="text-sm font-extrabold text-gray-800">${num(g.pct)}%</span></div>
+                    <p class="text-[11px] text-gray-500 mt-1">${left ? 'ต้องขายอีก ' + num(left) + ' ตัว' : 'ถึงเป้าแล้ว 🎉'}</p></div>`;
+            }).join('');
             if (tg) {
                 $id('teamGoalLabel').innerText = tg.label; $id('teamGoalSold').innerText = num(tg.sold); $id('teamGoalTarget').innerText = num(tg.target);
                 $id('teamGoalPct').innerText = num(tg.pct) + '%'; $id('teamGoalBar').style.width = Math.min(100, tg.pct || 0) + '%';
@@ -1440,7 +1448,7 @@
             $id('needUnit').innerText = appState.needUnit === 'ตัว' ? 'ตัว' + (appState.needLabel ? ' (' + appState.needLabel + ')' : '') : 'Points';
             const cl = appState.commissionLines || [];
             $id('commLines').classList.toggle('hidden', !cl.length);
-            $id('commLines').innerHTML = cl.length ? '<p class="text-[11px] font-semibold text-gray-500">ค่าคอมพีเรียดนี้' + (appState.position ? ' · ตำแหน่ง ' + esc(appState.position) : '') + '</p>' + cl.map(l =>
+            $id('commLines').innerHTML = cl.length ? '<p class="text-[11px] font-semibold text-gray-500">ค่าคอมพีเรียดนี้' + (appState.position ? ' · ตำแหน่ง ' + esc(appState.position) : '') + (appState.positions && appState.positions.length > 1 ? ' (คิดตามตำแหน่งผู้จัดการ)' : '') + '</p>' + cl.map(l =>
                 '<div class="flex justify-between items-center text-xs"><span class="text-gray-700">' + esc(l.label) + ' <span class="text-gray-400">' + num(l.base) + ' ' + esc(l.unit) + ' × ' + num(l.rate) + ' บาท' + (l.tier && l.tier !== 'ต่อตัว' ? ' (ขั้น ' + esc(l.tier) + ')' : '') + '</span></span><span class="font-bold text-gray-900">฿' + num(l.amount) + '</span></div>').join('')
                 + '<div class="flex justify-between items-center text-xs pt-1 border-t border-dashed border-gray-200"><span class="font-semibold text-gray-700">รวมค่าคอม</span><span class="font-extrabold text-red-600">฿' + num(appState.commission) + '</span></div>'
                 + (appState.pointsSrc ? '<p class="text-[10px] text-gray-400">ที่มาพ้อย: ' + esc(appState.pointsSrc) + '</p>' : '') : '';
