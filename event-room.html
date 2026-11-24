@@ -404,7 +404,7 @@ function lamp(x, z) {
     const g = glowSprite(1.4); g.position.set(x, 1.45, z); scene.add(g);
 }
 function fireworks() {
-    const bursts = [], rockets = [], v3 = new THREE.Vector3(), FLASH = glowTex('rgba(255,255,255,0.9)', 'rgba(255,255,255,0)'), ROCKET = glowTex('rgba(255,230,170,1)', 'rgba(255,160,60,0)');
+    const bursts = [], rockets = [], v3 = new THREE.Vector3(), FLASH = glowTex('rgba(255,255,255,0.9)', 'rgba(255,255,255,0)'), ROCKET = glowTex('rgba(255,230,170,1)', 'rgba(255,160,60,0)'), SPARK = glowTex('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
     // จุดแตกอยู่ในท้องฟ้าที่มองเห็นเสมอ: สุ่มตำแหน่งบนจอ (ส่วนบน) แล้วยิงออกไปไกล ~85 หน่วยเหนือฝั่งตรงข้าม
     const spot = () => {
         for (let k = 0; k < 6; k++) {
@@ -414,11 +414,11 @@ function fireworks() {
         const d = 85, c = camera.position.clone().addScaledVector(v3, d); c.y = Math.max(c.y, 9); return c;
     };
     const burst = (c) => {
-        const n = 130, p = new Float32Array(n * 3), v = [], col = new THREE.Color().setHSL(Math.random(), 0.95, 0.66), col2 = new THREE.Color().setHSL(Math.random(), 0.9, 0.75);
+        const n = 130, p = new Float32Array(n * 3), v = [], col = new THREE.Color().setHSL(Math.random(), 1, 0.55), col2 = new THREE.Color().setHSL(Math.random(), 1, 0.6);
         const sp = THREE.MathUtils.randFloat(7, 11);
         for (let i = 0; i < n; i++) { p.set([c.x, c.y, c.z], i * 3); v.push(new THREE.Vector3().randomDirection().multiplyScalar(sp * THREE.MathUtils.randFloat(0.75, 1))); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
-        const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: Math.random() < 0.5 ? col : col2, size: 1.5, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        const pts = new THREE.Points(g, new THREE.PointsMaterial({ map: SPARK, color: Math.random() < 0.5 ? col : col2, size: 1.1, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
         const flash = glowSprite(14, FLASH); flash.material.fog = false; flash.material.color = col; flash.position.copy(c);
         scene.add(pts); scene.add(flash); bursts.push({ pts, v, c, age: 0, flash });
     };
