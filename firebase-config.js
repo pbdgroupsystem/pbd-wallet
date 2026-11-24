@@ -12,7 +12,8 @@ self.PBD_FIREBASE = {
     messagingSenderId: '242090903335',
     appId: '1:242090903335:web:91083817d3ae267cdc8b02'
   },
-  vapidKey: 'BDxryvNTW3vDswNBV3UjmCMUu2pq9UEuHw0JrbcMaghvFF_RQqQtb3eRSKy5epVH48JSTA1gMahXEe-T8sJzhuA'
+  vapidKey: 'BDxryvNTW3vDswNBV3UjmCMUu2pq9UEuHw0JrbcMaghvFF_RQqQtb3eRSKy5epVH48JSTA1gMahXEe-T8sJzhuA',
+  rtdbUrl: 'https://pbd-wallet-default-rtdb.asia-southeast1.firebasedatabase.app'   // Realtime Database ของห้องกิจกรรมออนไลน์ (event-room.html)
 };
 /* ตัวอย่างเมื่อกรอกแล้ว:
 self.PBD_FIREBASE = {
