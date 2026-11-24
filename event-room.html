@@ -381,7 +381,7 @@ function buildWian() {
     const ring = new THREE.Mesh(new THREE.RingGeometry(5.6, 7.6, 64), toon(0xd8cbb5)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; scene.add(ring);
     WORLD.ground = ground; WORLD.r = 6.6;
     // พระเจดีย์ทรงระฆัง (ฐานขาว + องค์ระฆังทอง + ปล้องไฉน)
-    const gold = std(0xf2b93b, { metalness: 0.75, roughness: 0.3, emissive: 0x3a2200 }), white = toon(0xf4efe6);
+    const gold = std(0xf6c445, { metalness: 0.25, roughness: 0.42, emissive: 0x7a5200, emissiveIntensity: 0.55 }), white = toon(0xf4efe6);
     [[4.4, 0.5], [3.7, 0.5], [3.0, 0.5]].reduce((y, [w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), white); b.position.y = y + h / 2; scene.add(b); return y + h; }, 0);
     const pts = [[0, 1.5], [1.35, 1.5], [1.45, 1.75], [1.3, 2.0], [1.75, 2.35], [1.95, 2.9], [1.9, 3.5], [1.6, 4.1], [1.0, 4.55], [0.55, 4.75], [0.5, 5.0], [0.62, 5.15], [0.42, 5.3], [0.36, 5.7], [0.3, 5.9], [0.26, 6.1], [0.2, 6.35], [0.14, 6.9], [0.08, 7.5], [0.03, 8.1], [0, 8.4]].map(([x, y]) => new THREE.Vector2(x, y));
     const chedi = new THREE.Mesh(new THREE.LatheGeometry(pts, 40), gold); scene.add(chedi);
@@ -941,7 +941,7 @@ function frameCamera() {
     if (mode !== camMode) {   // ตั้งมุมเริ่มต้นเมื่อเปลี่ยนแนวจอเท่านั้น (คีย์บอร์ดเด้งไม่รีเซ็ตมุมที่ผู้ใช้หมุนไว้)
         camMode = mode;
         if (TYPE === 'loy') { if (portrait) { camera.fov = 62; camera.position.set(0, 7.2, 21.5); controls.target.set(0, 2.6, 0); } else { camera.fov = 48; camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); } }
-        else { if (portrait) { camera.fov = 60; camera.position.set(0, 14, 24); controls.target.set(0, 2, 0); } else { camera.fov = 48; camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); } }
+        else { if (portrait) { camera.fov = 62; camera.position.set(0, 7.5, 21); controls.target.set(0, 3.6, 0); } else { camera.fov = 48; camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); } }
         controls.maxDistance = portrait ? 40 : 32;
     }
     const ch = mob ? Math.min($('chat').getBoundingClientRect().height + 8, h * 0.4) : 0, cw = mob ? 0 : 350;
