@@ -1471,10 +1471,19 @@
                 + '<div class="flex justify-between items-center text-xs pt-1 border-t border-dashed border-gray-200"><span class="font-semibold text-gray-700">รวมค่าคอม</span><span class="font-extrabold text-red-600">฿' + num(appState.commission) + '</span></div>'
                 + (appState.pointsSrc ? '<p class="text-[10px] text-gray-400">ที่มาพ้อย: ' + esc(appState.pointsSrc) + '</p>' : '') : '';
 
-            const nPend = appState.activities.filter(a => a.kind === 'expense' && a.badge === 'รอหัก').length;
-            const nCoupon = appState.coupons.filter(c => c.status === 'Available').length;
-            const badge = nPend + nCoupon;
-            $id('notifBadge').innerText = badge; $id('notifBadge').classList.toggle('hidden', !badge);
+            updateNotifBadge();
+        }
+        // ---------- แจ้งเตือน (กระดิ่ง): จำรายการที่เปิดดูแล้วไว้ในเครื่อง ต่อรหัสพนักงาน · ตัวเลขนับเฉพาะรายการใหม่ ----------
+        function notifItems() {
+            const pend = (appState.activities || []).filter(a => a.kind === 'expense' && a.badge === 'รอหัก'), cp = (appState.coupons || []).filter(c => c.status === 'Available');
+            return pend.map(a => ({ key: 'x:' + (a.id || [a.title, a.amount, a.time].join('|')), html: `<b>รายการรอหัก:</b> ${esc(a.title)} ${esc(a.amount)} <span class="text-gray-400">(${esc(a.time)})</span>`, cls: 'bg-red-50 border-red-100' }))
+                .concat(cp.map(c => ({ key: 'c:' + c.couponId, html: `<b>คูปองพร้อมใช้:</b> ${esc(c.rewardName)} (${esc(c.couponId)})`, cls: 'bg-green-50 border-green-100' })));
+        }
+        const notifSeenKey = () => 'PBD_NOTIF_SEEN_' + (appState.empId || '');
+        function notifSeen() { try { return JSON.parse(localStorage.getItem(notifSeenKey()) || '[]'); } catch (e) { return []; } }
+        function updateNotifBadge() {
+            const seen = notifSeen(), n = notifItems().filter(i => seen.indexOf(i.key) < 0).length;
+            $id('notifBadge').innerText = n > 99 ? '99+' : n; $id('notifBadge').classList.toggle('hidden', !n);
         }
 
         // ---------- โหลดข้อมูล ----------
@@ -2463,9 +2472,10 @@
             });
         }
         function showNotifications() {
-            const pend = appState.activities.filter(a => a.kind === 'expense' && a.badge === 'รอหัก'), cp = appState.coupons.filter(c => c.status === 'Available');
-            const rows = pend.map(a => `<div class="p-2.5 bg-red-50 rounded-lg border border-red-100"><b>รายการรอหัก:</b> ${esc(a.title)} ${esc(a.amount)} <span class="text-gray-400">(${esc(a.time)})</span></div>`)
-                .concat(cp.map(c => `<div class="p-2.5 bg-green-50 rounded-lg border border-green-100"><b>คูปองพร้อมใช้:</b> ${esc(c.rewardName)} (${esc(c.couponId)})</div>`));
+            const items = notifItems(), seen = notifSeen();
+            const rows = items.map(i => `<div class="p-2.5 ${i.cls} rounded-lg border">${seen.indexOf(i.key) < 0 ? '<span class="inline-block w-2 h-2 rounded-full bg-red-600 mr-1 align-middle"></span><b class="text-red-600">ใหม่</b> · ' : ''}${i.html}</div>`);
+            try { localStorage.setItem(notifSeenKey(), JSON.stringify(items.map(i => i.key).concat(seen.filter(k => !items.some(i => i.key === k))).slice(0, 300))); } catch (e) { }   // เปิดดูแล้ว = อ่านแล้ว
+            updateNotifBadge();
             Swal.fire({ title: `🔔 การแจ้งเตือน (${rows.length})`, html: `<div class="text-left text-xs space-y-2">${rows.join('') || '<div class="text-gray-500 text-center">ไม่มีการแจ้งเตือน</div>'}</div>`, confirmButtonColor: '#dc2626' });
         }
 
