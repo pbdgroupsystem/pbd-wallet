@@ -41,6 +41,10 @@
         .act { border: 0; border-radius: 999px; padding: 11px 18px; font-size: 15px; font-weight: 600; color: #1f2937; background: linear-gradient(135deg, #fde68a, #f59e0b); box-shadow: 0 6px 20px rgba(245, 158, 11, .45); white-space: nowrap; }
         .act.alt { background: var(--gl); color: #fff; border: 1px solid var(--bd); box-shadow: none; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .act:disabled { opacity: .55; }
+        #xcd { position: fixed; left: 50%; transform: translateX(-50%); top: calc(max(10px, env(safe-area-inset-top)) + 96px); z-index: 4; padding: 6px 14px; font-size: 13px; font-weight: 600; white-space: nowrap; color: #fff; }
+        #xcd b { color: #fde68a; font-variant-numeric: tabular-nums; }
+        #xcd.party { background: linear-gradient(135deg, rgba(220,38,38,.8), rgba(22,163,74,.8)); font-size: 15px; animation: xcdPop 1.2s ease-in-out infinite alternate; }
+        @keyframes xcdPop { to { transform: translateX(-50%) scale(1.06); } }
         #stat { position: fixed; top: calc(max(10px, env(safe-area-inset-top)) + 54px); left: 10px; padding: 6px 12px; font-size: 12px; z-index: 4; color: var(--mut); }
         #stat b { color: var(--acc); font-size: 14px; }
         /* แชท: จอกว้าง = แถบด้านขวา · มือถือ = แผงล่าง (ย่อ/ขยายได้) */
@@ -142,6 +146,7 @@
         <button id="snd" onclick="toggleSound()" aria-label="เปิด/ปิดเสียง"><i class="fa-solid fa-volume-high"></i></button>
     </div>
     <div id="stat" class="glass"></div>
+    <div id="xcd" class="glass" style="display:none"></div>
     <div id="demo" class="glass">โหมดทดลอง · ยังไม่เชื่อมต่อเรียลไทม์</div>
     <div id="people" class="glass"></div>
 
@@ -170,6 +175,43 @@
         </div>
     </div>
 
+    <div id="orn" class="modal">
+        <div class="card glass">
+            <h2>🎄 แขวนของบนต้นคริสต์มาส</h2>
+            <p class="sub">เลือกของตกแต่ง — ตัวละครเดินไปแขวนให้ ทุกคนเห็นต้นสวยขึ้นเรื่อยๆ</p>
+            <div class="opts" id="ornKind"></div>
+            <div class="lbl">สี</div>
+            <div class="sw" id="ornColor"></div>
+            <div class="lbl">คำอวยพร (ไม่เกิน 40 ตัวอักษร)</div>
+            <textarea id="ornWish" rows="2" maxlength="40" placeholder="สุขสันต์วันคริสต์มาส 🎄"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="opt" style="flex:1" onclick="closeModal('orn')">ยกเลิก</button>
+                <button class="go" style="flex:2" onclick="hangOrnament()">🎄 แขวนเลย</button>
+            </div>
+        </div>
+    </div>
+    <div id="gift" class="modal">
+        <div class="card glass">
+            <h2 id="giftTitle">🎁 ส่งของขวัญ</h2>
+            <p class="sub">กล่องของขวัญจะลอยไปหาเพื่อน เพื่อนกดเปิดอ่านข้อความได้</p>
+            <div class="lbl">สีกล่อง</div>
+            <div class="sw" id="giftColor"></div>
+            <div class="lbl">ข้อความ (ไม่เกิน 80 ตัวอักษร)</div>
+            <textarea id="giftMsg" rows="3" maxlength="80" placeholder="ขอบคุณที่ช่วยกันมาทั้งปีนะ 🎄"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="opt" style="flex:1" onclick="closeModal('gift')">ยกเลิก</button>
+                <button class="go" style="flex:2" onclick="sendGift()">🎁 ส่งเลย</button>
+            </div>
+        </div>
+    </div>
+    <div id="giftOpen" class="modal" onclick="if(event.target===this)closeModal('giftOpen')">
+        <div class="card glass" style="text-align:center">
+            <div style="font-size:64px;line-height:1">🎁</div>
+            <h2 id="goFrom" style="margin-top:8px">ของขวัญจากเพื่อน</h2>
+            <p id="goMsg" style="font-size:17px;margin:10px 0 16px"></p>
+            <button class="go" onclick="closeModal('giftOpen')">ขอบคุณ ❤️</button>
+        </div>
+    </div>
     <div id="sm" class="modal">
         <div class="card glass">
             <h2>⛄ ปั้นตุ๊กตาหิมะ</h2>
@@ -483,8 +525,9 @@ function buildXmas() {
     for (let i = 0; i < N; i++) { sp[i * 3] = THREE.MathUtils.randFloat(-30, 30); sp[i * 3 + 1] = Math.random() * 22; sp[i * 3 + 2] = THREE.MathUtils.randFloat(-30, 25); sv.push(THREE.MathUtils.randFloat(0.6, 1.4)); }
     const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.BufferAttribute(sp, 3));
     const snow = new THREE.Points(sgm, new THREE.PointsMaterial({ map: glowTex('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), color: 0xffffff, size: 0.28, transparent: true, depthWrite: false })); scene.add(snow);
-    WORLD.update.push((t, dt) => { const a = sgm.attributes.position.array; for (let i = 0; i < N; i++) { a[i * 3 + 1] -= sv[i] * dt; a[i * 3] += Math.sin(t * 0.6 + i) * 0.006; if (a[i * 3 + 1] < 0) a[i * 3 + 1] = 22; } sgm.attributes.position.needsUpdate = true; });
-    WORLD.ground = ground; WORLD.bounds = { x0: -10.5, x1: 10.5, z0: -9.5, z1: 10.5 }; WORLD.tree = T0;
+    WORLD.update.push((t, dt) => { const a = sgm.attributes.position.array, k = XCD.party ? 2.6 : 1; snow.material.size = XCD.party ? 0.36 : 0.28; for (let i = 0; i < N; i++) { a[i * 3 + 1] -= sv[i] * dt * k; a[i * 3] += Math.sin(t * 0.6 + i) * 0.006; if (a[i * 3 + 1] < 0) a[i * 3 + 1] = 22; } sgm.attributes.position.needsUpdate = true; });
+    fireworks(() => XCD.party);   // พลุเฉพาะวันคริสต์มาส
+    WORLD.ground = ground; WORLD.bounds = { x0: -10.5, x1: 10.5, z0: -9.5, z1: 10.5 }; WORLD.tree = T0; WORLD.xt = xt;
     WORLD.spawn = () => { const a = Math.random() * Math.PI * 2, r = THREE.MathUtils.randFloat(3.5, 8); return [Math.cos(a) * r, Math.sin(a) * r + 1.5]; };
 }
 // ===================== ตุ๊กตาหิมะ =====================
@@ -545,6 +588,123 @@ window.buildSnowman = () => {
     if (wish) NET.chat('⛄ ' + wish);
     toast('กำลังปั้นตุ๊กตาหิมะ… ⛄');
 };
+// ===================== คริสต์มาส: แขวนของ · ส่งของขวัญ · ปาหิมะ · หมวกซานต้า · นับถอยหลัง =====================
+const ORN = [{ id: 'ball', icon: '🔴', label: 'ลูกบอล' }, { id: 'star', icon: '⭐', label: 'ดาว' }, { id: 'bell', icon: '🔔', label: 'กระดิ่ง' }, { id: 'cane', icon: '🍬', label: 'ลูกกวาด' }];
+const ORN_COL = ['#ef4444', '#fbbf24', '#3b82f6', '#ec4899', '#a855f7', '#ffffff'];
+let ornKind = 'ball', ornColor = ORN_COL[0], lastOrn = 0, giftTo = '', giftColor = ORN_COL[0], lastGift = 0, lastBall = 0, orTotal = 0;
+const ornaments = new Map();
+function ornSpot(id) {   // จุดบนผิวต้น (คำนวณจาก id → ทุกเครื่องได้ตำแหน่งเดียวกัน)
+    const h1 = hash(id + 'h'), h2 = hash(id + 'a'), y = 1.25 + (h1 % 1000) / 1000 * 4.3, a = (h2 % 3600) / 3600 * Math.PI * 2, r = (6.4 - y) * 0.42 + 0.27;
+    return { x: Math.cos(a) * r, y, z: Math.sin(a) * r, a };
+}
+function makeOrnament(kind, color) {
+    const c = new THREE.Color(color || '#ef4444'), g = new THREE.Group(), shiny = col => std(col, { roughness: 0.2, metalness: 0.5, emissive: col, emissiveIntensity: 0.35 });
+    if (kind === 'star') { const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), std(0xffd54a, { emissive: 0xffc107, emissiveIntensity: 0.9 })); g.add(m); }
+    else if (kind === 'bell') { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.17, 0.24, 14, 1, true), std(0xf6c445, { metalness: 0.6, roughness: 0.3, emissive: 0x7a5200, emissiveIntensity: 0.5, side: THREE.DoubleSide })); g.add(b); const cl = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), shiny(c)); cl.position.y = -0.13; g.add(cl); }
+    else if (kind === 'cane') { const red = toon(0xdc2626), wh = toon(0xffffff); for (let i = 0; i < 6; i++) { const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.06, 8), i % 2 ? wh : red); seg.position.y = -0.15 + i * 0.06; g.add(seg); } const hook = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.035, 8, 12, Math.PI), red); hook.position.set(0.07, 0.03, 0); g.add(hook); }
+    else { const b = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), shiny(c)); g.add(b); const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.05, 8), std(0xd4af37, { metalness: 0.8 })); cap.position.y = 0.18; g.add(cap); }
+    const gl = glowSprite(0.7, glowTex('rgba(255,240,200,0.8)', 'rgba(255,240,200,0)')); g.add(gl); g.userData.gl = gl;
+    return g;
+}
+function addOrnament(id, k) {
+    if (!k || ornaments.has(id) || !WORLD.xt) return;
+    const sp = ornSpot(id), m = makeOrnament(k.kind, k.color); m.position.set(sp.x, sp.y, sp.z); m.userData.k = k; m.userData.born = NET.now() - (k.t || 0) < 8000 ? performance.now() : 0;
+    if (m.userData.born) { const lab = label((k.name || '') + (k.wish ? ' · ' + k.wish : ''), k.uid === NET.uid); lab.position.y = 0.55; lab.scale.multiplyScalar(0.7); m.add(lab); m.userData.lab = lab; }
+    WORLD.xt.add(m); ornaments.set(id, m);
+    if (ornaments.size > 160) { const f = ornaments.keys().next().value; WORLD.xt.remove(ornaments.get(f)); ornaments.delete(f); }
+}
+function updOrnaments(t) {
+    const now = performance.now();
+    ornaments.forEach((m, id) => {
+        m.rotation.y = Math.sin(t * 1.2 + hash(id) % 10) * 0.3; m.userData.gl.material.opacity = 0.45 + Math.sin(t * 3 + hash(id)) * 0.35;
+        if (m.userData.born) { const a = (now - m.userData.born) / 1000; m.scale.setScalar(a < 0.5 ? easeBack(Math.min(1, a * 2)) : 1); if (m.userData.lab && a > 8) { m.remove(m.userData.lab); m.userData.lab = null; } }
+    });
+}
+$('ornKind').innerHTML = ORN.map(o => `<button class="opt" data-o="${o.id}"><span>${o.icon}</span>${o.label}</button>`).join('');
+$('ornKind').onclick = e => { const b = e.target.closest('button'); if (!b) return; ornKind = b.dataset.o; [...$('ornKind').children].forEach(x => x.classList.toggle('on', x === b)); };
+$('ornColor').innerHTML = ORN_COL.map(c => `<button style="background:${c}" data-c="${c}" aria-label="สี"></button>`).join('');
+$('ornColor').onclick = e => { const b = e.target.closest('button'); if (!b) return; ornColor = b.dataset.c; [...$('ornColor').children].forEach(x => x.classList.toggle('on', x === b)); };
+$('giftColor').innerHTML = ORN_COL.map(c => `<button style="background:${c}" data-c="${c}" aria-label="สี"></button>`).join('');
+$('giftColor').onclick = e => { const b = e.target.closest('button'); if (!b) return; giftColor = b.dataset.c; [...$('giftColor').children].forEach(x => x.classList.toggle('on', x === b)); };
+window.openOrn = () => { [...$('ornKind').children].forEach(x => x.classList.toggle('on', x.dataset.o === ornKind)); [...$('ornColor').children].forEach(x => x.classList.toggle('on', x.dataset.c === ornColor)); $('orn').classList.add('on'); };
+window.hangOrnament = () => {
+    if (Date.now() - lastOrn < 20000) { toast('รอสักครู่ แล้วค่อยแขวนชิ้นต่อไปนะ 🎄'); return; }
+    lastOrn = Date.now(); closeModal('orn');
+    const me = avatars.get(NET.uid), T0 = WORLD.tree; if (!me) return;
+    const ang = Math.atan2(me.position.x - T0.x, me.position.z - T0.z), tx = T0.x + Math.sin(ang) * 3.3, tz = T0.z + Math.cos(ang) * 3.3, dist = Math.hypot(me.position.x - tx, me.position.z - tz);
+    NET.set({ x: +tx.toFixed(2), z: +Math.max(WORLD.bounds.z0, tz).toFixed(2) });   // เดินไปที่ต้นก่อน
+    const wish = $('ornWish').value.trim().slice(0, 40); $('ornWish').value = '';
+    setTimeout(() => { NET.set({ build: NET.now() - SM_BUILD_MS + 1500 }); NET.ornament({ kind: ornKind, color: ornColor, wish }); if (wish) NET.chat('🎄 ' + wish); toast('แขวนบนต้นคริสต์มาสแล้ว ✨'); }, Math.max(600, dist / 2.4 * 1000 + 300));
+};
+// ---- ของขวัญ / ปาหิมะ (ลอยจากผู้ส่งไปหาผู้รับ — ทุกเครื่องเห็น) ----
+const flights = [];
+function fly(fromUid, toUid, mesh, dur, arc, onHit) {
+    const a = avatars.get(fromUid), b = avatars.get(toUid); if (!a || !b) { if (onHit) onHit(); return; }
+    scene.add(mesh); flights.push({ mesh, a, b, t0: performance.now(), dur, arc, onHit });
+}
+function updFlights() {
+    const now = performance.now();
+    for (let i = flights.length - 1; i >= 0; i--) {
+        const f = flights[i], k = Math.min(1, (now - f.t0) / f.dur), A = f.a.position, B = f.b.position;
+        f.mesh.position.set(A.x + (B.x - A.x) * k, 1.4 + Math.sin(k * Math.PI) * f.arc + (0.9 - 1.4) * k * 0, A.z + (B.z - A.z) * k); f.mesh.rotation.y += 0.2; f.mesh.rotation.x += 0.15;
+        if (k >= 1) { scene.remove(f.mesh); flights.splice(i, 1); if (f.onHit) f.onHit(); }
+    }
+}
+function giftBox(color) { const g = new THREE.Group(), c = toon(new THREE.Color(color)); const b = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.42), c); g.add(b); const r1 = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.38, 0.08), toon(0xffffff)); g.add(r1); const r2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.38, 0.44), toon(0xffffff)); g.add(r2); const gl = glowSprite(1.2, glowTex('rgba(255,230,150,0.9)', 'rgba(255,200,80,0)')); g.add(gl); return g; }
+function splash(uid) {
+    const a = avatars.get(uid); if (!a) return; const parts = [];
+    for (let i = 0; i < 14; i++) { const s = glowSprite(0.35, glowTex('rgba(255,255,255,1)', 'rgba(255,255,255,0)')); s.position.set(a.position.x, 1.7, a.position.z); s.userData.v = new THREE.Vector3((Math.random() - .5) * 3, Math.random() * 2.5, (Math.random() - .5) * 3); scene.add(s); parts.push(s); }
+    const t0 = performance.now(), tick = () => { const k = (performance.now() - t0) / 700; parts.forEach(s => { s.position.addScaledVector(s.userData.v, 0.016); s.userData.v.y -= 0.12; s.material.opacity = Math.max(0, 1 - k); }); if (k < 1) requestAnimationFrame(tick); else parts.forEach(s => scene.remove(s)); }; tick();
+}
+function onGift(id, g) {
+    if (!g || seenEv[id]) return; seenEv[id] = 1; if (NET.now() - (g.t || 0) > 20000) return;
+    fly(g.uid, g.to, giftBox(g.color || '#ef4444'), 1800, 2.2, () => {
+        splash(g.to);
+        if (g.to === NET.uid) { $('goFrom').textContent = '🎁 ของขวัญจาก ' + (g.name || 'เพื่อน'); $('goMsg').textContent = g.msg || 'Merry Christmas! 🎄'; $('giftOpen').classList.add('on'); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) { } }
+    });
+}
+function onBall(id, b) {
+    if (!b || seenEv[id]) return; seenEv[id] = 1; if (NET.now() - (b.t || 0) > 8000) return;
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), toon(0xffffff));
+    fly(b.uid, b.to, ball, 800, 1.2, () => { splash(b.to); showBubble(b.to, 'โดนปาหิมะ! ❄️'); if (b.to === NET.uid) toast('❄️ ' + (b.name || 'เพื่อน') + ' ปาหิมะใส่คุณ!'); });
+}
+const seenEv = {};
+window.fmGift = () => { const p = peersCache[fmUid]; if (!p) return; giftTo = fmUid; closeFriendMenu(); $('giftTitle').textContent = '🎁 ส่งของขวัญให้ ' + p.name; [...$('giftColor').children].forEach(x => x.classList.toggle('on', x.dataset.c === giftColor)); $('gift').classList.add('on'); };
+window.sendGift = () => {
+    if (Date.now() - lastGift < 15000) { toast('รอสักครู่ แล้วค่อยส่งชิ้นต่อไปนะ 🎁'); return; }
+    const p = peersCache[giftTo]; if (!p) { closeModal('gift'); return; }
+    lastGift = Date.now(); closeModal('gift');
+    const msg = $('giftMsg').value.trim().slice(0, 80); $('giftMsg').value = '';
+    NET.gift({ to: giftTo, toName: p.name, color: giftColor, msg });
+    const tx = '🎁 ส่งของขวัญให้ @' + p.name; NET.chat(tx, mentionsOf(tx));
+};
+window.fmBall = () => { const to = fmUid; closeFriendMenu(); if (!peersCache[to]) return; if (Date.now() - lastBall < 1500) return; lastBall = Date.now(); NET.snowball({ to }); };
+window.toggleSanta = () => { NET.set({ santa: !(NET.me && NET.me.santa) }); renderActions(); };
+function setSanta(a, on) {
+    const u = a.userData; if (!!u.santa === !!on) return; u.santa = !!on;
+    if (u.santaHat) { u.head.remove(u.santaHat); u.santaHat = null; }
+    if (on) { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.75, 18), toon(0xdc2626)); c.position.y = 0.62; c.rotation.z = 0.28; g.add(c);
+        const br = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.1, 8, 20), toon(0xffffff)); br.rotation.x = Math.PI / 2; br.position.y = 0.3; g.add(br);
+        const pm = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), toon(0xffffff)); pm.position.set(-0.2, 0.98, 0); g.add(pm); u.head.add(g); u.santaHat = g; }
+}
+// ---- นับถอยหลังวันคริสต์มาส (25 ธ.ค. เวลาไทย) · วันคริสต์มาส = พลุ + หิมะตกหนัก ----
+const XCD = { party: false, target: 0 };
+(function () {
+    if (!XMAS) return;
+    const el = $('xcd'); el.style.display = '';
+    const cdq = +Q.get('cd') || 0, force = Q.get('xmasNow') === '1';
+    const bkk = () => new Date(NET.now() + 7 * 3600e3);   // เวลาไทยในรูป UTC
+    const tgt = () => { const d = bkk(); let y = d.getUTCFullYear(); const t = Date.UTC(y, 11, 25) - 7 * 3600e3; return NET.now() > t + 864e5 ? Date.UTC(y + 1, 11, 25) - 7 * 3600e3 : t; };
+    const t0 = cdq ? Date.now() + cdq * 1000 : 0;
+    const tick = () => {
+        const target = t0 ? NET.now() - Date.now() + t0 : tgt(), left = target - NET.now();
+        const was = XCD.party; XCD.party = force || (left <= 0 && left > -864e5);
+        if (XCD.party) { el.className = 'glass party'; el.innerHTML = '🎄 Merry Christmas! 🎅 สุขสันต์วันคริสต์มาส'; if (!was) { toast('🎉 Merry Christmas!'); try { MUSIC.ctx && MUSIC.on && null; } catch (e) { } } return; }
+        const d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5), m = Math.floor(left % 36e5 / 6e4), sc = Math.floor(left % 6e4 / 1e3), z = n => String(n).padStart(2, '0');
+        el.className = 'glass'; el.innerHTML = `🎄 อีก <b>${d ? d + ' วัน ' : ''}${z(h)}:${z(m)}:${z(sc)}</b> ถึงวันคริสต์มาส`;
+    };
+    tick(); setInterval(tick, 1000);
+})();
 function buildWian() {
     scene.fog = new THREE.Fog(0x2b1d3a, 34, 120);
     skyDome('#1b1238', '#4b2a57', '#d9825b'); stars(300, 40);
@@ -576,7 +736,7 @@ function lamp(x, z) {
     const h = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.28), std(0xffe2a0, { emissive: 0xffb347, emissiveIntensity: 1.2 })); h.position.set(x, 1.45, z); scene.add(h);
     const g = glowSprite(1.4); g.position.set(x, 1.45, z); scene.add(g);
 }
-function fireworks() {
+function fireworks(gate) {   // gate() = false → ไม่ยิง (คริสต์มาส: ยิงเฉพาะวันคริสต์มาส)
     const bursts = [], rockets = [], v3 = new THREE.Vector3(), FLASH = glowTex('rgba(255,255,255,0.9)', 'rgba(255,255,255,0)'), ROCKET = glowTex('rgba(255,230,170,1)', 'rgba(255,160,60,0)'), SPARK = glowTex('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
     // จุดแตกอยู่ในท้องฟ้าที่มองเห็นเสมอ: สุ่มตำแหน่งบนจอ (ส่วนบน) แล้วยิงออกไปไกล ~85 หน่วยเหนือฝั่งตรงข้าม
     const spot = () => {
@@ -600,8 +760,8 @@ function fireworks() {
         const from = new THREE.Vector3(c.x + THREE.MathUtils.randFloat(-3, 3), Math.max(0, c.y - 26), c.z); s.position.copy(from); scene.add(s);
         rockets.push({ s, from, c, age: 0, dur: THREE.MathUtils.randFloat(0.8, 1.1) });
     };
-    setInterval(() => { if (document.hidden) return; launch(); if (Math.random() < 0.3) setTimeout(launch, 350); }, 3000);
-    setTimeout(launch, 800);
+    setInterval(() => { if (document.hidden || (gate && !gate())) return; launch(); if (Math.random() < 0.3) setTimeout(launch, 350); }, 3000);
+    if (!gate) setTimeout(launch, 800);
     WORLD.update.push((t, dt) => {
         for (let k = rockets.length - 1; k >= 0; k--) {
             const r = rockets[k]; r.age += dt; const f = Math.min(1, r.age / r.dur), e = 1 - Math.pow(1 - f, 2);
@@ -727,7 +887,7 @@ function syncPeers(map) {
             scene.add(a); avatars.set(uid, a);
             if (chatReady && uid !== NET.uid) sysMsg(p.name + ' เข้ามาในห้อง');
         }
-        a.userData.p = p; setHold(a, TYPE === 'loy' ? p.hold || '' : '');
+        a.userData.p = p; setHold(a, TYPE === 'loy' ? p.hold || '' : ''); if (XMAS) setSanta(a, !!p.santa);
     });
     avatars.forEach((a, uid) => { if (!peersCache[uid]) { if (chatReady && uid !== NET.uid) sysMsg((a.userData.p && a.userData.p.name || 'มีคน') + ' ออกจากห้อง'); a.userData.leaving = 1; avatars.delete(uid); leaving.push(a); } });
     $('onlineN').textContent = Object.keys(peersCache).length;
@@ -813,7 +973,12 @@ const NET = {
         this.base.child('presence').on('value', s => syncPeers(s.val() || {}));
         this.base.child('chat').limitToLast(60).on('child_added', s => onChat(s.val()));
         if (TYPE === 'loy') this.base.child('krathong').orderByChild('t').startAt(this.now() - KT_LIFE).on('child_added', s => addKrathong(s.key, s.val()));
-        if (XMAS) this.base.child('snowman').limitToLast(60).on('child_added', s => addSnowman(s.key, s.val()));
+        if (XMAS) {
+            this.base.child('snowman').limitToLast(60).on('child_added', s => addSnowman(s.key, s.val()));
+            this.base.child('ornament').limitToLast(160).on('child_added', s => addOrnament(s.key, s.val()));
+            this.base.child('gift').orderByChild('t').startAt(this.now() - 20000).on('child_added', s => onGift(s.key, s.val()));
+            this.base.child('snowball').orderByChild('t').startAt(this.now() - 8000).on('child_added', s => onBall(s.key, s.val()));
+        }
         this.base.child('stats').on('value', s => onStats(s.val() || {}));
     },
     set(patch) { Object.assign(this.me, patch); if (this.demo) return this.demoSet(); this.pref && this.pref.update(patch); },
@@ -822,11 +987,15 @@ const NET = {
         this.base.child('krathong').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/krathong').transaction(n => (n || 0) + 1); },
     snowman(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addSnowman('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ snowman: ++this.ds.snowman }); return; }
         this.base.child('snowman').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/snowman').transaction(n => (n || 0) + 1); },
+    ornament(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addOrnament('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ snowman: this.ds.snowman, ornament: ++this.ds.ornament }); return; }
+        this.base.child('ornament').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/ornament').transaction(n => (n || 0) + 1); },
+    gift(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) return onGift('d' + Math.random(), Object.assign(k, { t: this.now() })); this.base.child('gift').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); },
+    snowball(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) return onBall('d' + Math.random(), Object.assign(k, { t: this.now() })); this.base.child('snowball').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); },
     wianDone() { if (this.demo) { onStats({ krathong: this.ds.krathong, wian: ++this.ds.wian }); return; } this.base.child('stats/wian').transaction(n => (n || 0) + 1); },
     // ---------- โหมดทดลอง: มีเพื่อนจำลองเดินไปมา/พิมพ์แชท ----------
     startDemo() { this.demo = true; this.uid = 'me-' + Math.random().toString(36).slice(2, 8); $('demo').style.display = 'block'; return false; },
     demoJoin(me) {
-        this.ds = { krathong: 37, wian: 12, snowman: 18 }; onStats(this.ds); const P = {}; P[this.uid] = me; this.P = P;
+        this.ds = { krathong: 37, wian: 12, snowman: 18, ornament: 42 }; onStats(this.ds); const P = {}; P[this.uid] = me; this.P = P;
         const names = ['ปาล์ม', 'อู๋', 'แวว', 'หนึ่ง', 'มอส', 'ตอง', 'เอก', 'นก', 'โอม'], lines = XMAS ? ['Merry Christmas ทุกคน 🎄', 'ตุ๊กตาหิมะใครน่ารักสุด ⛄', 'หนาวจัง ❄️', 'ขอให้ปีหน้ายอดปังๆ 🎁', 'มาช่วยกันปั้นเยอะๆ', 'ซานต้ามาแล้ว 🎅'] : LOUNGE ? ['สวัสดีครับทุกคน 👋', 'วันนี้ยอดเป็นไงบ้าง', 'กินข้าวยังจ้า', 'สู้ๆ นะทีม 💪', 'ใครอยู่สาขาไหนบ้าง', 'เย็นนี้ฝนตกไหมนะ', '555 น่ารักมาก'] : ['สุขสันต์วันลอยกระทงครับ 🪷', 'ขอให้ยอดขายปังๆ', 'สวยมากเลย ✨', 'สาธุ 🙏', 'ปีนี้ขอให้สุขภาพแข็งแรง', 'ลอยแล้วววว', 'ทีม SD มาครบ!'];
         names.forEach((n, i) => { const id = 'bot' + i, s = this.spawn(); P[id] = { name: n, sex: i % 2 ? 'm' : 'f', color: COLORS[i % COLORS.length], x: s[0], z: s[1], wian: TYPE === 'wian' && i % 3 === 0 ? this.now() - i * 7000 : 0 }; });
         syncPeers(Object.assign({}, P));
@@ -838,7 +1007,11 @@ const NET = {
         if (TYPE === 'loy') { const ktb = () => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; addKrathong('b' + Math.random(), { uid: 'bot' + i, name: names[i], style: KT[i % 3].id, wish: '', x: p.x, t: this.now() }); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); };
             for (let i = 0; i < 4; i++) setTimeout(ktb, i * 300); setInterval(ktb, 9000); }
         if (XMAS) { const smb = (old) => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; P['bot' + i].build = this.now(); addSnowman('b' + Math.random(), { uid: 'bot' + i, name: names[i], hat: SM_HATS[i % 3].id, scarf: SM_SCARF[i % SM_SCARF.length], wish: '', x: p.x + 1, z: p.z, ry: Math.random() * 6, t: this.now() - (old ? 60000 : 0) }); onStats({ snowman: ++this.ds.snowman }); };
-            for (let i = 0; i < 5; i++) smb(true); setInterval(() => smb(false), 12000); }
+            for (let i = 0; i < 5; i++) smb(true); setInterval(() => smb(false), 12000);
+            const orb = (old) => { const i = Math.floor(Math.random() * names.length); addOrnament('o' + Math.random(), { uid: 'bot' + i, name: names[i], kind: ORN[i % 4].id, color: ORN_COL[i % ORN_COL.length], wish: '', t: this.now() - (old ? 60000 : 0) }); };
+            for (let i = 0; i < 30; i++) orb(true); setInterval(() => orb(false), 7000);
+            setInterval(() => { const i = Math.floor(Math.random() * names.length); P['bot' + i].santa = Math.random() < 0.6; onBall('x' + Math.random(), { uid: 'bot' + i, name: names[i], to: Math.random() < 0.4 ? this.uid : 'bot' + ((i + 1) % names.length), t: this.now() }); syncPeers(Object.assign({}, P)); }, 5000);
+            setTimeout(() => onGift('g' + Math.random(), { uid: 'bot2', name: names[2], to: this.uid, color: '#22c55e', msg: 'Merry Christmas นะ ขอบคุณที่ช่วยกันมาทั้งปี 🎄', t: this.now() }), 9000); }
     },
     spawn() { return WALK ? WORLD.spawn() : [0, 0]; },
     demoSet() { this.P[this.uid] = Object.assign({}, this.me); syncPeers(Object.assign({}, this.P)); }
@@ -906,12 +1079,12 @@ $('chat').addEventListener('transitionend', layoutChat);
 window.togglePeople = () => { $('people').classList.toggle('on'); renderPeople(); };
 function renderPeople() { const list = Object.keys(peersCache).map(k => peersCache[k]).filter(p => p && p.name); $('people').innerHTML = `<b>ผู้เข้าร่วม ${list.length} คน</b>` + list.map(p => `<div>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</div>`).join(''); }
 function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 2200); }
-function onStats(s) { ktTotal = s.krathong || 0; if (XMAS) { smTotal = s.snowman || 0; $('stat').innerHTML = `ปั้นแล้ว <b>${smTotal.toLocaleString('th-TH')}</b> ตัว ⛄`; return; } if (LOUNGE) { $('stat').style.display = 'none'; return; } $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
+function onStats(s) { ktTotal = s.krathong || 0; if (XMAS) { smTotal = s.snowman || 0; orTotal = s.ornament || 0; $('stat').innerHTML = `⛄ ปั้นแล้ว <b>${smTotal.toLocaleString('th-TH')}</b> · 🎄 แขวนแล้ว <b>${orTotal.toLocaleString('th-TH')}</b>`; return; } if (LOUNGE) { $('stat').style.display = 'none'; return; } $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
 
 // ===================== ปุ่มกิจกรรม =====================
 let myWianDoneAt = 0;
 function renderActions() {
-    if (XMAS) { $('actions').innerHTML = `<button class="act" onclick="openSm()">⛄ ปั้นตุ๊กตาหิมะ</button><button class="act alt" onclick="dance()">💃 เต้น</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`; return; }
+    if (XMAS) { $('actions').innerHTML = `<button class="act" onclick="openSm()">⛄ ปั้น</button><button class="act" onclick="openOrn()">🎄 แขวนของ</button><button class="act alt" onclick="toggleSanta()" aria-label="หมวกซานต้า">${NET.me && NET.me.santa ? '🎅✓' : '🎅'}</button><button class="act alt" onclick="dance()" aria-label="เต้น">💃</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`; return; }
     if (LOUNGE) { $('actions').innerHTML = `<button class="act" onclick="waveAll()">👋 ทักทาย</button><button class="act alt" onclick="dance()">💃 เต้น</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`; return; }
     if (TYPE === 'loy') $('actions').innerHTML = NET.me && NET.me.hold
         ? `<button class="act" id="floatBtn" onclick="floatKrathong()">🪷 ลอยกระทง</button><button class="act alt" onclick="openKt()" aria-label="เปลี่ยนกระทง"><i class="fa-solid fa-pen"></i></button><button class="act alt" onclick="dropKrathong()" aria-label="วางกระทงลง"><i class="fa-solid fa-xmark"></i></button>`
@@ -1083,7 +1256,9 @@ function friendMenu(uid, cx, cy) {
     m.innerHTML = `<h3>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</h3>
         <button onclick="fmGo()"><i class="fa-solid fa-person-walking"></i>เดินไปหา</button>
         <button onclick="fmWave()"><i class="fa-solid fa-hand"></i>โบกมือทักทาย</button>
-        <button onclick="fmTag()"><i class="fa-solid fa-at"></i>แท็กในแชท</button>`;
+        <button onclick="fmTag()"><i class="fa-solid fa-at"></i>แท็กในแชท</button>${XMAS ? `
+        <button onclick="fmGift()"><i class="fa-solid fa-gift"></i>ส่งของขวัญ</button>
+        <button onclick="fmBall()"><i class="fa-solid fa-snowflake"></i>ปาหิมะใส่</button>` : ''}`;
     m.classList.add('on'); const w = m.offsetWidth, h = m.offsetHeight;
     m.style.left = Math.max(8, Math.min(innerWidth - w - 8, cx - w / 2)) + 'px'; m.style.top = Math.max(60, Math.min(innerHeight - h - 8, cy - h - 16)) + 'px';
 }
@@ -1154,7 +1329,7 @@ resize();
 const clock = new THREE.Clock(); let T = 0;
 function loop() {
     const dt = Math.min(clock.getDelta(), 0.05); T += dt;
-    WORLD.update.forEach(f => f(T, dt)); if (TYPE === 'loy') updKrathongs(T); if (XMAS) updSnowmen(T); animateAvatars(T, dt);
+    WORLD.update.forEach(f => f(T, dt)); if (TYPE === 'loy') updKrathongs(T); if (XMAS) { updSnowmen(T); updOrnaments(T); updFlights(); } animateAvatars(T, dt);
     if (marker.userData.t > 0) { marker.userData.t -= dt * 1.4; marker.material.opacity = Math.max(0, marker.userData.t); marker.scale.setScalar(1 + (1 - marker.userData.t)); }
     if (pv && $('pick').classList.contains('on')) { pv.ch.rotation.y = Math.sin(T * 0.8) * 0.6; const u = pv.ch.userData; u.body.position.y = Math.abs(Math.sin(T * 3)) * 0.04; const w = pv.r.domElement; if (w.width !== w.clientWidth * pv.r.getPixelRatio()) { pv.r.setSize(w.clientWidth, w.clientHeight, false); pv.c.aspect = w.clientWidth / w.clientHeight; pv.c.updateProjectionMatrix(); } pv.r.render(pv.s, pv.c); }
     controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop);
