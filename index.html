@@ -2694,8 +2694,8 @@
         chip.textContent = T.emoji + ' ' + (f.title || FX_DEFAULT[f.theme] || '') + (today ? ' · วันนี้' : '');
         chip.title = f.title || '';
         // ห้องกิจกรรมออนไลน์: ลอยกระทง → ลอยกระทงออนไลน์ · วันพระใหญ่ → เวียนเทียนออนไลน์ ("room" ใน festivals.json: loy | wian | none)
-        const room = f.room || (f.theme === 'loy' ? 'loy' : f.theme === 'buddha' ? 'wian' : '');
-        FEST_ROOM = room && room !== 'none' ? { type: room, id: f.id || (f.theme + '-' + fxToday()), title: room === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์ · ' + (f.title || ''), from: f.from, to: f.to } : null;
+        const room = f.room || (f.theme === 'loy' ? 'loy' : f.theme === 'buddha' ? 'wian' : f.theme === 'xmas' ? 'xmas' : '');   // xmas = ปั้นตุ๊กตาหิมะ
+        FEST_ROOM = room && room !== 'none' ? { type: room, id: f.id || (f.theme + '-' + fxToday()), title: room === 'loy' ? 'ลอยกระทงออนไลน์' : room === 'xmas' ? 'ปั้นตุ๊กตาหิมะ · Merry Christmas' : 'เวียนเทียนออนไลน์ · ' + (f.title || ''), from: f.from, to: f.to } : null;
         placeFestCard();
     }
     function fxThDate(d) { if (!d) return ''; const m = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], p = String(d).split('-'); return +p[2] + ' ' + m[+p[1] - 1] + ' ' + (+p[0] + 543); }
@@ -2711,10 +2711,10 @@
             document.getElementById('frDesc').textContent = 'แวะมาทักทาย คุยเล่นกับเพื่อนๆ ทุกสาขา ด้วยตัวละคร 3D';
             document.getElementById('frDate').classList.add('hidden'); return;
         }
-        const loy = FEST_ROOM.type === 'loy';
-        document.getElementById('frEmoji').textContent = loy ? '🪷' : '🕯️';
-        document.getElementById('frTitle').textContent = loy ? 'ลอยกระทงออนไลน์' : FEST_ROOM.title;
-        document.getElementById('frDesc').textContent = loy ? 'ลอยกระทงพร้อมเพื่อนๆ แชทสด ถ่ายรูปเก็บไว้' : 'เวียนเทียนรอบพระเจดีย์ 3 รอบพร้อมเพื่อนๆ';
+        const loy = FEST_ROOM.type === 'loy', xm = FEST_ROOM.type === 'xmas';
+        document.getElementById('frEmoji').textContent = loy ? '🪷' : xm ? '⛄' : '🕯️';
+        document.getElementById('frTitle').textContent = loy ? 'ลอยกระทงออนไลน์' : xm ? 'ปั้นตุ๊กตาหิมะ' : FEST_ROOM.title;
+        document.getElementById('frDesc').textContent = loy ? 'ลอยกระทงพร้อมเพื่อนๆ แชทสด ถ่ายรูปเก็บไว้' : xm ? 'ปั้นตุ๊กตาหิมะ แต่งหมวก-ผ้าพันคอ ใต้ต้นคริสต์มาสกับเพื่อนๆ' : 'เวียนเทียนรอบพระเจดีย์ 3 รอบพร้อมเพื่อนๆ';
         const dt = FEST_ROOM.from ? fxThDate(FEST_ROOM.from) + (FEST_ROOM.to && FEST_ROOM.to !== FEST_ROOM.from ? ' – ' + fxThDate(FEST_ROOM.to) : '') : '';
         document.getElementById('frDate').classList.toggle('hidden', !dt); document.querySelector('#frDate span').textContent = dt;
     }

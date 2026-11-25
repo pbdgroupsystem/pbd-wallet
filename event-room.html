@@ -170,6 +170,22 @@
         </div>
     </div>
 
+    <div id="sm" class="modal">
+        <div class="card glass">
+            <h2>⛄ ปั้นตุ๊กตาหิมะ</h2>
+            <p class="sub">แต่งตุ๊กตาหิมะของคุณ — ปั้นตรงหน้าตัวละคร ทุกคนในห้องเห็น</p>
+            <div class="lbl">หมวก</div>
+            <div class="opts" id="smHat"></div>
+            <div class="lbl">ผ้าพันคอ</div>
+            <div class="sw" id="smScarf"></div>
+            <div class="lbl">คำอวยพร (ไม่เกิน 40 ตัวอักษร)</div>
+            <textarea id="smWish" rows="2" maxlength="40" placeholder="Merry Christmas ทีม PBD 🎄"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="opt" style="flex:1" onclick="closeModal('sm')">ยกเลิก</button>
+                <button class="go" style="flex:2" onclick="buildSnowman()">⛄ ปั้นเลย</button>
+            </div>
+        </div>
+    </div>
     <div id="kt" class="modal">
         <div class="card glass">
             <h2>🪷 เลือกกระทง</h2>
@@ -206,13 +222,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // เปิดจาก Wallet: event-room.html?room=<id เทศกาล>&type=loy|wian|lounge&title=...  · ทดลอง: ?type=loy&demo=1
 // lounge = ห้องพูดคุยช่วงเวลาปกติ (เปิดตลอด ห้องเดียวรวมทุกสาขา)
 const Q = new URLSearchParams(location.search);
-const TYPE = ['wian', 'lounge'].indexOf(Q.get('type')) >= 0 ? Q.get('type') : 'loy', WALK = TYPE !== 'wian', LOUNGE = TYPE === 'lounge';
+const TYPE = ['wian', 'lounge', 'xmas'].indexOf(Q.get('type')) >= 0 ? Q.get('type') : 'loy', WALK = TYPE !== 'wian', LOUNGE = TYPE === 'lounge', XMAS = TYPE === 'xmas', SOCIAL = LOUNGE || XMAS;   // xmas = ปั้นตุ๊กตาหิมะ (คริสต์มาส)
 const ROOM = (Q.get('room') || (LOUNGE ? 'lounge' : TYPE + '-demo')).replace(/[^\w-]/g, '').slice(0, 40);
-const TITLE = Q.get('title') || (LOUNGE ? 'ห้องพูดคุย PBD' : TYPE === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์');
+const TITLE = Q.get('title') || (XMAS ? 'ปั้นตุ๊กตาหิมะ · Merry Christmas' : LOUNGE ? 'ห้องพูดคุย PBD' : TYPE === 'loy' ? 'ลอยกระทงออนไลน์' : 'เวียนเทียนออนไลน์');
 const ROUND_MS = 36000, ROUNDS = 3, KT_LIFE = 170000, KT_SPEED = 0.17;
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f8fafc'];
 const KT = [{ id: 'leaf', icon: '🌿', label: 'ใบตอง' }, { id: 'lotus', icon: '🪷', label: 'ดอกบัว' }, { id: 'bread', icon: '🍞', label: 'ขนมปัง' }];
-const EMO = LOUNGE ? ['👋', '😊', '😂', '❤️', '👍', '👏', '🔥', '🎉'] : ['🙏', '🪷', '🕯️', '❤️', '😊', '👏', '✨', '🎉'];
+const EMO = XMAS ? ['🎄', '⛄', '🎅', '🎁', '❄️', '❤️', '😊', '🎉'] : LOUNGE ? ['👋', '😊', '😂', '❤️', '👍', '👏', '🔥', '🎉'] : ['🙏', '🪷', '🕯️', '❤️', '😊', '👏', '✨', '🎉'];
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
@@ -225,8 +241,8 @@ if (!ME || !ME.name) ME = Q.get('demo') ? { name: 'ทดลอง', emp: '' } :
 const LOOK = (() => { try { return JSON.parse(lsGet('PBD_EV_LOOK') || 'null'); } catch (e) { return null; } })() || { sex: 'f', color: COLORS[7] };
 
 document.title = 'PBD · ' + TITLE;
-$('roomTitle').textContent = (LOUNGE ? '💬 ' : TYPE === 'loy' ? '🪷 ' : '🕯️ ') + TITLE;
-$('roomSub').textContent = LOUNGE ? 'แตะพื้นเพื่อเดิน · แตะเพื่อนเพื่อทักทาย' : TYPE === 'loy' ? 'แตะพื้นเพื่อเดิน · กดปุ่มลอยกระทงที่ริมน้ำ' : 'เดินเวียนรอบพระเจดีย์ 3 รอบ (เวียนขวา)';
+$('roomTitle').textContent = (XMAS ? '⛄ ' : LOUNGE ? '💬 ' : TYPE === 'loy' ? '🪷 ' : '🕯️ ') + TITLE;
+$('roomSub').textContent = XMAS ? 'แตะพื้นเพื่อเดิน · กดปั้นตุ๊กตาหิมะ แต่งหมวก ผ้าพันคอ' : LOUNGE ? 'แตะพื้นเพื่อเดิน · แตะเพื่อนเพื่อทักทาย' : TYPE === 'loy' ? 'แตะพื้นเพื่อเดิน · กดปุ่มลอยกระทงที่ริมน้ำ' : 'เดินเวียนรอบพระเจดีย์ 3 รอบ (เวียนขวา)';
 window.goBack = () => { if (history.length > 1) history.back(); else location.href = './'; };
 
 // ===================== ฉาก 3 มิติ =====================
@@ -428,6 +444,107 @@ function buildLounge() {
     WORLD.ground = ground; WORLD.bounds = { x0: -10.5, x1: 10.5, z0: -9.5, z1: 10.5 };
     WORLD.spawn = () => { const a = Math.random() * Math.PI * 2, r = THREE.MathUtils.randFloat(3.2, 8); return [Math.cos(a) * r, Math.sin(a) * r]; };
 }
+// ===================== คริสต์มาส: ลานหิมะ + ต้นคริสต์มาส + หิมะตก =====================
+function buildXmas() {
+    scene.fog = new THREE.Fog(0x1a2550, 40, 150);
+    skyDome('#0a1033', '#1f2d66', '#4b5a9c'); stars(500, 30);
+    scene.add(new THREE.HemisphereLight(0xcfe0ff, 0x8892b0, 1.05));
+    const moonL = new THREE.DirectionalLight(0xdfe8ff, 0.9); moonL.position.set(-12, 24, 10); scene.add(moonL);
+    const snowM = toon(0xf4f8ff);
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(80, 48), snowM); ground.rotation.x = -Math.PI / 2; scene.add(ground);
+    for (let i = 0; i < 60; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(THREE.MathUtils.randFloat(0.5, 1.6), 10, 6), snowM); b.scale.y = 0.28; const a = Math.random() * Math.PI * 2, r = THREE.MathUtils.randFloat(13, 40); b.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(b); }
+    // ต้นคริสต์มาสใหญ่ + ลูกบอล + ดาว + ไฟวนรอบต้น + กล่องของขวัญ
+    const T0 = new THREE.Vector3(0, 0, -7), xt = new THREE.Group(); xt.position.copy(T0); scene.add(xt);
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.2, 8), toon(0x6b4226)); trunk.position.y = 0.6; xt.add(trunk);
+    [[2.6, 2.4, 1.6], [2.1, 2.2, 2.9], [1.6, 2.0, 4.1], [1.05, 1.7, 5.2]].forEach(([r, h, y]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 14), toon(0x1f7a3a)); c.position.y = y; xt.add(c);
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.98, h * 0.18, 14, 1, true), snowM); cap.position.y = y - h * 0.38; xt.add(cap); });
+    const balls = [0xef4444, 0xfbbf24, 0x3b82f6, 0xec4899, 0xffffff, 0xa855f7];
+    for (let i = 0; i < 34; i++) { const y = THREE.MathUtils.randFloat(1.2, 5.6), r = (6.4 - y) * 0.42 + 0.15, a = Math.random() * Math.PI * 2;
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), std(balls[i % balls.length], { roughness: 0.25, metalness: 0.4, emissive: balls[i % balls.length], emissiveIntensity: 0.25 })); b.position.set(Math.cos(a) * r, y, Math.sin(a) * r); xt.add(b); }
+    const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), std(0xffd54a, { emissive: 0xffc107, emissiveIntensity: 1 })); star.position.y = 6.45; xt.add(star);
+    const sg = glowSprite(3.2, glowTex('rgba(255,236,150,1)', 'rgba(255,200,60,0)')); sg.position.y = 6.45; xt.add(sg);
+    const tl = []; for (let i = 0; i < 70; i++) { const f = i / 70, y = 1.1 + f * 4.8, r = (6.4 - y) * 0.45 + 0.2, a = f * Math.PI * 9;
+        const l = glowSprite(0.42, glowTex(['rgba(255,214,120,1)', 'rgba(255,120,150,1)', 'rgba(140,220,255,1)', 'rgba(170,255,170,1)'][i % 4], 'rgba(0,0,0,0)')); l.position.set(Math.cos(a) * r, y, Math.sin(a) * r); xt.add(l); tl.push(l); }
+    for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.3, g = new THREE.Group(), w = THREE.MathUtils.randFloat(0.45, 0.75), col = balls[(i + 2) % balls.length];
+        const bx = new THREE.Mesh(new THREE.BoxGeometry(w, w * 0.8, w), toon(col)); bx.position.y = w * 0.4; g.add(bx);
+        const rb = new THREE.Mesh(new THREE.BoxGeometry(w * 1.02, w * 0.82, w * 0.16), toon(0xffffff)); rb.position.y = w * 0.4; g.add(rb);
+        g.position.set(T0.x + Math.cos(a) * 2.5, 0, T0.z + Math.sin(a) * 2.5); g.rotation.y = a; scene.add(g); }
+    WORLD.update.push(t => { tl.forEach((l, i) => l.material.opacity = 0.55 + Math.sin(t * 3 + i * 0.7) * 0.45); star.rotation.y = t * 0.8; sg.material.opacity = 0.75 + Math.sin(t * 2) * 0.25; });
+    // บ้านไฟอุ่นๆ + สนหิมะรอบลาน + โคมไฟ
+    const house = (x, z, ry, col) => { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.2, 2.6), toon(col)); b.position.y = 1.1; g.add(b);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.6, 4), snowM); roof.position.y = 3; roof.rotation.y = Math.PI / 4; roof.scale.set(1.05, 1, 0.85); g.add(roof);
+        [-0.8, 0.8].forEach(wx => { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshBasicMaterial({ color: 0xffd27a })); w.position.set(wx, 1.3, 1.31); g.add(w); const gw = glowSprite(1.4); gw.position.set(wx, 1.3, 1.5); g.add(gw); });
+        g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); };
+    house(-12, -12, 0.5, 0xb45a3c); house(12, -13, -0.5, 0x5a7bb4); house(-17, -2, 1.1, 0x8a5ab4); house(17, -3, -1.1, 0x3c8a6b);
+    for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2 + Math.random() * 0.2, r = THREE.MathUtils.randFloat(26, 40); tree(Math.cos(a) * r, Math.sin(a) * r, 0x1f5a3a); }
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; lamp(Math.cos(a) * 11.5, Math.sin(a) * 11.5 - 1); }
+    // หิมะตก (ตามกล้อง)
+    const N = 900, sp = new Float32Array(N * 3), sv = [];
+    for (let i = 0; i < N; i++) { sp[i * 3] = THREE.MathUtils.randFloat(-30, 30); sp[i * 3 + 1] = Math.random() * 22; sp[i * 3 + 2] = THREE.MathUtils.randFloat(-30, 25); sv.push(THREE.MathUtils.randFloat(0.6, 1.4)); }
+    const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    const snow = new THREE.Points(sgm, new THREE.PointsMaterial({ map: glowTex('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), color: 0xffffff, size: 0.28, transparent: true, depthWrite: false })); scene.add(snow);
+    WORLD.update.push((t, dt) => { const a = sgm.attributes.position.array; for (let i = 0; i < N; i++) { a[i * 3 + 1] -= sv[i] * dt; a[i * 3] += Math.sin(t * 0.6 + i) * 0.006; if (a[i * 3 + 1] < 0) a[i * 3 + 1] = 22; } sgm.attributes.position.needsUpdate = true; });
+    WORLD.ground = ground; WORLD.bounds = { x0: -10.5, x1: 10.5, z0: -9.5, z1: 10.5 }; WORLD.tree = T0;
+    WORLD.spawn = () => { const a = Math.random() * Math.PI * 2, r = THREE.MathUtils.randFloat(3.5, 8); return [Math.cos(a) * r, Math.sin(a) * r + 1.5]; };
+}
+// ===================== ตุ๊กตาหิมะ =====================
+const SM_HATS = [{ id: 'top', icon: '🎩', label: 'หมวกทรงสูง' }, { id: 'santa', icon: '🎅', label: 'หมวกซานต้า' }, { id: 'beanie', icon: '🧶', label: 'หมวกไหมพรม' }];
+const SM_SCARF = ['#ef4444', '#22c55e', '#3b82f6', '#eab308', '#ec4899', '#8b5cf6'];
+const SM_BUILD_MS = 4000;
+function makeSnowman(o) {
+    const g = new THREE.Group(), snowM = toon(0xffffff), coal = new THREE.MeshBasicMaterial({ color: 0x1f1f1f });
+    const parts = [[0.62, 0.6], [0.45, 1.5], [0.33, 2.2]].map(([r, y]) => { const b = new THREE.Mesh(new THREE.SphereGeometry(r, 22, 16), snowM); b.position.y = y; g.add(b); return b; });
+    const head = parts[2], acc = new THREE.Group(); g.add(acc);
+    [-1, 1].forEach(sx => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), coal); e.position.set(sx * 0.11, 2.28, 0.29); acc.add(e); });
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 10), toon(0xf97316)); nose.rotation.x = Math.PI / 2; nose.position.set(0, 2.2, 0.45); acc.add(nose);
+    for (let i = 0; i < 5; i++) { const a = (i - 2) * 0.32, m = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 4), coal); m.position.set(Math.sin(a) * 0.2, 2.07 + Math.cos(a) * -0.07 + Math.abs(i - 2) * 0.02, 0.28 + Math.cos(a) * 0.02); acc.add(m); }
+    [1.62, 1.4, 1.18].forEach(y => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), coal); b.position.set(0, y, 0.44 - (1.62 - y) * 0.06); acc.add(b); });
+    [-1, 1].forEach(sx => { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.95, 5), toon(0x6b4226)); arm.position.set(sx * 0.75, 1.65, 0); arm.rotation.z = sx * -1.0; acc.add(arm); });
+    const sc = toon(new THREE.Color(o.scarf || SM_SCARF[0]));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.08, 8, 18), sc); ring.rotation.x = Math.PI / 2; ring.position.y = 1.9; acc.add(ring);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.45, 0.06), sc); tail.position.set(0.2, 1.7, 0.36); tail.rotation.z = 0.25; acc.add(tail);
+    if (o.hat === 'santa') { const h = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 16), toon(0xdc2626)); h.position.set(0, 2.72, 0); h.rotation.z = 0.25; acc.add(h); const br = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.07, 8, 18), snowM); br.rotation.x = Math.PI / 2; br.position.y = 2.48; acc.add(br); const pm = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), snowM); pm.position.set(-0.13, 2.98, 0); acc.add(pm); }
+    else if (o.hat === 'beanie') { const h = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), sc); h.position.y = 2.42; acc.add(h); const pm = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), snowM); pm.position.y = 2.76; acc.add(pm); }
+    else { const k = toon(0x161616); const br = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 20), k); br.position.y = 2.47; acc.add(br); const cr = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.5, 20), k); cr.position.y = 2.74; acc.add(cr); const band = new THREE.Mesh(new THREE.CylinderGeometry(0.255, 0.255, 0.09, 20), toon(0xdc2626)); band.position.y = 2.55; acc.add(band); }
+    const lab = label((o.name || '') + (o.wish ? ' · ' + o.wish : ''), o.uid === NET.uid); lab.position.y = 3.35; lab.scale.multiplyScalar(0.95); g.add(lab);
+    g.userData = { parts, acc, lab };
+    return g;
+}
+const snowmen = new Map(); let smTotal = 0;
+function addSnowman(id, k) {
+    if (!k || snowmen.has(id)) return;
+    const m = makeSnowman(k); m.position.set(+k.x || 0, 0, +k.z || 0); m.rotation.y = +k.ry || 0; m.userData.k = k; scene.add(m); snowmen.set(id, m);
+    if (snowmen.size > 70) { const first = snowmen.keys().next().value; scene.remove(snowmen.get(first)); snowmen.delete(first); }
+}
+function updSnowmen(t) {
+    const now = NET.now();
+    snowmen.forEach((m, id) => {   // ปั้นทีละลูก (ล่าง → กลาง → หัว) แล้วค่อยแต่ง
+        const age = now - (m.userData.k.t || 0), u = m.userData;
+        if (age >= SM_BUILD_MS + 600) { if (!u.done) { u.done = 1; u.parts.forEach(p => p.scale.setScalar(1)); u.acc.visible = true; u.lab.visible = true; } return; }
+        u.parts.forEach((p, i) => { const f = Math.min(1, Math.max(0, (age - i * 1100) / 1100)); p.scale.setScalar(Math.max(0.001, f)); });
+        u.acc.visible = age > 3300; u.lab.visible = age > 3300;
+        if (u.acc.visible) u.acc.scale.setScalar(Math.min(1, (age - 3300) / 400) * (1 + Math.sin(t * 20) * 0.03));
+    });
+}
+let smHat = 'top', smScarf = SM_SCARF[0], lastSm = 0;
+$('smHat').innerHTML = SM_HATS.map(h => `<button class="opt" data-h="${h.id}"><span>${h.icon}</span>${h.label}</button>`).join('');
+$('smHat').onclick = e => { const b = e.target.closest('button'); if (!b) return; smHat = b.dataset.h; [...$('smHat').children].forEach(x => x.classList.toggle('on', x === b)); };
+$('smScarf').innerHTML = SM_SCARF.map(c => `<button style="background:${c}" data-c="${c}" aria-label="สีผ้าพันคอ"></button>`).join('');
+$('smScarf').onclick = e => { const b = e.target.closest('button'); if (!b) return; smScarf = b.dataset.c; [...$('smScarf').children].forEach(x => x.classList.toggle('on', x === b)); };
+window.openSm = () => { [...$('smHat').children].forEach(x => x.classList.toggle('on', x.dataset.h === smHat)); [...$('smScarf').children].forEach(x => x.classList.toggle('on', x.dataset.c === smScarf)); $('sm').classList.add('on'); };
+window.buildSnowman = () => {
+    if (Date.now() - lastSm < 30000) { toast('รอสักครู่ แล้วค่อยปั้นตัวต่อไปนะ ⛄'); return; }
+    const me = avatars.get(NET.uid); if (!me) return;
+    lastSm = Date.now(); closeModal('sm');
+    const ry = me.rotation.y, B = WORLD.bounds, T0 = WORLD.tree;
+    let x = THREE.MathUtils.clamp(me.position.x + Math.sin(ry) * 1.4, B.x0, B.x1), z = THREE.MathUtils.clamp(me.position.z + Math.cos(ry) * 1.4, B.z0, B.z1);
+    const dx = x - T0.x, dz = z - T0.z, d = Math.hypot(dx, dz); if (d < 3.4) { x = T0.x + dx / (d || 1) * 3.4; z = T0.z + dz / (d || 1) * 3.4; }   // ไม่ปั้นทับต้นคริสต์มาส
+    const wish = $('smWish').value.trim().slice(0, 40); $('smWish').value = '';
+    NET.set({ build: NET.now() });   // ท่าก้มปั้น (ทุกคนเห็น)
+    NET.snowman({ hat: smHat, scarf: smScarf, wish, x: +x.toFixed(2), z: +z.toFixed(2), ry: +(ry + Math.PI).toFixed(2) });
+    if (wish) NET.chat('⛄ ' + wish);
+    toast('กำลังปั้นตุ๊กตาหิมะ… ⛄');
+};
 function buildWian() {
     scene.fog = new THREE.Fog(0x2b1d3a, 34, 120);
     skyDome('#1b1238', '#4b2a57', '#d9825b'); stars(300, 40);
@@ -643,12 +760,15 @@ function animateAvatars(t, dt) {
         u.legs[0].rotation.x = moving ? Math.sin(ph) * 0.6 : 0; u.legs[1].rotation.x = moving ? -Math.sin(ph) * 0.6 : 0;
         if (u.holdMesh) { u.arms.forEach((ar, i) => { ar.rotation.x = -1.15; ar.rotation.z = (i ? -1 : 1) * 0.15; }); u.holdMesh.position.y = 0.66 + (moving ? Math.abs(Math.sin(ph)) * 0.03 : 0); u.holdMesh.userData.glow.material.opacity = 0.75 + Math.sin(t * 9 + u.phase) * 0.25; }
         else if (TYPE !== 'wian') { u.arms[0].rotation.x = moving ? -Math.sin(ph) * 0.5 : Math.sin(ph) * 0.06; u.arms[1].rotation.x = moving ? Math.sin(ph) * 0.5 : -Math.sin(ph) * 0.06; }
+        const bd = XMAS && p.build && now - p.build < SM_BUILD_MS ? (now - p.build) / 1000 : -1;   // ก้มปั้นหิมะ
+        if (bd >= 0 && !moving) { u.body.rotation.x = 0.45; u.body.position.y = -0.12; u.arms.forEach((ar, i) => { ar.rotation.x = -1.3 + Math.sin(bd * 9 + i * Math.PI) * 0.4; ar.rotation.z = (i ? -1 : 1) * 0.15; }); u.building = 1; }
+        else if (u.building) { u.building = 0; u.body.rotation.x = 0; u.arms.forEach((ar, i) => { ar.rotation.x = 0; ar.rotation.z = (i ? 1 : -1) * 0.35; }); }
         const dn = p.dance && now - p.dance < 6000 ? (now - p.dance) / 1000 : -1;   // เต้น 6 วินาที (ห้องพูดคุย)
         if (dn >= 0 && !moving) { u.body.rotation.y = Math.sin(dn * 5) * 0.5; u.body.position.y = Math.abs(Math.sin(dn * 8)) * 0.18; u.arms.forEach((ar, i) => { ar.rotation.x = 0; ar.rotation.z = (i ? -1 : 1) * (2.2 + Math.sin(dn * 8 + i * Math.PI) * 0.5); }); u.dancing = 1; }
         else if (u.dancing) { u.dancing = 0; u.body.rotation.y = 0; u.arms.forEach((ar, i) => { ar.rotation.z = (i ? 1 : -1) * 0.35; }); }
         if (p.wave && !u.holdMesh && now - p.wave < 2200) { const w = u.arms[1]; w.rotation.x = 0; w.rotation.z = 2.5 + Math.sin(t * 14) * 0.35; u.waving = 1; }   // โบกมือ
         else if (u.waving) { u.waving = 0; const w = u.arms[1]; if (TYPE === 'wian') { w.rotation.x = -1.0; w.rotation.z = -0.25; } else { w.rotation.x = 0; w.rotation.z = 0.35; } }
-        if (!u.dancing) u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
+        if (!u.dancing && !u.building) u.body.position.y = moving ? Math.abs(Math.sin(ph)) * 0.06 : Math.sin(ph) * 0.02;
         u.head.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.05;
         if (u.flame) u.flame.scale.y = 1 + Math.sin(t * 13 + u.phase) * 0.18;
         if (u.bubble) { u.bubbleT -= dt; u.bubble.material.opacity = Math.min(1, u.bubbleT); if (u.bubbleT <= 0) { a.remove(u.bubble); u.bubble.material.map.dispose(); u.bubble = null; } }
@@ -692,28 +812,33 @@ const NET = {
         this.db.ref('.info/connected').on('value', s => { if (s.val()) { this.pref.onDisconnect().remove(); this.pref.set(Object.assign({}, this.me, { t: firebase.database.ServerValue.TIMESTAMP })); } });
         this.base.child('presence').on('value', s => syncPeers(s.val() || {}));
         this.base.child('chat').limitToLast(60).on('child_added', s => onChat(s.val()));
-        this.base.child('krathong').orderByChild('t').startAt(this.now() - KT_LIFE).on('child_added', s => addKrathong(s.key, s.val()));
+        if (TYPE === 'loy') this.base.child('krathong').orderByChild('t').startAt(this.now() - KT_LIFE).on('child_added', s => addKrathong(s.key, s.val()));
+        if (XMAS) this.base.child('snowman').limitToLast(60).on('child_added', s => addSnowman(s.key, s.val()));
         this.base.child('stats').on('value', s => onStats(s.val() || {}));
     },
     set(patch) { Object.assign(this.me, patch); if (this.demo) return this.demoSet(); this.pref && this.pref.update(patch); },
     chat(text, mentions) { const m = { uid: this.uid, name: this.me.name, text, mentions: mentions && mentions.length ? mentions.slice(0, 10) : null, t: this.demo ? this.now() : firebase.database.ServerValue.TIMESTAMP }; if (this.demo) return onChat(Object.assign(m, { t: this.now() })); this.base.child('chat').push(m); },
     krathong(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addKrathong('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); return; }
         this.base.child('krathong').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/krathong').transaction(n => (n || 0) + 1); },
+    snowman(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addSnowman('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ snowman: ++this.ds.snowman }); return; }
+        this.base.child('snowman').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/snowman').transaction(n => (n || 0) + 1); },
     wianDone() { if (this.demo) { onStats({ krathong: this.ds.krathong, wian: ++this.ds.wian }); return; } this.base.child('stats/wian').transaction(n => (n || 0) + 1); },
     // ---------- โหมดทดลอง: มีเพื่อนจำลองเดินไปมา/พิมพ์แชท ----------
     startDemo() { this.demo = true; this.uid = 'me-' + Math.random().toString(36).slice(2, 8); $('demo').style.display = 'block'; return false; },
     demoJoin(me) {
-        this.ds = { krathong: 37, wian: 12 }; onStats(this.ds); const P = {}; P[this.uid] = me; this.P = P;
-        const names = ['ปาล์ม', 'อู๋', 'แวว', 'หนึ่ง', 'มอส', 'ตอง', 'เอก', 'นก', 'โอม'], lines = LOUNGE ? ['สวัสดีครับทุกคน 👋', 'วันนี้ยอดเป็นไงบ้าง', 'กินข้าวยังจ้า', 'สู้ๆ นะทีม 💪', 'ใครอยู่สาขาไหนบ้าง', 'เย็นนี้ฝนตกไหมนะ', '555 น่ารักมาก'] : ['สุขสันต์วันลอยกระทงครับ 🪷', 'ขอให้ยอดขายปังๆ', 'สวยมากเลย ✨', 'สาธุ 🙏', 'ปีนี้ขอให้สุขภาพแข็งแรง', 'ลอยแล้วววว', 'ทีม SD มาครบ!'];
+        this.ds = { krathong: 37, wian: 12, snowman: 18 }; onStats(this.ds); const P = {}; P[this.uid] = me; this.P = P;
+        const names = ['ปาล์ม', 'อู๋', 'แวว', 'หนึ่ง', 'มอส', 'ตอง', 'เอก', 'นก', 'โอม'], lines = XMAS ? ['Merry Christmas ทุกคน 🎄', 'ตุ๊กตาหิมะใครน่ารักสุด ⛄', 'หนาวจัง ❄️', 'ขอให้ปีหน้ายอดปังๆ 🎁', 'มาช่วยกันปั้นเยอะๆ', 'ซานต้ามาแล้ว 🎅'] : LOUNGE ? ['สวัสดีครับทุกคน 👋', 'วันนี้ยอดเป็นไงบ้าง', 'กินข้าวยังจ้า', 'สู้ๆ นะทีม 💪', 'ใครอยู่สาขาไหนบ้าง', 'เย็นนี้ฝนตกไหมนะ', '555 น่ารักมาก'] : ['สุขสันต์วันลอยกระทงครับ 🪷', 'ขอให้ยอดขายปังๆ', 'สวยมากเลย ✨', 'สาธุ 🙏', 'ปีนี้ขอให้สุขภาพแข็งแรง', 'ลอยแล้วววว', 'ทีม SD มาครบ!'];
         names.forEach((n, i) => { const id = 'bot' + i, s = this.spawn(); P[id] = { name: n, sex: i % 2 ? 'm' : 'f', color: COLORS[i % COLORS.length], x: s[0], z: s[1], wian: TYPE === 'wian' && i % 3 === 0 ? this.now() - i * 7000 : 0 }; });
         syncPeers(Object.assign({}, P));
         setInterval(() => { const ids = Object.keys(P).filter(x => x.startsWith('bot')), id = ids[Math.floor(Math.random() * ids.length)]; const s = this.spawn();
             if (TYPE === 'wian') { if (Math.random() < 0.3) P[id].wian = this.now(); } else { P[id].x = s[0]; P[id].z = s[1]; }
-            if (LOUNGE && Math.random() < 0.15) P[id].dance = this.now();
+            if (SOCIAL && Math.random() < 0.15) P[id].dance = this.now();
             syncPeers(Object.assign({}, P)); }, 2200);
         setInterval(() => { const i = Math.floor(Math.random() * names.length); onChat({ uid: 'bot' + i, name: names[i], text: lines[Math.floor(Math.random() * lines.length)], t: this.now() }); }, 6500);
         if (TYPE === 'loy') { const ktb = () => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; addKrathong('b' + Math.random(), { uid: 'bot' + i, name: names[i], style: KT[i % 3].id, wish: '', x: p.x, t: this.now() }); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); };
             for (let i = 0; i < 4; i++) setTimeout(ktb, i * 300); setInterval(ktb, 9000); }
+        if (XMAS) { const smb = (old) => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; P['bot' + i].build = this.now(); addSnowman('b' + Math.random(), { uid: 'bot' + i, name: names[i], hat: SM_HATS[i % 3].id, scarf: SM_SCARF[i % SM_SCARF.length], wish: '', x: p.x + 1, z: p.z, ry: Math.random() * 6, t: this.now() - (old ? 60000 : 0) }); onStats({ snowman: ++this.ds.snowman }); };
+            for (let i = 0; i < 5; i++) smb(true); setInterval(() => smb(false), 12000); }
     },
     spawn() { return WALK ? WORLD.spawn() : [0, 0]; },
     demoSet() { this.P[this.uid] = Object.assign({}, this.me); syncPeers(Object.assign({}, this.P)); }
@@ -781,11 +906,12 @@ $('chat').addEventListener('transitionend', layoutChat);
 window.togglePeople = () => { $('people').classList.toggle('on'); renderPeople(); };
 function renderPeople() { const list = Object.keys(peersCache).map(k => peersCache[k]).filter(p => p && p.name); $('people').innerHTML = `<b>ผู้เข้าร่วม ${list.length} คน</b>` + list.map(p => `<div>${p.sex === 'm' ? '👦' : '👧'} ${esc(p.name)}</div>`).join(''); }
 function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 2200); }
-function onStats(s) { ktTotal = s.krathong || 0; if (LOUNGE) { $('stat').style.display = 'none'; return; } $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
+function onStats(s) { ktTotal = s.krathong || 0; if (XMAS) { smTotal = s.snowman || 0; $('stat').innerHTML = `ปั้นแล้ว <b>${smTotal.toLocaleString('th-TH')}</b> ตัว ⛄`; return; } if (LOUNGE) { $('stat').style.display = 'none'; return; } $('stat').innerHTML = TYPE === 'loy' ? `ลอยแล้ว <b>${(s.krathong || 0).toLocaleString('th-TH')}</b> กระทง` : `เวียนเทียนครบแล้ว <b>${(s.wian || 0).toLocaleString('th-TH')}</b> ครั้ง`; }
 
 // ===================== ปุ่มกิจกรรม =====================
 let myWianDoneAt = 0;
 function renderActions() {
+    if (XMAS) { $('actions').innerHTML = `<button class="act" onclick="openSm()">⛄ ปั้นตุ๊กตาหิมะ</button><button class="act alt" onclick="dance()">💃 เต้น</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`; return; }
     if (LOUNGE) { $('actions').innerHTML = `<button class="act" onclick="waveAll()">👋 ทักทาย</button><button class="act alt" onclick="dance()">💃 เต้น</button><button class="act alt" onclick="openPick()" aria-label="เปลี่ยนตัวละคร"><i class="fa-solid fa-shirt"></i></button>`; return; }
     if (TYPE === 'loy') $('actions').innerHTML = NET.me && NET.me.hold
         ? `<button class="act" id="floatBtn" onclick="floatKrathong()">🪷 ลอยกระทง</button><button class="act alt" onclick="openKt()" aria-label="เปลี่ยนกระทง"><i class="fa-solid fa-pen"></i></button><button class="act alt" onclick="dropKrathong()" aria-label="วางกระทงลง"><i class="fa-solid fa-xmark"></i></button>`
@@ -875,7 +1001,7 @@ const MUSIC = {
         } else if (TYPE === 'wian') {   // โดรนต่ำๆ
             [65.4, 98, 130.8].forEach((fq, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = fq; o.detune.value = i * 3; g.gain.value = 0.045; o.connect(g); g.connect(m); g.connect(rv); o.start(); });
         }
-        const SC = [0, 2, 4, 7, 9], BASE = TYPE === 'loy' ? 392 : LOUNGE ? 329.6 : 261.6;   // G / C เพนทาโทนิก
+        const SC = [0, 2, 4, 7, 9], BASE = TYPE === 'loy' ? 392 : SOCIAL ? 329.6 : 261.6;   // G / C เพนทาโทนิก
         const freq = n => BASE * Math.pow(2, (SC[((n % 5) + 5) % 5] + 12 * Math.floor(n / 5)) / 12);
         const note = (t, f, dur, vol, type) => {
             const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(); o.type = type || 'triangle'; o2.type = 'sine';
@@ -889,7 +1015,7 @@ const MUSIC = {
         const bird = t => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; const f0 = 2400 + Math.random() * 900; for (let k = 0; k < 3; k++) { o.frequency.setValueAtTime(f0, t + k * 0.13); o.frequency.exponentialRampToValueAtTime(f0 * 1.45, t + k * 0.13 + 0.08); } g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42); o.connect(g); g.connect(m); o.start(t); o.stop(t + 0.45); };
         const bell = t => { [1, 2.76, 5.4, 8.93].forEach((k, i) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 174.6 * k; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12 / (i + 1), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 7 - i); o.connect(g); g.connect(m); g.connect(this.rv); o.start(t); o.stop(t + 7.1); }); };
         // ทำนอง: สุ่มเดินบนบันไดเสียงเป็นวลี 2 ห้อง เล่นซ้ำ 2 รอบแล้วแต่งวลีใหม่
-        const step = LOUNGE ? 60 / 84 / 2 : TYPE === 'loy' ? 60 / 92 / 2 : 60 / 56 / 2; let phrase = [], rep = 0, idx = 0, beat = 0, next = c.currentTime + 0.3, cur = 5;
+        const step = XMAS ? 60 / 100 / 2 : LOUNGE ? 60 / 84 / 2 : TYPE === 'loy' ? 60 / 92 / 2 : 60 / 56 / 2; let phrase = [], rep = 0, idx = 0, beat = 0, next = c.currentTime + 0.3, cur = 5;
         const mk = () => { const out = []; for (let i = 0; i < 16; i++) { if (TYPE === 'wian' && i % 2 && Math.random() < 0.7) { out.push(null); continue; } if (Math.random() < 0.18 && i % 4) { out.push(null); continue; } cur = Math.max(2, Math.min(11, cur + [-2, -1, -1, 1, 1, 2, 0][Math.floor(Math.random() * 7)])); out.push(cur); } out[15] = null; out[14] = 5; return out; };
         let lastBell = 0;
         this.timer = setInterval(() => {
@@ -899,6 +1025,7 @@ const MUSIC = {
                 const n = phrase[idx]; if (n != null) note(next, freq(n), TYPE === 'loy' ? 0.55 : 1.6, TYPE === 'loy' ? 0.16 : 0.13, TYPE === 'loy' ? 'triangle' : 'sine');
                 if (TYPE === 'loy' && idx % 2 === 0 && Math.random() < 0.35) note(next, freq(n == null ? 0 : n - 5), 0.4, 0.07);
                 if (TYPE === 'loy') { if (beat % 4 === 1) ching(next, true); else if (beat % 4 === 3) ching(next, false); }
+                else if (XMAS) { ching(next, beat % 2 === 0); if (beat % 16 === 0) [0, 4, 7].forEach(k => note(next, BASE / 2 * Math.pow(2, k / 12), 2.4, 0.045, 'sine')); }   // กระดิ่งเลื่อน
                 else if (LOUNGE) { if (beat % 8 === 4) ching(next, false); if (beat % 16 === 0) [0, 4, 7].forEach(k => note(next, BASE / 2 * Math.pow(2, k / 12), 2.4, 0.045, 'sine')); if (Math.random() < 0.012) bird(next); }
                 else if (beat % 8 === 0) ching(next, true);
                 if (TYPE === 'wian' && next - lastBell > 14) { bell(next); lastBell = next; }
@@ -1008,6 +1135,7 @@ function frameCamera() {
     if (mode !== camMode) {   // ตั้งมุมเริ่มต้นเมื่อเปลี่ยนแนวจอเท่านั้น (คีย์บอร์ดเด้งไม่รีเซ็ตมุมที่ผู้ใช้หมุนไว้)
         camMode = mode;
         if (TYPE === 'loy') { if (portrait) { camera.fov = 62; camera.position.set(0, 7.2, 21.5); controls.target.set(0, 2.6, 0); } else { camera.fov = 48; camera.position.set(0, 6.5, 17.5); controls.target.set(0, 1.6, -2); } }
+        else if (XMAS) { if (portrait) { camera.fov = 62; camera.position.set(0, 7.5, 21); controls.target.set(0, 3, -2); } else { camera.fov = 48; camera.position.set(0, 7, 17); controls.target.set(0, 2.2, -2); } }
         else if (LOUNGE) { if (portrait) { camera.fov = 62; camera.position.set(0, 9, 21); controls.target.set(0, 2.2, 0); } else { camera.fov = 48; camera.position.set(0, 8.5, 17); controls.target.set(0, 1.2, 0); } }
         else { if (portrait) { camera.fov = 62; camera.position.set(0, 7.5, 21); controls.target.set(0, 3.6, 0); } else { camera.fov = 48; camera.position.set(0, 11, 19); controls.target.set(0, 2, 0); } }
         controls.maxDistance = portrait ? 40 : 32;
@@ -1020,12 +1148,13 @@ function frameCamera() {
 addEventListener('resize', resize);
 if (TYPE === 'loy') { buildLoy(); controls.minAzimuthAngle = -1.0; controls.maxAzimuthAngle = 1.0; }   // ลอยกระทง: หมุนได้ไม่เกิน ~57° ไม่ให้มองเลียบท่าน้ำ/โคมไฟจ่อกล้อง
 else if (LOUNGE) buildLounge();
+else if (XMAS) buildXmas();
 else buildWian();
 resize();
 const clock = new THREE.Clock(); let T = 0;
 function loop() {
     const dt = Math.min(clock.getDelta(), 0.05); T += dt;
-    WORLD.update.forEach(f => f(T, dt)); if (TYPE === 'loy') updKrathongs(T); animateAvatars(T, dt);
+    WORLD.update.forEach(f => f(T, dt)); if (TYPE === 'loy') updKrathongs(T); if (XMAS) updSnowmen(T); animateAvatars(T, dt);
     if (marker.userData.t > 0) { marker.userData.t -= dt * 1.4; marker.material.opacity = Math.max(0, marker.userData.t); marker.scale.setScalar(1 + (1 - marker.userData.t)); }
     if (pv && $('pick').classList.contains('on')) { pv.ch.rotation.y = Math.sin(T * 0.8) * 0.6; const u = pv.ch.userData; u.body.position.y = Math.abs(Math.sin(T * 3)) * 0.04; const w = pv.r.domElement; if (w.width !== w.clientWidth * pv.r.getPixelRatio()) { pv.r.setSize(w.clientWidth, w.clientHeight, false); pv.c.aspect = w.clientWidth / w.clientHeight; pv.c.updateProjectionMatrix(); } pv.r.render(pv.s, pv.c); }
     controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop);
