@@ -703,7 +703,7 @@ const XCD = { party: false, target: 0 };
         const d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5), m = Math.floor(left % 36e5 / 6e4), sc = Math.floor(left % 6e4 / 1e3), z = n => String(n).padStart(2, '0');
         el.className = 'glass'; el.innerHTML = `🎄 อีก <b>${d ? d + ' วัน ' : ''}${z(h)}:${z(m)}:${z(sc)}</b> ถึงวันคริสต์มาส`;
     };
-    tick(); setInterval(tick, 1000);
+    setTimeout(() => { tick(); setInterval(tick, 1000); }, 0);   // รอให้ NET ถูกประกาศก่อน
 })();
 function buildWian() {
     scene.fog = new THREE.Fog(0x2b1d3a, 34, 120);
@@ -985,7 +985,7 @@ const NET = {
     chat(text, mentions) { const m = { uid: this.uid, name: this.me.name, text, mentions: mentions && mentions.length ? mentions.slice(0, 10) : null, t: this.demo ? this.now() : firebase.database.ServerValue.TIMESTAMP }; if (this.demo) return onChat(Object.assign(m, { t: this.now() })); this.base.child('chat').push(m); },
     krathong(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addKrathong('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); return; }
         this.base.child('krathong').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/krathong').transaction(n => (n || 0) + 1); },
-    snowman(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addSnowman('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ snowman: ++this.ds.snowman }); return; }
+    snowman(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addSnowman('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ snowman: ++this.ds.snowman, ornament: this.ds.ornament }); return; }
         this.base.child('snowman').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/snowman').transaction(n => (n || 0) + 1); },
     ornament(k) { k.uid = this.uid; k.name = this.me.name; if (this.demo) { addOrnament('d' + Math.random(), Object.assign(k, { t: this.now() })); onStats({ snowman: this.ds.snowman, ornament: ++this.ds.ornament }); return; }
         this.base.child('ornament').push(Object.assign(k, { t: firebase.database.ServerValue.TIMESTAMP })); this.base.child('stats/ornament').transaction(n => (n || 0) + 1); },
@@ -1006,7 +1006,7 @@ const NET = {
         setInterval(() => { const i = Math.floor(Math.random() * names.length); onChat({ uid: 'bot' + i, name: names[i], text: lines[Math.floor(Math.random() * lines.length)], t: this.now() }); }, 6500);
         if (TYPE === 'loy') { const ktb = () => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; addKrathong('b' + Math.random(), { uid: 'bot' + i, name: names[i], style: KT[i % 3].id, wish: '', x: p.x, t: this.now() }); onStats({ krathong: ++this.ds.krathong, wian: this.ds.wian }); };
             for (let i = 0; i < 4; i++) setTimeout(ktb, i * 300); setInterval(ktb, 9000); }
-        if (XMAS) { const smb = (old) => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; P['bot' + i].build = this.now(); addSnowman('b' + Math.random(), { uid: 'bot' + i, name: names[i], hat: SM_HATS[i % 3].id, scarf: SM_SCARF[i % SM_SCARF.length], wish: '', x: p.x + 1, z: p.z, ry: Math.random() * 6, t: this.now() - (old ? 60000 : 0) }); onStats({ snowman: ++this.ds.snowman }); };
+        if (XMAS) { const smb = (old) => { const i = Math.floor(Math.random() * names.length), p = P['bot' + i]; P['bot' + i].build = this.now(); addSnowman('b' + Math.random(), { uid: 'bot' + i, name: names[i], hat: SM_HATS[i % 3].id, scarf: SM_SCARF[i % SM_SCARF.length], wish: '', x: p.x + 1, z: p.z, ry: Math.random() * 6, t: this.now() - (old ? 60000 : 0) }); onStats({ snowman: ++this.ds.snowman, ornament: this.ds.ornament }); };
             for (let i = 0; i < 5; i++) smb(true); setInterval(() => smb(false), 12000);
             const orb = (old) => { const i = Math.floor(Math.random() * names.length); addOrnament('o' + Math.random(), { uid: 'bot' + i, name: names[i], kind: ORN[i % 4].id, color: ORN_COL[i % ORN_COL.length], wish: '', t: this.now() - (old ? 60000 : 0) }); };
             for (let i = 0; i < 30; i++) orb(true); setInterval(() => orb(false), 7000);
