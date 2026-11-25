@@ -124,6 +124,8 @@
         body.wx-full #wxBg .cloud::before { width: 76px; height: 76px; left: 26px; top: -36px; } body.wx-full #wxBg .cloud::after { width: 56px; height: 56px; left: 86px; top: -25px; }
         body.wx-full #wxBg .fogband { height: 46px; filter: blur(14px); }
         body.wx-full #wxBg .rain { background-size: 260px 260px; }
+        body.wx-full #wxBg.wx-img { background-size: cover !important; background-position: center top !important; background-repeat: no-repeat !important; }
+        body.wx-full #wxBg.wx-img .cloud, body.wx-full #wxBg.wx-img .sun, body.wx-full #wxBg.wx-img .moon, body.wx-full #wxBg.wx-img .fogband { display: none; }   /* มีภาพแล้ว: เหลือฝน/ฟ้าแลบ/ดาวกะพริบ */
         @keyframes wxDriftFull { from { transform: translateX(-240px); } to { transform: translateX(110vw); } }
         #wxChip { display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 2px 9px 2px 6px; border-radius: 999px; background: rgba(255,255,255,.75); backdrop-filter: blur(4px);
             font-size: 11.5px; font-weight: 600; color: #1f2937; box-shadow: 0 1px 3px rgba(0,0,0,.08); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
@@ -2531,6 +2533,21 @@
         });
     }
     let WX_LAST = null;
+    // ภาพพื้นหลังสภาพอากาศ (อัปโหลดเองที่ bg/<ชนิด>.jpg|.png|.webp ใน repo: day night cloudy rain storm fog) · ไม่มีไฟล์ = ใช้สีไล่ระดับ + เมฆ/ฝนที่วาดด้วยโค้ด
+    const WX_IMG = {};
+    function wxBgImage(bg, k) {
+        bg.style.backgroundImage = ''; bg.classList.remove('wx-img');
+        const show = (url) => { if (bg.className.indexOf('wx-' + k) === 0) { bg.style.backgroundImage = 'url("' + url + '")'; bg.classList.add('wx-img'); } };
+        if (WX_IMG[k] !== undefined) { if (WX_IMG[k]) show(WX_IMG[k]); return; }
+        const tryExt = (ext) => {
+            if (!ext.length) { WX_IMG[k] = ''; return; }
+            const url = 'bg/' + k + '.' + ext[0], im = new Image();
+            im.onload = () => { WX_IMG[k] = url; show(url); };
+            im.onerror = () => tryExt(ext.slice(1));
+            im.src = url;
+        };
+        tryExt(['jpg', 'png', 'webp']);
+    }
     function wxScene(kind, day) {
         const bg = document.getElementById('wxBg'); if (!bg) return;
         WX_LAST = [kind, day];
@@ -2549,6 +2566,7 @@
             };
             bg.className = 'wx-' + k; bg.innerHTML = F[k] || '';
             document.body.classList.toggle('wx-dark-top', k === 'night' || k === 'storm' || k === 'rain' || k === 'day');
+            wxBgImage(bg, k);
             return;
         }
         const H = {
