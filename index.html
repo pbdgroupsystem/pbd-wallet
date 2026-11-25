@@ -124,8 +124,24 @@
         body.wx-full #wxBg .cloud::before { width: 76px; height: 76px; left: 26px; top: -36px; } body.wx-full #wxBg .cloud::after { width: 56px; height: 56px; left: 86px; top: -25px; }
         body.wx-full #wxBg .fogband { height: 46px; filter: blur(14px); }
         body.wx-full #wxBg .rain { background-size: 260px 260px; }
-        body.wx-full #wxBg.wx-img { background-size: cover !important; background-position: center top !important; background-repeat: no-repeat !important; }
-        body.wx-full #wxBg.wx-img .cloud, body.wx-full #wxBg.wx-img .sun, body.wx-full #wxBg.wx-img .moon, body.wx-full #wxBg.wx-img .fogband { display: none; }   /* มีภาพแล้ว: เหลือฝน/ฟ้าแลบ/ดาวกะพริบ */
+        /* ภาพพื้นหลังที่อัปโหลด (bg/<ชนิด>.jpg): ภาพค่อยๆ ซูม/เลื่อนช้าๆ + ของเคลื่อนไหวซ้อนแบบบางลง */
+        body.wx-full #wxBg.wx-img::before { content: ''; position: absolute; inset: -6%; background: var(--wximg) center top / cover no-repeat; animation: wxKen 38s ease-in-out infinite alternate; will-change: transform; }
+        @keyframes wxKen { from { transform: scale(1) translate3d(0, 0, 0); } to { transform: scale(1.08) translate3d(-2%, 1.5%, 0); } }
+        body.wx-full #wxBg.wx-img .sun, body.wx-full #wxBg.wx-img .moon { display: none; }
+        body.wx-full #wxBg.wx-img .cloud { opacity: .32 !important; animation-duration: 110s; }
+        body.wx-full #wxBg.wx-img .fogband { opacity: .55; }
+        body.wx-full #wxBg.wx-img .rain { opacity: .8; }
+        /* แสงแดดส่องเป็นลำ (กลางวัน) · ดาวตก (กลางคืน) */
+        body.wx-full #wxBg .rays { top: calc(8% - 60vmax); right: calc(14% - 60vmax); width: 120vmax; height: 120vmax; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255,244,200,.16) 0deg 6deg, rgba(255,244,200,0) 6deg 18deg);
+            -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 62%); mask-image: radial-gradient(circle, #000 0%, transparent 62%); animation: wxSpin 90s linear infinite; }
+        body.wx-full #wxBg .glow { top: -12%; right: -12%; width: 70vmin; height: 70vmin; border-radius: 50%; background: radial-gradient(circle, rgba(255,240,190,.55), rgba(255,240,190,0) 65%); animation: wxPulse 6s ease-in-out infinite; }
+        body.wx-full #wxBg .shoot { top: 8%; left: 70%; width: 140px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff); opacity: 0; transform: rotate(-25deg); animation: wxShoot 9s ease-in infinite; }
+        body.wx-full #wxBg .drops { inset: 0; background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,.35) 0 2px, transparent 3px), radial-gradient(circle at 70% 60%, rgba(255,255,255,.3) 0 2px, transparent 3px), radial-gradient(circle at 45% 80%, rgba(255,255,255,.3) 0 1.5px, transparent 2.5px);
+            background-size: 180px 220px, 240px 260px, 200px 200px; animation: wxDrops 2.4s linear infinite; opacity: .6; }
+        @keyframes wxSpin { to { transform: rotate(360deg); } }
+        @keyframes wxShoot { 0%, 78% { opacity: 0; transform: rotate(-25deg) translateX(0); } 80% { opacity: 1; } 92% { opacity: 0; transform: rotate(-25deg) translateX(-55vw); } 100% { opacity: 0; } }
+        @keyframes wxDrops { 0% { opacity: .15; } 50% { opacity: .6; } 100% { opacity: .15; } }
+        @media (prefers-reduced-motion: reduce) { body.wx-full #wxBg.wx-img::before, body.wx-full #wxBg > i { animation: none !important; } }
         @keyframes wxDriftFull { from { transform: translateX(-240px); } to { transform: translateX(110vw); } }
         #wxChip { display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 2px 9px 2px 6px; border-radius: 999px; background: rgba(255,255,255,.75); backdrop-filter: blur(4px);
             font-size: 11.5px; font-weight: 600; color: #1f2937; box-shadow: 0 1px 3px rgba(0,0,0,.08); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
@@ -2536,8 +2552,8 @@
     // ภาพพื้นหลังสภาพอากาศ (อัปโหลดเองที่ bg/<ชนิด>.jpg|.png|.webp ใน repo: day night cloudy rain storm fog) · ไม่มีไฟล์ = ใช้สีไล่ระดับ + เมฆ/ฝนที่วาดด้วยโค้ด
     const WX_IMG = {};
     function wxBgImage(bg, k) {
-        bg.style.backgroundImage = ''; bg.classList.remove('wx-img');
-        const show = (url) => { if (bg.className.indexOf('wx-' + k) === 0) { bg.style.backgroundImage = 'url("' + url + '")'; bg.classList.add('wx-img'); } };
+        bg.style.removeProperty('--wximg'); bg.classList.remove('wx-img');
+        const show = (url) => { if (bg.className.indexOf('wx-' + k) === 0) { bg.style.setProperty('--wximg', 'url("' + url + '")'); bg.classList.add('wx-img'); } };
         if (WX_IMG[k] !== undefined) { if (WX_IMG[k]) show(WX_IMG[k]); return; }
         const tryExt = (ext) => {
             if (!ext.length) { WX_IMG[k] = ''; return; }
@@ -2557,10 +2573,10 @@
             const cf = (t, d, o) => `<i class="cloud" style="left:0;top:${t}%;animation-delay:${d}s;opacity:${o || 1}"></i>`;
             const st = [6, 14, 24, 33, 45, 58, 70].map((t, i) => `<i class="star" style="left:${(i * 37) % 80}%;top:${t}%;animation-delay:-${i * .4}s"></i>`).join('');
             const F = {
-                day: '<i class="sun"></i>' + cf(14, -8) + cf(30, -40) + cf(52, -22, .85) + cf(74, -55, .8),
-                night: st + '<i class="moon"></i>' + cf(26, -20, .6) + cf(62, -48, .5),
+                day: '<i class="glow"></i><i class="rays"></i><i class="sun"></i>' + cf(14, -8) + cf(30, -40) + cf(52, -22, .85) + cf(74, -55, .8),
+                night: st + '<i class="moon"></i><i class="shoot"></i><i class="shoot" style="top:22%;left:40%;animation-delay:-4.5s;animation-duration:13s"></i>' + cf(26, -20, .6) + cf(62, -48, .5),
                 cloudy: cf(8, -4) + cf(20, -30) + cf(34, -14) + cf(50, -52) + cf(66, -24) + cf(82, -60),
-                rain: cf(4, -4) + cf(14, -30) + cf(26, -16) + cf(40, -50) + '<i class="rain"></i>',
+                rain: cf(4, -4) + cf(14, -30) + cf(26, -16) + cf(40, -50) + '<i class="rain"></i><i class="drops"></i>',
                 storm: cf(4, -4) + cf(14, -30) + cf(28, -46) + '<i class="rain"></i><i class="flash"></i>',
                 fog: [12, 28, 44, 60, 76, 90].map((t, i) => `<i class="fogband" style="top:${t}%;animation-delay:-${i * 3}s"></i>`).join(''),
             };
