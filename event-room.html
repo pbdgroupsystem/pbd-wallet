@@ -477,7 +477,7 @@ function buildXmas() {
         g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); };
     house(-12, -12, 0.5, 0xb45a3c); house(12, -13, -0.5, 0x5a7bb4); house(-17, -2, 1.1, 0x8a5ab4); house(17, -3, -1.1, 0x3c8a6b);
     for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2 + Math.random() * 0.2, r = THREE.MathUtils.randFloat(26, 40); tree(Math.cos(a) * r, Math.sin(a) * r, 0x1f5a3a); }
-    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; lamp(Math.cos(a) * 11.5, Math.sin(a) * 11.5 - 1); }
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, lz = Math.sin(a) * 11.5 - 1; if (lz < 5) lamp(Math.cos(a) * 11.5, lz); }   // ไม่วางโคมฝั่งกล้อง
     // หิมะตก (ตามกล้อง)
     const N = 900, sp = new Float32Array(N * 3), sv = [];
     for (let i = 0; i < N; i++) { sp[i * 3] = THREE.MathUtils.randFloat(-30, 30); sp[i * 3 + 1] = Math.random() * 22; sp[i * 3 + 2] = THREE.MathUtils.randFloat(-30, 25); sv.push(THREE.MathUtils.randFloat(0.6, 1.4)); }
