@@ -2151,7 +2151,7 @@
             const R = menuRights(), box = $id(R.mgmt ? 'mgmtMenu' : 'quickMenu'); if (!box) return;
             const v = x => typeof x === 'function' ? x(R) : x;
             const items = QUICK_MENU.filter(m => { try { return m.show(R); } catch (e) { return false; } });
-            const IMG = { dash: 1, team: 1, staff: 1, requests: 1, pending: 1, coupon: 1, leave: 1, leaveok: 1, myqr: 1, baadmin: 1, aaadmin: 1, facescan: 1, meowex: 1, award: 1, rewards: 1 };   // icons/menu/<id>.png
+            const IMG = { dash: 1, team: 1, staff: 1, requests: 1, pending: 1, coupon: 1, leave: 1, leaveok: 1, myqr: 1, baadmin: 1, aaadmin: 1, facescan: 1, meowex: 1, pos: 1, award: 1, rewards: 1 };   // icons/menu/<id>.png
             let html = items.map(m => {
                 const b = m.badge ? m.badge(R) : null;
                 const icon = IMG[m.id] ? '<img src="icons/menu/' + m.id + '.png" alt="" loading="lazy">' : '<i class="fa-solid ' + v(m.icon) + ' qm-fa"></i>';
