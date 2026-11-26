@@ -2105,6 +2105,7 @@
             { id: 'lounge', label: 'ห้องพูดคุย', icon: 'fa-comments', run: "openLounge()", show: R => true },
             { id: 'ptadmin', label: 'พ้อย Award', icon: 'fa-trophy', run: "openAdminPage('admin-points.html')", show: R => R.allAdmin },
             { id: 'pos', label: 'PBD POS', icon: 'fa-cash-register', run: 'openPos()', show: () => true },   // ทุกคนเห็น — สิทธิ์แยกตอนเข้าสู่ระบบ POS
+            { id: 'meowex', label: 'MeowEX', icon: 'fa-receipt', run: 'openMeowEx()', show: () => true },   // ระบบเบิกค่าใช้จ่าย Meow Meow Expenses
             { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
             { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
@@ -2120,6 +2121,11 @@
         function openPos() {
             try { if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) { liff.openWindow({ url: POS_URL, external: false }); return; } } catch (e) { }
             location.href = POS_URL;
+        }
+        const MEOWEX_URL = 'https://pbdgroup.github.io/blue-card-form/meowmeowindex.html';
+        function openMeowEx() {
+            try { if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) { liff.openWindow({ url: MEOWEX_URL, external: false }); return; } } catch (e) { }
+            location.href = MEOWEX_URL;
         }
         function menuRights() {
             const o = appState.overview || {};
@@ -2144,7 +2150,7 @@
             const R = menuRights(), box = $id(R.mgmt ? 'mgmtMenu' : 'quickMenu'); if (!box) return;
             const v = x => typeof x === 'function' ? x(R) : x;
             const items = QUICK_MENU.filter(m => { try { return m.show(R); } catch (e) { return false; } });
-            const IMG = { dash: 1, team: 1, staff: 1, requests: 1, pending: 1, coupon: 1, leave: 1, leaveok: 1, myqr: 1, baadmin: 1, aaadmin: 1, facescan: 1, award: 1, rewards: 1 };   // icons/menu/<id>.png
+            const IMG = { dash: 1, team: 1, staff: 1, requests: 1, pending: 1, coupon: 1, leave: 1, leaveok: 1, myqr: 1, baadmin: 1, aaadmin: 1, facescan: 1, meowex: 1, award: 1, rewards: 1 };   // icons/menu/<id>.png
             let html = items.map(m => {
                 const b = m.badge ? m.badge(R) : null;
                 const icon = IMG[m.id] ? '<img src="icons/menu/' + m.id + '.png" alt="" loading="lazy">' : '<i class="fa-solid ' + v(m.icon) + ' qm-fa"></i>';
