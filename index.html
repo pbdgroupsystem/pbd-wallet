@@ -2105,7 +2105,7 @@
             { id: 'lounge', label: 'ห้องพูดคุย', icon: 'fa-comments', run: "openLounge()", show: R => true },
             { id: 'ptadmin', label: 'พ้อย Award', icon: 'fa-trophy', run: "openAdminPage('admin-points.html')", show: R => R.allAdmin },
             { id: 'pos', label: 'PBD POS', icon: 'fa-cash-register', run: 'openPos()', show: () => true },   // ทุกคนเห็น — สิทธิ์แยกตอนเข้าสู่ระบบ POS
-            { id: 'meowex', label: 'MeowEX', icon: 'fa-receipt', run: 'openMeowEx()', show: () => true },   // ระบบเบิกค่าใช้จ่าย Meow Meow Expenses
+            { id: 'meowex', label: 'MeowEX', icon: 'fa-receipt', run: 'openMeowEx()', show: R => R.mgmt || R.staff || R.mgr || R.exec || R.allAdmin },   // ซ่อนจากฝ่ายขายและหัวหน้าทีม (ผู้จัดการ/บริหาร/พนักงานทั่วไป/แอดมิน เห็น)   // ระบบเบิกค่าใช้จ่าย Meow Meow Expenses
             { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
             { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
@@ -2143,7 +2143,8 @@
                 aaAdmin: !!(appState.adminPages && appState.adminPages.activity),   // หน้าแอดมินกิจกรรม
                 allAdmin: !!(appState.adminPages && appState.adminPages.all),       // ผู้ดูแลระบบ: นำเข้าไฟล์หักพ้อยเครื่องคืน
                 lvApprover: !!(appState.leaveRights && appState.leaveRights.approver),   // ผู้จัดการ/หัวหน้าทีม: อนุมัติการลา
-                lvPending: (appState.leaveRights && appState.leaveRights.pending) || 0
+                lvPending: (appState.leaveRights && appState.leaveRights.pending) || 0,
+                mgr: /ผู้จัดการ/.test(String(appState.position || '') + ' ' + String(appState.role || '') + ' ' + (appState.positions || []).join(' '))   // ผู้จัดการสาขา (รวมคนที่มี 2 ตำแหน่ง)
             };
         }
         function renderMenus() {
