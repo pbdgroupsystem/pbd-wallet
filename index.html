@@ -2104,6 +2104,7 @@
             { id: 'pdxadmin', label: 'หักพ้อยคืน', icon: 'fa-rotate-left', run: "openAdminPage('admin-deduct.html')", show: R => R.allAdmin },
             { id: 'lounge', label: 'ห้องพูดคุย', icon: 'fa-comments', run: "openLounge()", show: R => true },
             { id: 'ptadmin', label: 'พ้อย Award', icon: 'fa-trophy', run: "openAdminPage('admin-points.html')", show: R => R.allAdmin },
+            { id: 'pos', label: 'PBD POS', icon: 'fa-cash-register', run: 'openPos()', show: R => !R.staff || R.exec },   // หน้าขาย (สิทธิ์ใช้งานจริงตรวจที่ระบบ POS อีกชั้น)
             { id: 'facescan', label: 'สแกนหน้านอกพื้นที่', icon: 'fa-user-check', run: 'openFaceScan()', show: R => R.fieldLead },
             { id: 'award', label: 'PBD Award', icon: 'fa-trophy', run: 'openAward()', dark: 1, badge: () => ({ t: 'NEW', c: 'bg-amber-400 text-black' }), show: () => true },
             { id: 'rewards', label: 'แลกสิทธิประโยชน์', icon: 'fa-gift', run: "openSection('rewardsModal')", badge: R => R.mgmt ? null : { t: 'HOT', c: 'bg-amber-500 text-white' }, show: () => true }
@@ -2113,6 +2114,12 @@
         function openFaceScan() {
             try { if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) { liff.openWindow({ url: FACESCAN_URL, external: false }); return; } } catch (e) { }
             location.href = FACESCAN_URL;
+        }
+        // PBD POS (LIFF หน้าขาย)
+        const POS_URL = 'https://liff.line.me/2012225566-EItPzpdH';
+        function openPos() {
+            try { if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) { liff.openWindow({ url: POS_URL, external: false }); return; } } catch (e) { }
+            location.href = POS_URL;
         }
         function menuRights() {
             const o = appState.overview || {};
